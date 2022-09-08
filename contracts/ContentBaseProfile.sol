@@ -96,33 +96,12 @@ contract ContentBaseProfile is
     }
 
     /**
-     * @notice createProfileByAdmin can only be called by an admin (on behalf of users who use built in wallets)
-     */
-    function createProfileByAdmin(
-        address profileOwnerAddress,
-        string memory uid,
-        string calldata handle,
-        string calldata imageURI,
-        bool isDefault
-    )
-        external
-        onlyRole(ADMIN_ROLE)
-        _onlyValidHandleLen(handle)
-        _onlyValidImageURI(imageURI)
-        returns (uint256)
-    {
-        return
-            _createProfile({
-                owner: profileOwnerAddress,
-                uid: uid,
-                handle: handle,
-                imageURI: imageURI,
-                isDefault: isDefault
-            });
-    }
-
-    /**
-     * @notice createProfile can be called by users directly when they use their own wallet
+     * @dev an external function that users can call to create profiles
+     *
+     * @param uid - the uid of the user. If using the built-in wallet it's a uid from external database, if using user own wallet it's an address.
+     * @param handle - a user given name of the profile
+     * @param imageURI - a user's profile's image
+     * @param isDefault - if the profile is a default profile of the user.
      */
     function createProfile(
         string memory uid,
@@ -148,13 +127,9 @@ contract ContentBaseProfile is
     }
 
     /**
-     * @notice a function that actually contains logic to create a profile.
+     * @dev a function that actually contains logic to create a profile.
      *
-     * @param owner - a wallet address of the owner of a profile.
-     * @param uid - if using the built-in wallet it's a uid from external database, if using user own wallet it's an address.
-     * @param handle - a user given name of the profile
-     * @param imageURI - a uri for use as a profile's image
-     * @param isDefault - if the profile is a default profile of the user.
+     * @param owner - an owner of the profile.
      */
     function _createProfile(
         address owner,
