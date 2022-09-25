@@ -2,12 +2,12 @@ import { ethers, upgrades } from 'hardhat'
 import path from 'path'
 import fs from 'fs/promises'
 
-import contentBaseProfile from '../abi/ContentBaseProfile.json'
+import contentBaseProfileV2 from '../abi/ContentBaseProfileV2.json'
 
 async function main() {
   const ContentBaseV2 = await ethers.getContractFactory('ContentBaseProfileV2')
   const contentBaseV2 = await upgrades.upgradeProxy(
-    contentBaseProfile.address,
+    contentBaseProfileV2.address,
     ContentBaseV2
   )
 

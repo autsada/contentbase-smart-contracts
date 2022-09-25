@@ -30,13 +30,14 @@ contract ContentBaseProfileV2 is
     mapping(uint256 => Profile) private _profileById;
 
     /**
-     * @dev  profileId - a token id
-     * @dev  owner - an address who owns the token
-     * @dev uid - a database user id or wallet address
-     * @dev handle - a user given name which must be unique
-     * @dev imageURI1 - an image uri save on ipfs
-     * @dev imageURI2 - an image uri save on cloud storage
-     * @dev isDefault - boolean if the owner want a profile be their default profile
+     * @dev A struct containing profile nft data.
+     * @param  profileId - a token id
+     * @param  owner - an address who owns the token
+     * @param uid - a database user id
+     * @param handle - a user given name which must be unique
+     * @param imageURI1 - an image uri save on ipfs, can be empty string
+     * @param imageURI2 - an image uri save on cloud storage, can be empty string
+     * @param isDefault - boolean if the owner want a profile be their default profile
      */
     struct Profile {
         uint256 profileId;
@@ -48,7 +49,15 @@ contract ContentBaseProfileV2 is
         bool isDefault;
     }
 
-    struct CreateProfileArgs {
+    /**
+     * @dev A struct containing the required arguments for the "createProfile" function.
+     * @param uid - a database user id
+     * @param handle - a user given name which must be unique
+     * @param imageURI1 - an image uri save on ipfs, can be empty string
+     * @param imageURI2 - an image uri save on cloud storage, can be empty string
+     * @param isDefault - boolean if the owner want a profile be their default profile
+     */
+    struct CreateProfileParams {
         string uid;
         string handle;
         string imageURI1;
@@ -61,7 +70,7 @@ contract ContentBaseProfileV2 is
         _disableInitializers();
     }
 
-    event ProfileCreated(uint256 profileId, address owner);
+    event ProfileCreated(uint256 profileId, string handle, address owner);
 
     function initialize() public initializer {
         __ERC721_init("Content Base Profile", "CTB");
@@ -79,7 +88,7 @@ contract ContentBaseProfileV2 is
     /**
      * @dev modifier to check if handle has correct length
      */
-    modifier _onlyValidHandleLen(string memory handle) {
+    modifier _onlyValidHandleLen(string calldata handle) {
         bytes memory bytesHandle = bytes(handle);
         if (
             bytesHandle.length >= Constants.MIN_HANDLE_LENGTH &&
@@ -96,7 +105,7 @@ contract ContentBaseProfileV2 is
     /**
      * @dev modifier to validate image uri
      */
-    modifier _onlyValidImageURI(string memory imageURI) {
+    modifier _onlyValidImageURI(string calldata imageURI) {
         bytes memory bytesURI = bytes(imageURI);
         if (Constants.MAX_PROFILE_IMAGE_URI_LENGTH >= bytesURI.length) {
             _;
@@ -108,44 +117,37 @@ contract ContentBaseProfileV2 is
     /**
      * @dev an external function that users can call to create profiles
      *
-     * @param createProfileArgs.uid - the uid of the user. If using the built-in wallet it's a uid from external database, if using user own wallet it's an address.
-     * @param createProfileArgs.handle - a user given name of the profile
-     * @param createProfileArgs.imageURI1 - an image uri save on ipfs
-     * @param createProfileArgs.imageURI2 - an image uri save on cloud storage
-     * @param createProfileArgs.isDefault - if the profile is a default profile of the user.
+     * @param createProfileParams the struct containing required data to create a profile: (uid, handle, imageURI1, imageURI2, isDefault) - imageURI1 and imageURI2 can be empty string
+     *
      */
-    function createProfile(CreateProfileArgs memory createProfileArgs)
+    function createProfile(CreateProfileParams calldata createProfileParams)
         external
-        _onlyValidHandleLen(createProfileArgs.handle)
-        _onlyValidImageURI(createProfileArgs.imageURI1)
-        _onlyValidImageURI(createProfileArgs.imageURI2)
+        _onlyValidHandleLen(createProfileParams.handle)
+        _onlyValidImageURI(createProfileParams.imageURI1)
+        _onlyValidImageURI(createProfileParams.imageURI2)
         returns (uint256)
     {
         return
             _createProfile({
                 owner: msg.sender,
-                uid: createProfileArgs.uid,
-                handle: createProfileArgs.handle,
-                imageURI1: createProfileArgs.imageURI1,
-                imageURI2: createProfileArgs.imageURI2,
-                isDefault: createProfileArgs.isDefault
+                createProfileParams: createProfileParams
             });
     }
 
     /**
-     * @dev a function that actually contains logic to create a profile.
+     * @dev an internal function that actually contains logic to create a profile.
+     * @param createProfileParams the struct containing required data to create a profile: (uid, handle, imageURI1, imageURI2, isDefault) - imageURI1 and imageURI2 can be empty string
      *
      */
     function _createProfile(
         address owner,
-        string memory uid,
-        string memory handle,
-        string memory imageURI1,
-        string memory imageURI2,
-        bool isDefault
+        CreateProfileParams calldata createProfileParams
     ) internal returns (uint256) {
         // Check if handle is already taken
-        require(_handleUnique(handle), "Handle already taken.");
+        require(
+            _handleUnique(createProfileParams.handle),
+            "Handle already taken."
+        );
 
         _profileIdCounter.increment();
         uint256 newProfileId = _profileIdCounter.current();
@@ -157,21 +159,23 @@ contract ContentBaseProfileV2 is
         _profileIdsByAddress[owner].push(newProfileId);
 
         // Link profile id to handle hash
-        _profileIdByHandleHash[_hashHandle(handle)] = newProfileId;
+        _profileIdByHandleHash[
+            _hashHandle(createProfileParams.handle)
+        ] = newProfileId;
 
         // Create a profile struct and assign it to the newProfileId in the mapping.
         _profileById[newProfileId] = Profile({
             profileId: newProfileId,
             owner: owner,
-            uid: uid,
-            handle: handle,
-            imageURI1: imageURI1,
-            imageURI2: imageURI2,
-            isDefault: isDefault
+            uid: createProfileParams.uid,
+            handle: createProfileParams.handle,
+            imageURI1: createProfileParams.imageURI1,
+            imageURI2: createProfileParams.imageURI2,
+            isDefault: createProfileParams.isDefault
         });
 
         // Emit an event
-        emit ProfileCreated(newProfileId, owner);
+        emit ProfileCreated(newProfileId, createProfileParams.handle, owner);
 
         return newProfileId;
     }
@@ -204,6 +208,7 @@ contract ContentBaseProfileV2 is
 
     /**
      * @dev A function to validate handle - validate len and uniqueness
+     * @param handle a string handle name
      */
     function validateHandle(string calldata handle)
         external
@@ -214,13 +219,27 @@ contract ContentBaseProfileV2 is
         return _handleUnique(handle);
     }
 
-    // A function to check if handle is unique
-    function _handleUnique(string memory handle) internal view returns (bool) {
+    /**
+     * @dev A function to check if handle is unique
+     * @param handle a string handle name
+     */
+    function _handleUnique(string calldata handle)
+        internal
+        view
+        returns (bool)
+    {
         return _profileIdByHandleHash[_hashHandle(handle)] == 0;
     }
 
-    // A function to hash a handle
-    function _hashHandle(string memory handle) internal pure returns (bytes32) {
+    /**
+     * @dev A function to hash the handle
+     * @param handle a string handle name
+     */
+    function _hashHandle(string calldata handle)
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(bytes(handle));
     }
 
