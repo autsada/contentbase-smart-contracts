@@ -70,7 +70,7 @@ contract ContentBaseProfileV2 is
         _disableInitializers();
     }
 
-    event ProfileCreated(uint256 profileId, string handle, address owner);
+    event ProfileCreated(uint256 profileId, address owner);
 
     function initialize() public initializer {
         __ERC721_init("Content Base Profile", "CTB");
@@ -175,7 +175,7 @@ contract ContentBaseProfileV2 is
         });
 
         // Emit an event
-        emit ProfileCreated(newProfileId, createProfileParams.handle, owner);
+        emit ProfileCreated(newProfileId, owner);
 
         return newProfileId;
     }
