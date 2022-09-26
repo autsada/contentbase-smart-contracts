@@ -36,7 +36,7 @@ contract ContentBaseProfileV3 is
      * @param isDefault - boolean if the owner want a profile be their default profile
      * @param uid - a database user id
      * @param handle - a user given name which must be unique
-     * @param tokenURI - a url point the image on ipfs, can be empty
+     * @param tokenURI - a url point the image on ipfs, can be empty string
      * @param imageURI - a url point to an image saved on cloud storage, can be empty string
      */
     struct Profile {
@@ -54,7 +54,7 @@ contract ContentBaseProfileV3 is
      * @param isDefault - boolean if the owner want a profile be their default profile
      * @param uid - a database user id
      * @param handle - a user given name which must be unique
-     * @param tokenURI - a url point the image on ipfs, can be empty
+     * @param tokenURI - a url point the image on ipfs, can be empty string
      * @param imageURI - a url point to an image saved on cloud storage, can be empty string
      */
     struct CreateProfileParams {
