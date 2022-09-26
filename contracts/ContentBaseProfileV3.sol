@@ -36,7 +36,7 @@ contract ContentBaseProfileV3 is
      * @param isDefault - boolean if the owner want a profile be their default profile
      * @param uid - a database user id
      * @param handle - a user given name which must be unique
-     * @param tokenURI - a url point to json metadata save on ipfs - metadata = (handle: string, image: string - a url of the mage on ipfs)
+     * @param tokenURI - a url point to json metadata save on ipfs - metadata = (handle: string, url: string - a url of the image on ipfs)
      * @param imageURI - a url point to an image saved on cloud storage, can be empty string
      */
     struct Profile {
@@ -54,7 +54,7 @@ contract ContentBaseProfileV3 is
      * @param isDefault - boolean if the owner want a profile be their default profile
      * @param uid - a database user id
      * @param handle - a user given name which must be unique
-     * @param tokenURI - a url point to json metadata save on ipfs
+     * @param tokenURI - a url point to json metadata save on ipfs - metadata = (handle: string, url: string - a url of the image on ipfs)
      * @param imageURI - a url point to an image saved on cloud storage, can be empty string
      */
     struct CreateProfileParams {
@@ -136,7 +136,7 @@ contract ContentBaseProfileV3 is
 
     /**
      * @dev an internal function that actually contains logic to create a profile.
-     * @param createProfileParams the struct containing required data to create a profile: (uid, handle, imageURI1, imageURI2, isDefault) - imageURI1 and imageURI2 can be empty string
+     * @param createProfileParams the struct containing required data to create a profile: (uid, handle, tokenURI, imageURI, isDefault) - imageURI can be empty string
      *
      */
     function _createProfile(
