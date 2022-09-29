@@ -3,7 +3,7 @@ import path from 'path'
 import fs from 'fs/promises'
 
 async function main() {
-  const ContentBase = await ethers.getContractFactory('ContentBaseProfile')
+  const ContentBase = await ethers.getContractFactory('ContentBase')
   const contentBase = await upgrades.deployProxy(ContentBase)
 
   await contentBase.deployed()
@@ -16,7 +16,7 @@ async function main() {
   }
 
   await fs.writeFile(
-    path.join(__dirname, '..', '/abi/ContentBaseProfile.json'),
+    path.join(__dirname, '..', '/abi/ContentBase.json'),
     JSON.stringify(data)
   )
 }

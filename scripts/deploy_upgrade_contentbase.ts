@@ -2,13 +2,18 @@ import { ethers, upgrades } from 'hardhat'
 import path from 'path'
 import fs from 'fs/promises'
 
+import contentBase from '../abi/ContentBase.json'
+
 async function main() {
-  const ContentBaseV2 = await ethers.getContractFactory('ContentBaseProfileV2')
-  const contentBaseV2 = await upgrades.deployProxy(ContentBaseV2)
+  const ContentBaseV2 = await ethers.getContractFactory('ContentBase')
+  const contentBaseV2 = await upgrades.upgradeProxy(
+    contentBase.address,
+    ContentBaseV2
+  )
 
   await contentBaseV2.deployed()
 
-  console.log('ContentBaseV2 deployed to:', contentBaseV2.address)
+  console.log('ContentBase deployed to:', contentBaseV2.address)
   //Pull the address and ABI out, since that will be key in interacting with the smart contract later
   const data = {
     address: contentBaseV2.address,
@@ -16,7 +21,7 @@ async function main() {
   }
 
   await fs.writeFile(
-    path.join(__dirname, '..', '/abi/ContentBaseProfileV2.json'),
+    path.join(__dirname, '..', '/abi/ContentBaseV2.json'),
     JSON.stringify(data)
   )
 }

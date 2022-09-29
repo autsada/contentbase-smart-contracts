@@ -7,18 +7,18 @@
       "kind": "uups"
     },
     {
+      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "txHash": "0xd6fd106cb0c1820af15e45d8010c561919c6e8465bb97a5b0697fabe58e886ef",
+      "kind": "uups"
+    },
+    {
       "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0x64588fd4923225299a0a7e82aa9dceab355fee7ae1d62e2f32b4ab4c3af98260",
+      "txHash": "0x893640ccf57fd702441a23fe3d07c6910883c74020b9732fcf1e14d8b085a776",
       "kind": "uups"
     },
     {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x15fedcd619978fc563ba2eb9f3620428e6bbee3e8d3feb72c087b8ae695de998",
-      "kind": "uups"
-    },
-    {
-      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-      "txHash": "0xd6fd106cb0c1820af15e45d8010c561919c6e8465bb97a5b0697fabe58e886ef",
+      "txHash": "0x4d55c9c8423fdc652e8f5f4a61623cd67e86c8df35a7f6208bfc83d947b6a8fa",
       "kind": "uups"
     }
   ],
@@ -330,9 +330,9 @@
         }
       }
     },
-    "d7eaa2c7b07972f556c1cb68d5bdbae5ed565af6bbf460625e3c4306524bd762": {
+    "b7f4ade9e647239aa2c44df1f6191e0efa77b3a3a6cbf3e919afe69ea222b84e": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x67e09668d1db92cb070c78debf10344947540fa5403a9a446c497fca23c7c2eb",
+      "txHash": "0x35cf24eb28ee2a6953c3167457e5b9990b360a4366986685fea6ad198d34fc93",
       "layout": {
         "storage": [
           {
@@ -425,9 +425,17 @@
             "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:465"
           },
           {
-            "label": "_roles",
+            "label": "__gap",
             "offset": 0,
             "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC721BurnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721BurnableUpgradeable.sol:38"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "201",
             "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
             "contract": "AccessControlUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:61"
@@ -435,7 +443,7 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "152",
+            "slot": "202",
             "type": "t_array(t_uint256)49_storage",
             "contract": "AccessControlUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:259"
@@ -443,7 +451,7 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "201",
+            "slot": "251",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ERC1967UpgradeUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:211"
@@ -451,42 +459,42 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "251",
+            "slot": "301",
             "type": "t_array(t_uint256)50_storage",
             "contract": "UUPSUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
           },
           {
-            "label": "_profileIdCounter",
+            "label": "_tokenIdCounter",
             "offset": 0,
-            "slot": "301",
-            "type": "t_struct(Counter)2432_storage",
-            "contract": "ContentBaseProfile",
-            "src": "contracts\\ContentBaseProfile.sol:24"
+            "slot": "351",
+            "type": "t_struct(Counter)2482_storage",
+            "contract": "ContentBase",
+            "src": "contracts\\ContentBaseMain.sol:29"
           },
           {
             "label": "_profileIdsByAddress",
             "offset": 0,
-            "slot": "302",
+            "slot": "352",
             "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
-            "contract": "ContentBaseProfile",
-            "src": "contracts\\ContentBaseProfile.sol:26"
+            "contract": "ContentBase",
+            "src": "contracts\\ContentBaseMain.sol:32"
           },
           {
             "label": "_profileIdByHandleHash",
             "offset": 0,
-            "slot": "303",
+            "slot": "353",
             "type": "t_mapping(t_bytes32,t_uint256)",
-            "contract": "ContentBaseProfile",
-            "src": "contracts\\ContentBaseProfile.sol:28"
+            "contract": "ContentBase",
+            "src": "contracts\\ContentBaseMain.sol:34"
           },
           {
             "label": "_profileById",
             "offset": 0,
-            "slot": "304",
-            "type": "t_mapping(t_uint256,t_struct(Profile)2904_storage)",
-            "contract": "ContentBaseProfile",
-            "src": "contracts\\ContentBaseProfile.sol:30"
+            "slot": "354",
+            "type": "t_mapping(t_uint256,t_struct(Profile)3699_storage)",
+            "contract": "ContentBase",
+            "src": "contracts\\ContentBaseMain.sol:36"
           }
         ],
         "types": {
@@ -546,15 +554,15 @@
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Profile)2904_storage)": {
-            "label": "mapping(uint256 => struct ContentBaseProfile.Profile)",
+          "t_mapping(t_uint256,t_struct(Profile)3699_storage)": {
+            "label": "mapping(uint256 => struct DataTypes.Profile)",
             "numberOfBytes": "32"
           },
           "t_string_storage": {
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Counter)2432_storage": {
+          "t_struct(Counter)2482_storage": {
             "label": "struct CountersUpgradeable.Counter",
             "members": [
               {
@@ -566,8 +574,8 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Profile)2904_storage": {
-            "label": "struct ContentBaseProfile.Profile",
+          "t_struct(Profile)3699_storage": {
+            "label": "struct DataTypes.Profile",
             "members": [
               {
                 "label": "profileId",
@@ -576,19 +584,25 @@
                 "slot": "0"
               },
               {
-                "label": "owner",
-                "type": "t_address",
+                "label": "isDefault",
+                "type": "t_bool",
                 "offset": 0,
                 "slot": "1"
               },
               {
-                "label": "uid",
+                "label": "owner",
+                "type": "t_address",
+                "offset": 1,
+                "slot": "1"
+              },
+              {
+                "label": "handle",
                 "type": "t_string_storage",
                 "offset": 0,
                 "slot": "2"
               },
               {
-                "label": "handle",
+                "label": "tokenURI",
                 "type": "t_string_storage",
                 "offset": 0,
                 "slot": "3"
@@ -598,15 +612,9 @@
                 "type": "t_string_storage",
                 "offset": 0,
                 "slot": "4"
-              },
-              {
-                "label": "isDefault",
-                "type": "t_bool",
-                "offset": 0,
-                "slot": "5"
               }
             ],
-            "numberOfBytes": "192"
+            "numberOfBytes": "160"
           },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",

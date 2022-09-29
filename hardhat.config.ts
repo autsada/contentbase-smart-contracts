@@ -8,7 +8,15 @@ import '@openzeppelin/hardhat-upgrades'
 const { GOERLI_URL, PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env
 
 const config: HardhatUserConfig = {
-  solidity: '0.8.9',
+  solidity: {
+    version: '0.8.9',
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 1000,
+      },
+    },
+  },
   networks: {
     goerli: {
       url: GOERLI_URL || '',
