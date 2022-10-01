@@ -5,8 +5,15 @@ import {Helpers} from "../libraries/Helpers.sol";
 import {DataTypes} from "../libraries/DataTypes.sol";
 
 abstract contract ContentBaseProfile {
-    // A public function signature to mint profile nft that to be implemented by the derived contract.
+    event ProfileCreated(uint256 tokenId, bool isDefault, address owner);
+    event ProfileImageUpdated(uint256 tokenId, string imageURI, address owner);
+    event DefaultProfileUpdated(uint256 tokenId, address owner);
+
+    /**
+     * A public function signature to mint profile nft that to be implemented by the derived contract.
+     */
     function createProfile(
+        string calldata tokenURI,
         DataTypes.CreateProfileParams calldata createProfileParams
     ) public virtual returns (uint256);
 
@@ -28,35 +35,101 @@ abstract contract ContentBaseProfile {
         mapping(bytes32 => uint256) storage _profileIdByHandleHash,
         mapping(uint256 => DataTypes.Profile) storage _profileById
     ) internal returns (uint256) {
-        // Get the profiles array of the owner.
-        DataTypes.Profile[] memory profiles = _fetchProfilesByAddress(
-            owner,
-            _profileIdsByAddress,
-            _profileById
-        );
-
-        // Link profile id to handle hash.
+        // Store profile id to handle hash.
         _profileIdByHandleHash[
             Helpers.hashString(createProfileParams.handle)
         ] = profileId;
 
-        // Create a profile struct and assign it to the newProfileId in the mapping.
-        _profileById[profileId] = DataTypes.Profile({
+        // Create a profile struct in memory
+        DataTypes.Profile memory profile = DataTypes.Profile({
             profileId: profileId,
-            isDefault: profiles.length > 0 ? false : true, // If it's the user's first profile set to true, otherwise false.
+            isDefault: _profileIdsByAddress[owner].length == 0 ? true : false, // If it's user's first profile set to true, otherwise false.
             owner: owner,
             handle: createProfileParams.handle,
-            tokenURI: createProfileParams.tokenURI,
             imageURI: createProfileParams.imageURI
         });
+
+        // Store the created profile in mapping
+        _profileById[profileId] = profile;
 
         // Push the profile id to user's profile ids array.
         _profileIdsByAddress[owner].push(profileId);
 
-        // Emit creaete profile event.
-        emit DataTypes.TokenCreated(profileId, owner);
+        // Emit create profile event.
+        emit ProfileCreated(profileId, profile.isDefault, owner);
 
         return profileId;
+    }
+
+    /**
+     * A public function signature to update profile image that will be implemented by the derived contract.
+     * @param updateProfileImageParams - refer to DataTypes.UpdateProfileImageParams
+     */
+    function updateProfileImage(
+        DataTypes.UpdateProfileImageParams calldata updateProfileImageParams
+    ) public virtual returns (uint256);
+
+    /**
+     * An interal function to update profile image.
+     * @param owner {address} - An owner address of the profile
+     * @param profileId {uint256} - An id of the profile to be updated
+     * @param imageURI {string} - new image uri
+     * @param _profileById {mapping}
+     *
+     */
+    function _updateProfileImage(
+        address owner,
+        uint256 profileId,
+        string calldata imageURI,
+        mapping(uint256 => DataTypes.Profile) storage _profileById
+    ) internal returns (uint256) {
+        // Update the profile
+        _profileById[profileId].imageURI = imageURI;
+
+        // Emit update profile event.
+        emit ProfileImageUpdated(
+            profileId,
+            _profileById[profileId].imageURI,
+            owner
+        );
+
+        return profileId;
+    }
+
+    /**
+     * A public function signature to set profile as default that will be implemented by the derived contract.
+     * @param profileId {uint256}
+     */
+    function setDefaultProfile(uint256 profileId) public virtual;
+
+    /**
+     * An internal function that contain the logic to set profile as default
+     * @param owner {address}
+     * @param profileId {uint256}
+     * @param _profileIdsByAddress {mapping}
+     * @param _profileById {mapping}
+     */
+    function _setDefaultProfile(
+        address owner,
+        uint256 profileId,
+        mapping(address => uint256[]) storage _profileIdsByAddress,
+        mapping(uint256 => DataTypes.Profile) storage _profileById
+    ) internal {
+        // Get profile ids array of the owner
+        uint256[] memory profileIds = _profileIdsByAddress[owner];
+
+        // Loop through the ids array and update isDefault field
+        for (uint256 i = 0; i < profileIds.length; i++) {
+            if (profileId == profileIds[i]) {
+                // This is the id to be set as default
+                _profileById[profileId].isDefault = true;
+            } else {
+                // Other ids to be set as false
+                _profileById[profileIds[i]].isDefault = false;
+            }
+        }
+
+        emit DefaultProfileUpdated(profileId, owner);
     }
 
     /**
@@ -94,48 +167,5 @@ abstract contract ContentBaseProfile {
         }
 
         return profiles;
-    }
-
-    /**
-     * A public function signature to update profile image that will be implemented by the derived contract.
-     * @param profileId {uint256} - A token id of the profile to be updated
-     */
-    function updateProfileImage(
-        uint256 profileId,
-        DataTypes.UpdateProfileParams calldata updateProfileParams
-    ) public virtual returns (uint256);
-
-    /**
-     * An interal function to update profile image.
-     * @param owner {address} - An owner address of the profile
-     * @param profileId {uint256} - An id of the profile to be updated
-     * @param updateProfileParams {struct} - refer to DataTypes.UpdateProfileParams
-     * @param _profileById {mapping}
-     */
-    function _updateProfileImage(
-        address owner,
-        uint256 profileId,
-        DataTypes.UpdateProfileParams calldata updateProfileParams,
-        mapping(uint256 => DataTypes.Profile) storage _profileById
-    ) internal returns (uint256) {
-        // Validate if the tokenURI changed.
-        // Don't have to validate the imageURI as it might not be changed even the image changed.
-        bytes32 oldTokenURIHash = keccak256(
-            bytes(_profileById[profileId].tokenURI)
-        );
-
-        require(
-            oldTokenURIHash != Helpers.hashString(updateProfileParams.tokenURI),
-            "Nothing change"
-        );
-
-        // Update tokenURI and imageURI.
-        _profileById[profileId].tokenURI = updateProfileParams.tokenURI;
-        _profileById[profileId].imageURI = updateProfileParams.imageURI;
-
-        // Emit update profile event.
-        emit DataTypes.TokenUpdated(profileId, owner);
-
-        return profileId;
     }
 }

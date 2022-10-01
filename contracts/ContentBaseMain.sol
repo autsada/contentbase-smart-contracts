@@ -2,11 +2,13 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "hardhat/console.sol";
 import "./ContentBaseProfile.sol";
 import {Constants} from "../libraries/Constants.sol";
 import {Helpers} from "../libraries/Helpers.sol";
@@ -15,6 +17,7 @@ import {DataTypes} from "../libraries/DataTypes.sol";
 contract ContentBase is
     Initializable,
     ERC721Upgradeable,
+    ERC721URIStorageUpgradeable,
     ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
@@ -27,6 +30,15 @@ contract ContentBase is
 
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
+
+    /**
+     * There are 4 types of token that use the same token counter, so it's needed to track each type separately
+     * These are 4 types:
+     * - Profile type
+     * - Publish type
+     * - Follow type
+     * - Like type
+     */
 
     // Array of profile ids by address.
     mapping(address => uint256[]) private _profileIdsByAddress;
@@ -42,6 +54,7 @@ contract ContentBase is
 
     function initialize() public initializer {
         __ERC721_init("Content Base", "CTB");
+        __ERC721URIStorage_init();
         __ERC721Burnable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -59,17 +72,19 @@ contract ContentBase is
     /// ***********************
 
     /**
-     * A public function to create profile nft
+     * A public function to create profile nft.
+     * @param uri {string} - a uri point to the token's metadata file
      * @param createProfileParams {struct} - refer to DataTypes.CreateProfileParams struct
      *
      */
     function createProfile(
+        string calldata uri,
         DataTypes.CreateProfileParams calldata createProfileParams
     ) public override returns (uint256) {
-        // Validate handle length, the helper function will revert with error message if the check is false so we don't have to set the error message here
+        // Validate handle length, the helper function will revert with error message if the check is false so we don't have to set the error message here.
         require(Helpers.onlyValidHandleLen(createProfileParams.handle));
 
-        // Check if handle is already taken
+        // Check if handle is already taken.
         require(
             Helpers.handleUnique(
                 createProfileParams.handle,
@@ -78,24 +93,119 @@ contract ContentBase is
             "Handle already taken."
         );
 
-        // Validate tokenURI and imageURI, the helper function will revert with error message if the check is false so we don't have to set the error message here.
-        // An imageURI can be empty so we don't have to validate min length
-        require(Helpers.notTooShortURI(createProfileParams.tokenURI));
-        require(Helpers.notTooLongURI(createProfileParams.tokenURI));
+        // Validate tokenURI, the helper function will revert with error message if the check is false so we don't have to set the error message here.
+        require(Helpers.notTooShortURI(uri));
+        require(Helpers.notTooLongURI(uri));
+
+        // The imageURI can be empty so we don't have to validate min length.
         require(Helpers.notTooLongURI(createProfileParams.imageURI));
 
-        // Mint new token
-        uint256 newProfileId = safeMint(msg.sender);
+        // Mint new token.
+        // Increment the counter before using it so the id will start from 1 (instead of 0).
+        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter.current();
+        _safeMint(msg.sender, tokenId);
 
+        // Store tokenURI
+        _setTokenURI(tokenId, uri);
+
+        // Create a profile.
         return
             _createProfile({
                 owner: msg.sender,
-                profileId: newProfileId,
+                profileId: tokenId,
                 createProfileParams: createProfileParams,
                 _profileIdsByAddress: _profileIdsByAddress,
                 _profileIdByHandleHash: _profileIdByHandleHash,
                 _profileById: _profileById
             });
+    }
+
+    /**
+     * A public function to update profile image.
+     * @dev token id must exist
+     * @dev caller must be the owner of the token
+     * @param updateProfileImageParams - refer to DataTypes.UpdateProfileImageParams
+     */
+    function updateProfileImage(
+        DataTypes.UpdateProfileImageParams calldata updateProfileImageParams
+    ) public override returns (uint256) {
+        // Check if the caller is the owner of the profile.
+        require(
+            ownerOf(updateProfileImageParams.profileId) == msg.sender,
+            "Forbidden"
+        );
+
+        // Check if the profile id exist.
+        require(
+            _exists(updateProfileImageParams.profileId),
+            "Profile not found"
+        );
+
+        // Check if it's profile token
+        require(_isProfile(updateProfileImageParams.profileId), "Not found");
+
+        // Validate the image uri.
+        require(Helpers.notTooShortURI(updateProfileImageParams.imageURI));
+        require(Helpers.notTooLongURI(updateProfileImageParams.imageURI));
+
+        // Validate the token uri.
+        require(Helpers.notTooShortURI(updateProfileImageParams.tokenURI));
+        require(Helpers.notTooLongURI(updateProfileImageParams.tokenURI));
+
+        // Validate if the tokenURI changed.
+        // Don't have to validate the imageURI as it might not be changed even the image changed.
+        string memory oldTokenURI = tokenURI(
+            updateProfileImageParams.profileId
+        );
+        require(
+            keccak256(bytes(oldTokenURI)) !=
+                Helpers.hashString(updateProfileImageParams.tokenURI),
+            "Nothing change"
+        );
+
+        // Update the token uri.
+        _setTokenURI(
+            updateProfileImageParams.profileId,
+            updateProfileImageParams.tokenURI
+        );
+
+        // Update the profile struct.
+        return
+            _updateProfileImage({
+                owner: msg.sender,
+                profileId: updateProfileImageParams.profileId,
+                imageURI: updateProfileImageParams.imageURI,
+                _profileById: _profileById
+            });
+    }
+
+    /**
+     * A public function to update profile image.
+     * @dev token id must exist
+     * @dev caller must be the owner of the token
+     * @param profileId - a token id
+     */
+    function setDefaultProfile(uint256 profileId) public override {
+        // The id must exist
+        require(_exists(profileId), "Profile not found");
+
+        // Caller must own the token
+        require(ownerOf(profileId) == msg.sender, "Forbidden");
+
+        // Must be a profile token
+        require(_isProfile(profileId), "Profile not found");
+
+        // If the id is already a default, revert
+        if (_profileById[profileId].isDefault) revert("Already a default");
+
+        // Update the profile
+        _setDefaultProfile({
+            owner: msg.sender,
+            profileId: profileId,
+            _profileIdsByAddress: _profileIdsByAddress,
+            _profileById: _profileById
+        });
     }
 
     /**
@@ -113,38 +223,105 @@ contract ContentBase is
     }
 
     /**
-     * A public function to update profile image
-     * @param profileId {uint256} - An id of the profile to be updated
-     * @param updateProfileParams {struct} - refer to DataTypes.UpdateProfileParams
+     * A public function to get a profile by id
+     * @param profileId {uint256}
      */
-    function updateProfileImage(
-        uint256 profileId,
-        DataTypes.UpdateProfileParams calldata updateProfileParams
-    ) public override returns (uint256) {
-        // Check if the caller is the owner of the profile
-        require(ownerOf(profileId) == msg.sender, "Forbidden");
+    function getProfileById(uint256 profileId)
+        public
+        view
+        returns (DataTypes.Profile memory)
+    {
+        // Profile must exist
+        require(_exists(profileId), "Not found");
 
-        // Check if the profile id exist
-        require(_exists(profileId), "Profile not found");
+        // Must be a profile token
+        require(_isProfile(profileId), "Not found");
 
-        // Valdate the parameters
-        require(Helpers.notTooShortURI(updateProfileParams.tokenURI));
-        require(Helpers.notTooLongURI(updateProfileParams.tokenURI));
-        require(Helpers.notTooShortURI(updateProfileParams.imageURI));
-        require(Helpers.notTooLongURI(updateProfileParams.imageURI));
+        return _profileById[profileId];
+    }
 
-        return
-            _updateProfileImage(
-                msg.sender,
-                profileId,
-                updateProfileParams,
-                _profileById
-            );
+    /**
+     * A public function to validate handle - validate length and uniqueness.
+     * @param handle {string}
+     */
+    function validateHandle(string calldata handle) public view returns (bool) {
+        require(Helpers.onlyValidHandleLen(handle));
+
+        return Helpers.handleUnique(handle, _profileIdByHandleHash);
+    }
+
+    /**
+     * A helper function to check  if the token is a profile token.
+     */
+    function _isProfile(uint256 tokenId) private view returns (bool) {
+        return (_profileById[tokenId].owner != address(0) &&
+            _profileById[tokenId].profileId != 0);
     }
 
     /// ***********************
-    /// ***** Over all Logic *****
+    /// ***** General Logic *****
     /// ***********************
+
+    /**
+     * A public function to get total NFTs count.
+     */
+    function totalNFTs() public view returns (uint256) {
+        return _tokenIdCounter.current();
+    }
+
+    /**
+     * A public function to burn a token.
+     * @param tokenId {number} - a token id to be burned
+     */
+    function burn(uint256 tokenId) public override {
+        // Token must exist.
+        require(_exists(tokenId), "Token not found");
+
+        // Find an owner.
+        address owner = ownerOf(tokenId);
+
+        // The caller must me the owner
+        require(msg.sender == owner);
+
+        // If the token is a profile token, delete the token id (the profile id) from owner's profileIds array.
+        DataTypes.Profile memory profile = _profileById[tokenId];
+        if (profile.owner == owner && profile.profileId == tokenId) {
+            // This case means the token is a profile token.
+
+            // 1. Delete the profile from profile by id mapping.
+            delete _profileById[tokenId];
+
+            // 2. Remove the burned id from user's profile ids array.
+            uint256[] memory profileIds = _profileIdsByAddress[owner];
+
+            if (profileIds.length > 0) {
+                // Contruct a new profile ids array
+                uint256[] memory updatedProfileIds = new uint256[](
+                    profileIds.length - 1
+                );
+                uint256 index = 0;
+
+                // Loop though the current profile ids array to filter out the burned id
+                for (uint256 i = 0; i < profileIds.length; i++) {
+                    if (profileIds[i] != tokenId) {
+                        // Keep only the id that doesn't equal tokenId.
+                        updatedProfileIds[index] = profileIds[i];
+                        index++;
+                    }
+                }
+
+                _profileIdsByAddress[owner] = updatedProfileIds;
+
+                // If the burned id is a default profile and user still have some profiles left, set the first id in the remaining profile ids array as a default
+                if (profile.isDefault && updatedProfileIds.length > 0) {
+                    _profileById[updatedProfileIds[0]].isDefault = true;
+                }
+            }
+        } else {}
+
+        // Call the parent burn function.
+        super.burn(tokenId);
+    }
 
     /**
      * @notice If it's not the first creation or burn token, the token in non-transferable
@@ -158,7 +335,7 @@ contract ContentBase is
         address to,
         uint256 tokenId
     ) internal override(ERC721Upgradeable) {
-        if (from != address(0) || to != address(0)) {
+        if (from != address(0) && to != address(0)) {
             require(
                 (msg.sender == ownerOf(tokenId)) &&
                     (msg.sender == from) &&
@@ -170,60 +347,37 @@ contract ContentBase is
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    /**
-     * A private function to perform minting logic
-     * @param to {address} = An address to mint the token to
-     */
-    function safeMint(address to) private returns (uint256) {
-        _tokenIdCounter.increment();
-        uint256 tokenId = _tokenIdCounter.current();
-        _safeMint(to, tokenId);
-
-        return tokenId;
-    }
-
-    function burn(uint256 tokenId) public override {
-        // Token must exist.
-        require(_exists(tokenId), "Token not found");
-
-        // Find an owner.
-        address owner = ownerOf(tokenId);
-
-        // If the token is a profile token, delete the token id (the profile id) from owner's profileIds array.
-        DataTypes.Profile memory profile = _profileById[tokenId];
-        if (profile.owner == owner && profile.profileId == tokenId) {
-            // This case means the token is a profile token.
-            // Find profile ids array of the owner and update it.
-            uint256[] memory profileIds = _profileIdsByAddress[owner];
-
-            if (profileIds.length > 0) {
-                uint256[] memory updatedProfileIds;
-                uint256 index = 0;
-                for (uint256 i = 0; i < profileIds.length; i++) {
-                    if (profileIds[i] != tokenId) {
-                        // Keep only the id that doesn't equal tokenId.
-                        updatedProfileIds[index] = profileIds[i];
-                        index++;
-                    }
-                }
-
-                _profileIdsByAddress[owner] = updatedProfileIds;
-            }
-        } else {}
-
-        // Call the parent burn function.
-        super.burn(tokenId);
-    }
-
     function _authorizeUpgrade(address newImplementation)
         internal
         override
         onlyRole(UPGRADER_ROLE)
-    {
-        _grantRole(UPGRADER_ROLE, newImplementation);
-    }
+    {}
 
     // The following functions are overrides required by Solidity.
+
+    function _burn(uint256 tokenId)
+        internal
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+    {
+        super._burn(tokenId);
+    }
+
+    /**
+     * @param tokenId {number}
+     * @return tokenURI {string} - a url point the metadata.json containing the token data consist of:
+     * - name {string} - "Content Base Profile"
+     * - description {string} - "A profile of ${handle}", handle is the name who owns the profile
+     * - image {string} - An ipfs uri point to an image stored on ipfs
+     * - properties {object} - Other additional information of the token
+     */
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+        returns (string memory)
+    {
+        return super.tokenURI(tokenId);
+    }
 
     function supportsInterface(bytes4 interfaceId)
         public
