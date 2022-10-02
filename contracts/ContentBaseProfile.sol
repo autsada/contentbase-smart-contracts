@@ -37,7 +37,7 @@ abstract contract ContentBaseProfile {
     ) internal returns (uint256) {
         // Store profile id to handle hash.
         _profileIdByHandleHash[
-            Helpers.hashString(createProfileParams.handle)
+            Helpers.hashHandle(createProfileParams.handle)
         ] = profileId;
 
         // Create a profile struct in memory
@@ -119,13 +119,16 @@ abstract contract ContentBaseProfile {
         uint256[] memory profileIds = _profileIdsByAddress[owner];
 
         // Loop through the ids array and update isDefault field
-        for (uint256 i = 0; i < profileIds.length; i++) {
+        for (uint256 i = 0; i < profileIds.length; ) {
             if (profileId == profileIds[i]) {
                 // This is the id to be set as default
                 _profileById[profileId].isDefault = true;
             } else {
                 // Other ids to be set as false
                 _profileById[profileIds[i]].isDefault = false;
+            }
+            unchecked {
+                i++;
             }
         }
 
@@ -162,8 +165,11 @@ abstract contract ContentBaseProfile {
         );
 
         // Loop through the ids array and get the profile for each id.
-        for (uint256 i = 0; i < profileIds.length; i++) {
+        for (uint256 i = 0; i < profileIds.length; ) {
             profiles[i] = _profileById[profileIds[i]];
+            unchecked {
+                i++;
+            }
         }
 
         return profiles;

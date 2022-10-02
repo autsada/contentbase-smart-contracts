@@ -81,16 +81,15 @@ contract ContentBase is
         string calldata uri,
         DataTypes.CreateProfileParams calldata createProfileParams
     ) public override returns (uint256) {
-        // Validate handle length, the helper function will revert with error message if the check is false so we don't have to set the error message here.
-        require(Helpers.onlyValidHandleLen(createProfileParams.handle));
+        // Validate handle length and special characters, the helper function will revert with error message if the check is false so we don't have to set the error message here.
+        require(Helpers.onlyValidHandle(createProfileParams.handle));
 
         // Check if handle is already taken.
         require(
-            Helpers.handleUnique(
+            Helpers.onlyUniqueHandle(
                 createProfileParams.handle,
                 _profileIdByHandleHash
-            ),
-            "Handle already taken."
+            )
         );
 
         // Validate tokenURI, the helper function will revert with error message if the check is false so we don't have to set the error message here.
@@ -155,12 +154,10 @@ contract ContentBase is
 
         // Validate if the tokenURI changed.
         // Don't have to validate the imageURI as it might not be changed even the image changed.
-        string memory oldTokenURI = tokenURI(
-            updateProfileImageParams.profileId
-        );
         require(
-            keccak256(bytes(oldTokenURI)) !=
-                Helpers.hashString(updateProfileImageParams.tokenURI),
+            keccak256(
+                abi.encodePacked(tokenURI(updateProfileImageParams.profileId))
+            ) == keccak256(abi.encodePacked(updateProfileImageParams.tokenURI)),
             "Nothing change"
         );
 
@@ -241,13 +238,13 @@ contract ContentBase is
     }
 
     /**
-     * A public function to validate handle - validate length and uniqueness.
+     * A public function to validate handle - validate length, special characters and uniqueness.
      * @param handle {string}
      */
     function validateHandle(string calldata handle) public view returns (bool) {
-        require(Helpers.onlyValidHandleLen(handle));
+        require(Helpers.onlyValidHandle(handle));
 
-        return Helpers.handleUnique(handle, _profileIdByHandleHash);
+        return Helpers.onlyUniqueHandle(handle, _profileIdByHandleHash);
     }
 
     /**
@@ -302,11 +299,14 @@ contract ContentBase is
                 uint256 index = 0;
 
                 // Loop though the current profile ids array to filter out the burned id
-                for (uint256 i = 0; i < profileIds.length; i++) {
+                for (uint256 i = 0; i < profileIds.length; ) {
                     if (profileIds[i] != tokenId) {
                         // Keep only the id that doesn't equal tokenId.
                         updatedProfileIds[index] = profileIds[i];
                         index++;
+                    }
+                    unchecked {
+                        i++;
                     }
                 }
 

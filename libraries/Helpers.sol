@@ -5,29 +5,36 @@ import {Constants} from "./Constants.sol";
 
 library Helpers {
     /**
-     * A helper function to hash string
-     * @param str {string} - string to be hashed
+     * A helper function to hash handle
+     * @param handle {string}
      */
-    function hashString(string calldata str) internal pure returns (bytes32) {
-        return keccak256(bytes(str));
+    function hashHandle(string calldata handle)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(bytes(handle));
     }
 
     /**
      * A helper function to check if handle is unique
      * @param handle {string} - a handle
      */
-    function handleUnique(
+    function onlyUniqueHandle(
         string calldata handle,
         mapping(bytes32 => uint256) storage _profileIdByHandleHash
     ) internal view returns (bool) {
-        return _profileIdByHandleHash[Helpers.hashString(handle)] == 0;
+        if (_profileIdByHandleHash[Helpers.hashHandle(handle)] != 0)
+            revert("Handle taken");
+
+        return true;
     }
 
     /**
-     * A Helper function to check if handle has correct length
-     * @param handle {string}
+     * A helper function to check if handle is vaild
+     * @param handle {string} - a handle
      */
-    function onlyValidHandleLen(string calldata handle)
+    function onlyValidHandle(string calldata handle)
         internal
         pure
         returns (bool)
@@ -38,6 +45,20 @@ library Helpers {
             bytesHandle.length < Constants.MIN_HANDLE_LENGTH ||
             bytesHandle.length > Constants.MAX_HANDLE_LENGTH
         ) revert("Handle is too short or too long.");
+
+        for (uint256 i = 0; i < bytesHandle.length; ) {
+            if (
+                (bytesHandle[i] < "0" ||
+                    bytesHandle[i] > "z" ||
+                    (bytesHandle[i] > "9" && bytesHandle[i] < "a")) &&
+                bytesHandle[i] != "." &&
+                bytesHandle[i] != "-" &&
+                bytesHandle[i] != "_"
+            ) revert("Capital letters and special characters not allowed");
+            unchecked {
+                i++;
+            }
+        }
 
         return true;
     }
