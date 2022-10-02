@@ -51,10 +51,12 @@ contract ContentBase is
 
     // Mapping of array of publish ids by address.
     mapping(address => uint256[]) private _publishIdsByAddress;
-    // Publish Ids counter, used to track of how many publishes have been created.
-    CountersUpgradeable.Counter private _publishIdCounter;
     // Mapping of publish struct by publish id.
     mapping(uint256 => DataTypes.Publish) private _publishById;
+    // Array of all publish ids
+    uint256[] private _allPublishIds;
+    // Mapping of publish count by categories
+    mapping(bytes32 => uint256) private _publishCountByCategory;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -307,16 +309,15 @@ contract ContentBase is
         // Mint new token.
         uint256 tokenId = _mintToken(msg.sender, uri);
 
-        // Increment publish id counter
-        _publishIdCounter.increment();
-
         return
             _createPublish({
                 owner: msg.sender,
                 publishId: tokenId,
                 createPublishParams: createPublishParams,
                 _publishIdsByAddress: _publishIdsByAddress,
-                _publishById: _publishById
+                _publishById: _publishById,
+                _allPublishIds: _allPublishIds,
+                _publishCountByCategory: _publishCountByCategory
             });
     }
 

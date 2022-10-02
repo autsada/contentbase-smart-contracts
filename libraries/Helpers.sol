@@ -142,4 +142,42 @@ library Helpers {
 
         return true;
     }
+
+    /**
+     * A helper function to convert Category enum to string and hash the string
+     * @param category {Category}
+     */
+    function hashCategory(DataTypes.Category category)
+        internal
+        pure
+        returns (bytes32)
+    {
+        if (category == DataTypes.Category.Music)
+            return keccak256(bytes("Music"));
+        if (category == DataTypes.Category.Entertainment)
+            return keccak256(bytes("Entertainment"));
+        if (category == DataTypes.Category.Sports)
+            return keccak256(bytes("Sports"));
+        if (category == DataTypes.Category.Food)
+            return keccak256(bytes("Food"));
+        if (category == DataTypes.Category.Travel)
+            return keccak256(bytes("Travel"));
+        if (category == DataTypes.Category.Gaming)
+            return keccak256(bytes("Gaming"));
+        if (category == DataTypes.Category.News)
+            return keccak256(bytes("News"));
+        if (category == DataTypes.Category.Animals)
+            return keccak256(bytes("Animals"));
+        if (category == DataTypes.Category.Education)
+            return keccak256(bytes("Education"));
+        if (category == DataTypes.Category.Technology)
+            return keccak256(bytes("Technology"));
+        if (category == DataTypes.Category.LifeStyle)
+            return keccak256(bytes("LifeStyle"));
+        if (category == DataTypes.Category.Vehicles)
+            return keccak256(bytes("Vehicles"));
+        if (category == DataTypes.Category.Children)
+            return keccak256(bytes("Children"));
+        return keccak256(bytes("Other"));
+    }
 }

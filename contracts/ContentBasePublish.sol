@@ -22,6 +22,7 @@ abstract contract ContentBasePublish {
      * @param createPublishParams {struct} - refer to DataTypes.CreatePublishParams struct
      * @param _publishIdsByAddress {mapping}
      * @param _publishById {mapping}
+     * @param _publishCountByCategory {mapping}
      *
      */
     function _createPublish(
@@ -29,13 +30,16 @@ abstract contract ContentBasePublish {
         uint256 publishId,
         DataTypes.CreatePublishParams calldata createPublishParams,
         mapping(address => uint256[]) storage _publishIdsByAddress,
-        mapping(uint256 => DataTypes.Publish) storage _publishById
+        mapping(uint256 => DataTypes.Publish) storage _publishById,
+        uint256[] storage _allPublishIds,
+        mapping(bytes32 => uint256) storage _publishCountByCategory
     ) internal returns (uint256) {
         // Create a publish struct in memory
         DataTypes.Publish memory publish = DataTypes.Publish({
             publishId: publishId,
             owner: owner,
             categories: createPublishParams.categories,
+            visibility: createPublishParams.visibility,
             handle: createPublishParams.handle,
             thumbnailURI: createPublishParams.thumbnailURI,
             contentURI: createPublishParams.contentURI,
@@ -48,6 +52,19 @@ abstract contract ContentBasePublish {
 
         // Add the publish id to publish ids array by address
         _publishIdsByAddress[owner].push(publishId);
+
+        // Add token id to all publish ids array
+        _allPublishIds.push(publishId);
+
+        // Increase publish count by category for all categories
+        for (uint256 i = 0; i < createPublishParams.categories.length; ) {
+            _publishCountByCategory[
+                Helpers.hashCategory(createPublishParams.categories[i])
+            ]++;
+            unchecked {
+                i++;
+            }
+        }
 
         // Emit publish created event
         emit PublishCreated(publishId, owner);

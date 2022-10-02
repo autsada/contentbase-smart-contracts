@@ -59,13 +59,24 @@ library DataTypes {
         Technology,
         LifeStyle,
         Vehicles,
-        Children
+        Children,
+        Other
+    }
+
+    /**
+     * Publis's visibility
+     */
+    enum Visibility {
+        OFF,
+        ON
     }
 
     /**
      * A struct containing publish struct data.
      * @param publishId {number} - a token id
      * @param owner {address} - an address that owns the publish
+     * @param categories {enum[]} - a publish's categories
+     * @param visibility {enum} - a publish's visibility
      * @param handle {string} - a handle that owns the publish
      * @param thumbnailURI {string} - a uri of the publish's thumbnail image
      * @param contentURI {string} - a uri of the publish's content
@@ -76,6 +87,7 @@ library DataTypes {
         uint256 publishId;
         address owner;
         Category[] categories;
+        Visibility visibility;
         string handle;
         string thumbnailURI;
         string contentURI;
@@ -85,6 +97,7 @@ library DataTypes {
 
     struct CreatePublishParams {
         Category[] categories;
+        Visibility visibility;
         string handle;
         string thumbnailURI;
         string contentURI;
