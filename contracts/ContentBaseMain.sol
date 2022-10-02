@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
 import "./ContentBaseProfile.sol";
+import "./ContentBasePublish.sol";
 import {Constants} from "../libraries/Constants.sol";
 import {Helpers} from "../libraries/Helpers.sol";
 import {DataTypes} from "../libraries/DataTypes.sol";
@@ -21,7 +22,8 @@ contract ContentBase is
     ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    ContentBaseProfile
+    ContentBaseProfile,
+    ContentBasePublish
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
@@ -40,12 +42,19 @@ contract ContentBase is
      * - Like type
      */
 
-    // Array of profile ids by address.
+    // Mapping of array of profile ids by address.
     mapping(address => uint256[]) private _profileIdsByAddress;
-    // Profile id by handle hash.
+    // Mapping of rofile id by handle hash.
     mapping(bytes32 => uint256) private _profileIdByHandleHash;
-    // Profile struct by profile id.
+    // Mapping of profile struct by profile id.
     mapping(uint256 => DataTypes.Profile) private _profileById;
+
+    // Mapping of array of publish ids by address.
+    mapping(address => uint256[]) private _publishIdsByAddress;
+    // Publish Ids counter, used to track of how many publishes have been created.
+    CountersUpgradeable.Counter private _publishIdCounter;
+    // Mapping of publish struct by publish id.
+    mapping(uint256 => DataTypes.Publish) private _publishById;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -100,13 +109,7 @@ contract ContentBase is
         require(Helpers.notTooLongURI(createProfileParams.imageURI));
 
         // Mint new token.
-        // Increment the counter before using it so the id will start from 1 (instead of 0).
-        _tokenIdCounter.increment();
-        uint256 tokenId = _tokenIdCounter.current();
-        _safeMint(msg.sender, tokenId);
-
-        // Store tokenURI
-        _setTokenURI(tokenId, uri);
+        uint256 tokenId = _mintToken(msg.sender, uri);
 
         // Create a profile.
         return
@@ -256,8 +259,90 @@ contract ContentBase is
     }
 
     /// ***********************
+    /// ***** Publish Logic *****
+    /// ***********************
+
+    /**
+     * A public function to create publish nft.
+     * @param uri {string} - a uri point to the token's metadata file
+     * @param createPublishParams {struct} - refer to DataTypes.CreatePublishParams struct
+     *
+     */
+    function createPublish(
+        string calldata uri,
+        DataTypes.CreatePublishParams calldata createPublishParams
+    ) public override returns (uint256) {
+        // Get caller's profile id from the handle
+        uint256 profileId = _profileIdByHandleHash[
+            Helpers.hashHandle(createPublishParams.handle)
+        ];
+
+        // Handle (profile id) must exist
+        require(_exists(profileId), "Handle not found");
+
+        // Caller must own the handle (profile id)
+        require(ownerOf(profileId) == msg.sender, "Forbidden");
+
+        // Validate tokenURI.
+        require(Helpers.notTooShortURI(uri));
+        require(Helpers.notTooLongURI(uri));
+
+        // Validate title length
+        require(Helpers.onlyValidHandle(createPublishParams.title));
+
+        // Validate description length
+        require(Helpers.onlyValidDescription(createPublishParams.description));
+
+        // Validate categories
+        require(Helpers.onlyValidCategories(createPublishParams.categories));
+
+        // Validate thumbnailURI.
+        require(Helpers.notTooShortURI(createPublishParams.thumbnailURI));
+        require(Helpers.notTooLongURI(createPublishParams.thumbnailURI));
+
+        // Validate contentlURI.
+        require(Helpers.notTooShortURI(createPublishParams.contentURI));
+        require(Helpers.notTooLongURI(createPublishParams.contentURI));
+
+        // Mint new token.
+        uint256 tokenId = _mintToken(msg.sender, uri);
+
+        // Increment publish id counter
+        _publishIdCounter.increment();
+
+        return
+            _createPublish({
+                owner: msg.sender,
+                publishId: tokenId,
+                createPublishParams: createPublishParams,
+                _publishIdsByAddress: _publishIdsByAddress,
+                _publishById: _publishById
+            });
+    }
+
+    /// ***********************
     /// ***** General Logic *****
     /// ***********************
+
+    /**
+     * A private function to mint nft
+     * @param to {address} - mint to address
+     * @param uri {string} - tokenURI
+     */
+    function _mintToken(address to, string calldata uri)
+        private
+        returns (uint256)
+    {
+        // Increment the counter before using it so the id will start from 1 (instead of 0).
+        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter.current();
+        _safeMint(to, tokenId);
+
+        // Store tokenURI
+        _setTokenURI(tokenId, uri);
+
+        return tokenId;
+    }
 
     /**
      * A public function to get total NFTs count.

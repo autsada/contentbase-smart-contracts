@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 import {Constants} from "./Constants.sol";
+import {DataTypes} from "./DataTypes.sol";
 
 library Helpers {
     /**
@@ -85,6 +86,59 @@ library Helpers {
 
         if (Constants.MAX_URI_LENGTH < bytesURI.length)
             revert("URI is too long.");
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate publish's title
+     * @param title {string} - a publish's title
+     */
+    function onlyValidTitle(string calldata title)
+        internal
+        pure
+        returns (bool)
+    {
+        bytes memory bytesTitle = bytes(title);
+        if (
+            bytesTitle.length == 0 ||
+            bytesTitle.length > Constants.MAX_PUBLISH_TITLE
+        ) revert("Invalid title length.");
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate publish's description
+     * @param description {string} - a publish's description
+     */
+    function onlyValidDescription(string calldata description)
+        internal
+        pure
+        returns (bool)
+    {
+        bytes memory bytesDescription = bytes(description);
+        if (
+            bytesDescription.length == 0 ||
+            bytesDescription.length > Constants.MAX_PUBLISH_TITLE
+        ) revert("Invalid description length.");
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate publish's category
+     * @param categories {enum} - refer to DataTypes.Category
+     */
+    function onlyValidCategories(DataTypes.Category[] calldata categories)
+        internal
+        pure
+        returns (bool)
+    {
+        if (
+            categories.length < Constants.MIN_PUBLISH_CATEGORY ||
+            categories.length > Constants.MAX_PUBLISH_CATEGORY
+        ) revert("At least 1 and at most 3 categories.");
 
         return true;
     }

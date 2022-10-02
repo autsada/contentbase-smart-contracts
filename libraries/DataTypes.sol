@@ -42,11 +42,53 @@ library DataTypes {
         string tokenURI;
     }
 
+    /**
+     * Publish's category
+     * @dev when a pubish is created, it must be classified to at least one category and at most 3 categories
+     */
+    enum Category {
+        Music,
+        Entertainment,
+        Sports,
+        Food,
+        Travel,
+        Gaming,
+        News,
+        Animals,
+        Education,
+        Technology,
+        LifeStyle,
+        Vehicles,
+        Children
+    }
+
+    /**
+     * A struct containing publish struct data.
+     * @param publishId {number} - a token id
+     * @param owner {address} - an address that owns the publish
+     * @param handle {string} - a handle that owns the publish
+     * @param thumbnailURI {string} - a uri of the publish's thumbnail image
+     * @param contentURI {string} - a uri of the publish's content
+     * @param title {string} - a publish's title
+     * @param description {string} - a publish's description
+     */
     struct Publish {
         uint256 publishId;
-        string owner;
+        address owner;
+        Category[] categories;
         string handle;
         string thumbnailURI;
         string contentURI;
+        string title;
+        string description;
+    }
+
+    struct CreatePublishParams {
+        Category[] categories;
+        string handle;
+        string thumbnailURI;
+        string contentURI;
+        string title;
+        string description;
     }
 }
