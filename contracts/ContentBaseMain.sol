@@ -33,30 +33,12 @@ contract ContentBase is
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
 
-    /**
-     * There are 4 types of token that use the same token counter, so it's needed to track each type separately
-     * These are 4 types:
-     * - Profile type
-     * - Publish type
-     * - Follow type
-     * - Like type
-     */
-
-    // Mapping of array of profile ids by address.
-    mapping(address => uint256[]) private _profileIdsByAddress;
     // Mapping of rofile id by handle hash.
     mapping(bytes32 => uint256) private _profileIdByHandleHash;
-    // Mapping of profile struct by profile id.
-    mapping(uint256 => DataTypes.Profile) private _profileById;
-
-    // Mapping of array of publish ids by address.
-    mapping(address => uint256[]) private _publishIdsByAddress;
-    // Mapping of publish struct by publish id.
-    mapping(uint256 => DataTypes.Publish) private _publishById;
-    // Array of all publish ids
-    uint256[] private _allPublishIds;
-    // Mapping of publish count by categories
-    mapping(bytes32 => uint256) private _publishCountByCategory;
+    // Mapping to track user's default profile
+    mapping(address => uint256) private _defaultProfileIdByAddress;
+    // Mapping of token struct by token id.
+    mapping(uint256 => DataTypes.Token) private _tokenById;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -83,22 +65,22 @@ contract ContentBase is
     /// ***********************
 
     /**
-     * A public function to create profile nft.
-     * @param uri {string} - a uri point to the token's metadata file
-     * @param createProfileParams {struct} - refer to DataTypes.CreateProfileParams struct
+     * An external function to create profile nft.
+     * @param uri {string} - a uri of the token's metadata file
+     * @param createProfileData {struct} - refer to DataTypes.CreateProfileData struct
      *
      */
     function createProfile(
         string calldata uri,
-        DataTypes.CreateProfileParams calldata createProfileParams
-    ) public override returns (uint256) {
+        DataTypes.CreateProfileData calldata createProfileData
+    ) external override returns (uint256) {
         // Validate handle length and special characters, the helper function will revert with error message if the check is false so we don't have to set the error message here.
-        require(Helpers.onlyValidHandle(createProfileParams.handle));
+        require(Helpers.onlyValidHandle(createProfileData.handle));
 
         // Check if handle is already taken.
         require(
             Helpers.onlyUniqueHandle(
-                createProfileParams.handle,
+                createProfileData.handle,
                 _profileIdByHandleHash
             )
         );
@@ -108,145 +90,204 @@ contract ContentBase is
         require(Helpers.notTooLongURI(uri));
 
         // The imageURI can be empty so we don't have to validate min length.
-        require(Helpers.notTooLongURI(createProfileParams.imageURI));
+        require(Helpers.notTooLongURI(createProfileData.imageURI));
 
         // Mint new token.
         uint256 tokenId = _mintToken(msg.sender, uri);
+
+        // If it's the caller's first profile, set the token id as default
+        if (_defaultProfileIdByAddress[msg.sender] == 0) {
+            _defaultProfileIdByAddress[msg.sender] = tokenId;
+        }
 
         // Create a profile.
         return
             _createProfile({
                 owner: msg.sender,
-                profileId: tokenId,
-                createProfileParams: createProfileParams,
-                _profileIdsByAddress: _profileIdsByAddress,
+                tokenId: tokenId,
+                createProfileData: createProfileData,
                 _profileIdByHandleHash: _profileIdByHandleHash,
-                _profileById: _profileById
+                _tokenById: _tokenById
             });
     }
 
     /**
-     * A public function to update profile image.
-     * @dev token id must exist
+     * An external function to update profile image.
+     * @dev token must id exist
      * @dev caller must be the owner of the token
-     * @param updateProfileImageParams - refer to DataTypes.UpdateProfileImageParams
+     * @dev must be a profile token
+     * @param tokenId {uint256} - an id of the token to be updated
+     * @param uri {string} - a new uri of the token's metadata
+     * @param imageURI {string} - a new image uri
      */
     function updateProfileImage(
-        DataTypes.UpdateProfileImageParams calldata updateProfileImageParams
-    ) public override returns (uint256) {
-        // Check if the caller is the owner of the profile.
-        require(
-            ownerOf(updateProfileImageParams.profileId) == msg.sender,
-            "Forbidden"
-        );
+        uint256 tokenId,
+        string calldata uri,
+        string calldata imageURI
+    ) external override returns (uint256) {
+        // The token id must exist.
+        require(_exists(tokenId), "Profile not found");
 
-        // Check if the profile id exist.
-        require(
-            _exists(updateProfileImageParams.profileId),
-            "Profile not found"
-        );
+        // The caller must own the token.
+        require(ownerOf(tokenId) == msg.sender, "Forbidden");
 
-        // Check if it's profile token
-        require(_isProfile(updateProfileImageParams.profileId), "Not found");
+        // Must be a profile token
+        require(_isProfile(tokenId), "Profile not found");
 
         // Validate the image uri.
-        require(Helpers.notTooShortURI(updateProfileImageParams.imageURI));
-        require(Helpers.notTooLongURI(updateProfileImageParams.imageURI));
+        require(Helpers.notTooShortURI(imageURI));
+        require(Helpers.notTooLongURI(imageURI));
 
         // Validate the token uri.
-        require(Helpers.notTooShortURI(updateProfileImageParams.tokenURI));
-        require(Helpers.notTooLongURI(updateProfileImageParams.tokenURI));
+        require(Helpers.notTooShortURI(uri));
+        require(Helpers.notTooLongURI(uri));
 
         // Validate if the tokenURI changed.
         // Don't have to validate the imageURI as it might not be changed even the image changed.
         require(
-            keccak256(
-                abi.encodePacked(tokenURI(updateProfileImageParams.profileId))
-            ) == keccak256(abi.encodePacked(updateProfileImageParams.tokenURI)),
+            keccak256(abi.encodePacked(tokenURI(tokenId))) !=
+                keccak256(abi.encodePacked(uri)),
             "Nothing change"
         );
 
         // Update the token uri.
-        _setTokenURI(
-            updateProfileImageParams.profileId,
-            updateProfileImageParams.tokenURI
-        );
+        _setTokenURI(tokenId, uri);
 
         // Update the profile struct.
         return
             _updateProfileImage({
                 owner: msg.sender,
-                profileId: updateProfileImageParams.profileId,
-                imageURI: updateProfileImageParams.imageURI,
-                _profileById: _profileById
+                tokenId: tokenId,
+                imageURI: imageURI,
+                _tokenById: _tokenById
             });
     }
 
     /**
-     * A public function to update profile image.
+     * An external function to set user's default profile.
      * @dev token id must exist
      * @dev caller must be the owner of the token
-     * @param profileId - a token id
+     * @dev must be a profile token
+     * @param tokenId - a token id
      */
-    function setDefaultProfile(uint256 profileId) public override {
+    function setDefaultProfile(uint256 tokenId) external override {
         // The id must exist
-        require(_exists(profileId), "Profile not found");
+        require(_exists(tokenId), "Profile not found");
 
-        // Caller must own the token
-        require(ownerOf(profileId) == msg.sender, "Forbidden");
+        // The Caller must own the token
+        require(ownerOf(tokenId) == msg.sender, "Forbidden");
 
         // Must be a profile token
-        require(_isProfile(profileId), "Profile not found");
+        require(_isProfile(tokenId), "Profile not found");
 
         // If the id is already a default, revert
-        if (_profileById[profileId].isDefault) revert("Already a default");
+        if (_defaultProfileIdByAddress[msg.sender] == tokenId)
+            revert("Already a default");
 
         // Update the profile
         _setDefaultProfile({
             owner: msg.sender,
-            profileId: profileId,
-            _profileIdsByAddress: _profileIdsByAddress,
-            _profileById: _profileById
+            tokenId: tokenId,
+            _defaultProfileIdByAddress: _defaultProfileIdByAddress,
+            _tokenById: _tokenById
         });
     }
 
     /**
-     * A public function to fetch profiles of a specific address
-     * @param owner {address} - An address who owns profiles
+     * An external function to list profiles of the caller
+     * @dev limit to 5 ids at a time
+     * @param tokenIds {uint256[]} - An array of token ids
      */
-    function fetchProfilesByAddress(address owner)
-        public
+    function ownerProfiles(uint256[] calldata tokenIds)
+        external
         view
-        override
-        returns (DataTypes.Profile[] memory)
+        returns (DataTypes.Token[] memory)
     {
-        return
-            _fetchProfilesByAddress(owner, _profileIdsByAddress, _profileById);
+        require(tokenIds.length < 6, "Limit to 5 profiles per request");
+
+        // Get the length of to be created profiles array, cannot use "tokenIds.length" as some id might not be a profile token
+        uint256 profileArrayLen;
+
+        // Loop through the token ids array and check if the token exists and it's a profile token
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (
+                _exists(tokenIds[i]) &&
+                _isProfile(tokenIds[i]) &&
+                (ownerOf(tokenIds[i]) == msg.sender)
+            ) {
+                profileArrayLen++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        require(profileArrayLen > 0, "No profiles found");
+
+        // Create a profiles array in memory with the fix size of the array length.
+        DataTypes.Token[] memory profiles = new DataTypes.Token[](
+            profileArrayLen
+        );
+
+        // Loop through the token ids array and find the token and assign it to each item in the profiles array
+        // Need to track the index of the profiles array
+        uint index;
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (
+                _exists(tokenIds[i]) &&
+                _isProfile(tokenIds[i]) &&
+                (ownerOf(tokenIds[i]) == msg.sender)
+            ) {
+                profiles[index] = _tokenById[tokenIds[i]];
+                index++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        return profiles;
     }
 
     /**
-     * A public function to get a profile by id
-     * @param profileId {uint256}
+     * An external function to get a profile by token id
+     * @param tokenId {uint256}
      */
-    function getProfileById(uint256 profileId)
-        public
+    function profileById(uint256 tokenId)
+        external
         view
-        returns (DataTypes.Profile memory)
+        returns (DataTypes.Token memory)
     {
-        // Profile must exist
-        require(_exists(profileId), "Not found");
+        // Token id must exist
+        require(_exists(tokenId), "Not found");
 
         // Must be a profile token
-        require(_isProfile(profileId), "Not found");
+        require(_isProfile(tokenId), "Not a profile");
 
-        return _profileById[profileId];
+        return _tokenById[tokenId];
     }
 
     /**
-     * A public function to validate handle - validate length, special characters and uniqueness.
+     * An external function to get the caller's default profile
+     */
+    function defaultProfile() external view returns (DataTypes.Token memory) {
+        uint256 tokenId = _defaultProfileIdByAddress[msg.sender];
+        require(tokenId != 0, "No default profile");
+
+        DataTypes.Token memory profile = _tokenById[tokenId];
+
+        return profile;
+    }
+
+    /**
+     * An external function to validate handle - validate length, special characters and uniqueness.
      * @param handle {string}
      */
-    function validateHandle(string calldata handle) public view returns (bool) {
+    function validateHandle(string calldata handle)
+        external
+        view
+        returns (bool)
+    {
         require(Helpers.onlyValidHandle(handle));
 
         return Helpers.onlyUniqueHandle(handle, _profileIdByHandleHash);
@@ -256,8 +297,7 @@ contract ContentBase is
      * A helper function to check  if the token is a profile token.
      */
     function _isProfile(uint256 tokenId) private view returns (bool) {
-        return (_profileById[tokenId].owner != address(0) &&
-            _profileById[tokenId].profileId != 0);
+        return (_tokenById[tokenId].tokenType == DataTypes.TokenType.Profile);
     }
 
     /// ***********************
@@ -265,46 +305,40 @@ contract ContentBase is
     /// ***********************
 
     /**
-     * A public function to create publish nft.
-     * @param uri {string} - a uri point to the token's metadata file
-     * @param createPublishParams {struct} - refer to DataTypes.CreatePublishParams struct
+     * An external function to create publish nft.
+     * @param uri {string} - a uri of the token's metadata file
+     * @param createPublishData {struct} - refer to DataTypes.CreatePublishData struct
      *
      */
     function createPublish(
         string calldata uri,
-        DataTypes.CreatePublishParams calldata createPublishParams
-    ) public override returns (uint256) {
-        // Get caller's profile id from the handle
+        DataTypes.CreatePublishData calldata createPublishData
+    ) external override returns (uint256) {
+        // Handle must not empty
+        require(bytes(createPublishData.handle).length > 0, "Bad request");
+
+        // Get caller's profile id (token id) from the handle hash
         uint256 profileId = _profileIdByHandleHash[
-            Helpers.hashHandle(createPublishParams.handle)
+            Helpers.hashHandle(createPublishData.handle)
         ];
 
-        // Handle (profile id) must exist
+        // Profile id (handle / token id) must exist
         require(_exists(profileId), "Handle not found");
 
-        // Caller must own the handle (profile id)
+        // Caller must own the handle (profile id / token id)
         require(ownerOf(profileId) == msg.sender, "Forbidden");
 
         // Validate tokenURI.
         require(Helpers.notTooShortURI(uri));
         require(Helpers.notTooLongURI(uri));
 
-        // Validate title length
-        require(Helpers.onlyValidHandle(createPublishParams.title));
-
-        // Validate description length
-        require(Helpers.onlyValidDescription(createPublishParams.description));
-
-        // Validate categories
-        require(Helpers.onlyValidCategories(createPublishParams.categories));
-
-        // Validate thumbnailURI.
-        require(Helpers.notTooShortURI(createPublishParams.thumbnailURI));
-        require(Helpers.notTooLongURI(createPublishParams.thumbnailURI));
+        // Validate imageURI.
+        require(Helpers.notTooShortURI(createPublishData.imageURI));
+        require(Helpers.notTooLongURI(createPublishData.imageURI));
 
         // Validate contentlURI.
-        require(Helpers.notTooShortURI(createPublishParams.contentURI));
-        require(Helpers.notTooLongURI(createPublishParams.contentURI));
+        require(Helpers.notTooShortURI(createPublishData.contentURI));
+        require(Helpers.notTooLongURI(createPublishData.contentURI));
 
         // Mint new token.
         uint256 tokenId = _mintToken(msg.sender, uri);
@@ -312,13 +346,238 @@ contract ContentBase is
         return
             _createPublish({
                 owner: msg.sender,
-                publishId: tokenId,
-                createPublishParams: createPublishParams,
-                _publishIdsByAddress: _publishIdsByAddress,
-                _publishById: _publishById,
-                _allPublishIds: _allPublishIds,
-                _publishCountByCategory: _publishCountByCategory
+                tokenId: tokenId,
+                createPublishData: createPublishData,
+                _tokenById: _tokenById
             });
+    }
+
+    /**
+     * An external function to update a publish.
+     * @dev token must id exist
+     * @dev caller must be the owner of the token
+     * @dev must be a publish token
+     * @param tokenId {uint256} - an id of the token to be updated
+     * @param uri {string} - a uri point to the token's metadata file
+     * @param updatePublishData {struct} - refer to DataTypes.UpdatePublishData struct
+     *
+     */
+    function updatePublish(
+        uint256 tokenId,
+        string calldata uri,
+        DataTypes.UpdatePublishData calldata updatePublishData
+    ) external override returns (uint256) {
+        // The token id must exist.
+        require(_exists(tokenId), "Publish not found");
+
+        // The caller must own the token.
+        require(ownerOf(tokenId) == msg.sender, "Forbidden");
+
+        // Must be a publish token
+        require(_isPublish(tokenId), "Publish not found");
+
+        // Validate tokenURI.
+        require(Helpers.notTooShortURI(uri));
+        require(Helpers.notTooLongURI(uri));
+
+        // Validate imageURI.
+        require(Helpers.notTooShortURI(updatePublishData.imageURI));
+        require(Helpers.notTooLongURI(updatePublishData.imageURI));
+
+        // Validate contentlURI.
+        require(Helpers.notTooShortURI(updatePublishData.contentURI));
+        require(Helpers.notTooLongURI(updatePublishData.contentURI));
+
+        // Validate if the tokenURI changed.
+        // Don't have to validate the imageURI as it might not be changed even the image changed.
+        require(
+            keccak256(abi.encodePacked(tokenURI(tokenId))) ==
+                keccak256(abi.encodePacked(uri)),
+            "Nothing change"
+        );
+
+        // Update the token uri.
+        _setTokenURI(tokenId, uri);
+
+        return
+            _updatePublish({
+                owner: msg.sender,
+                tokenId: tokenId,
+                updatePublishData: updatePublishData,
+                _tokenById: _tokenById
+            });
+    }
+
+    /**
+     * An external function to get owner publishes
+     * @dev return the publishes that the caller is the owner
+     * @param tokenIds {uint256[]} - an array of token ids
+     */
+    function ownerPublishes(uint256[] calldata tokenIds)
+        external
+        view
+        returns (DataTypes.Token[] memory)
+    {
+        // Validate the token ids array length
+        if (
+            tokenIds.length == 0 ||
+            tokenIds.length > Constants.PUBLISH_QUERY_LIMIT
+        ) revert("Invalid parameter");
+
+        // Get the length of to be created publishes array, cannot use "tokenIds.length" as some id might not be a publish token and the caller might not be an owner
+        uint256 publishesArrayLen;
+
+        // Loop through the tokenIds array to check if each id is a publish token and the caller is the owner
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (
+                _isPublish(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)
+            ) {
+                publishesArrayLen++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        // Validate the length of to be created array
+        if (publishesArrayLen == 0) revert("Publishes not found");
+
+        // Once we know the length of to be created array, loop through the tokenIds again and construct a publish token for each id (if the id is a publish and the caller is the owner) and put it in the new array
+        // Create an array first
+        DataTypes.Token[] memory tokens = new DataTypes.Token[](
+            publishesArrayLen
+        );
+        // Track the index
+        uint256 index;
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (
+                _isPublish(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)
+            ) {
+                // Find the token and put it in the array
+                tokens[index] = _tokenById[tokenIds[i]];
+                index++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        return tokens;
+    }
+
+    /**
+     * An external function to get owner's publish by token id
+     * @dev return only the publish that the caller own
+     * @param tokenId {uint256}
+     */
+    function ownerPublish(uint256 tokenId)
+        external
+        view
+        returns (DataTypes.Token memory)
+    {
+        // Token id must exist
+        require(_exists(tokenId), "Not found");
+
+        // Must be a publish token
+        require(_isPublish(tokenId), "Not a publish");
+
+        // The caller must own the token
+        require(ownerOf(tokenId) == msg.sender, "Forbidden");
+
+        return _tokenById[tokenId];
+    }
+
+    /**
+     * An external function to get publishes
+     * @dev similar to ownerPublishes but not specific to the publishes that owned by the caller, return only with visibility is ON
+     * @param tokenIds {uint256[]} - an array of token ids
+     */
+    function publishesByIds(uint256[] calldata tokenIds)
+        external
+        view
+        returns (DataTypes.Token[] memory)
+    {
+        // Validate the token ids array length
+        if (
+            tokenIds.length == 0 ||
+            tokenIds.length > Constants.PUBLISH_QUERY_LIMIT
+        ) revert("Invalid parameter");
+
+        // Get the length of to be created publishes array, cannot use "tokenIds.length" as some id might not be a publish token
+        uint256 publishesArrayLen;
+
+        // Loop through the tokenIds array to check if each id is a publish token and its visibility is ON
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (
+                _isPublish(tokenIds[i]) &&
+                (_tokenById[tokenIds[i]].visibility == DataTypes.Visibility.ON)
+            ) {
+                publishesArrayLen++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        // Validate the length of to be created array
+        if (publishesArrayLen == 0) revert("Publishes not found");
+
+        // Once we know the length of to be created array, loop through the tokenIds again and construct a publish token for each id (if the id is a publish and visibility is ON) and put it in the new array
+        // Create an array first
+        DataTypes.Token[] memory tokens = new DataTypes.Token[](
+            publishesArrayLen
+        );
+        // Track the index
+        uint256 index;
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (
+                _isPublish(tokenIds[i]) &&
+                (_tokenById[tokenIds[i]].visibility == DataTypes.Visibility.ON)
+            ) {
+                // Find the token and put it in the array
+                tokens[index] = _tokenById[tokenIds[i]];
+                index++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        return tokens;
+    }
+
+    /**
+     * An external function to get a publish by token id
+     * @dev similar to ownerPublish except not only the publish that the caller own but with only visibility ON
+     * @param tokenId {uint256}
+     */
+    function publishById(uint256 tokenId)
+        external
+        view
+        returns (DataTypes.Token memory)
+    {
+        // Token id must exist
+        require(_exists(tokenId), "Not found");
+
+        // Must be a publish token
+        require(_isPublish(tokenId), "Not a publish");
+
+        // Visibility must be ON
+        require(
+            _tokenById[tokenId].visibility == DataTypes.Visibility.ON,
+            "Forbidden"
+        );
+
+        return _tokenById[tokenId];
+    }
+
+    /**
+     * A helper function to check  if the token is a publish token.
+     */
+    function _isPublish(uint256 tokenId) private view returns (bool) {
+        require(_exists(tokenId), "Not exist");
+
+        return (_tokenById[tokenId].tokenType == DataTypes.TokenType.Publish);
     }
 
     /// ***********************
@@ -346,9 +605,9 @@ contract ContentBase is
     }
 
     /**
-     * A public function to get total NFTs count.
+     * An external function to get total NFTs count.
      */
-    function totalNFTs() public view returns (uint256) {
+    function totalNFTs() external view returns (uint256) {
         return _tokenIdCounter.current();
     }
 
@@ -360,50 +619,32 @@ contract ContentBase is
         // Token must exist.
         require(_exists(tokenId), "Token not found");
 
+        // Not allow if the token is a profile token and it's the caller's default token
+        if (
+            _isProfile(tokenId) &&
+            _defaultProfileIdByAddress[msg.sender] == tokenId
+        ) revert("Cannot burn default profile");
+
         // Find an owner.
         address owner = ownerOf(tokenId);
 
-        // The caller must me the owner
+        // The caller must me the owner.
         require(msg.sender == owner);
 
-        // If the token is a profile token, delete the token id (the profile id) from owner's profileIds array.
-        DataTypes.Profile memory profile = _profileById[tokenId];
-        if (profile.owner == owner && profile.profileId == tokenId) {
-            // This case means the token is a profile token.
+        // If the token is a profile token
+        if (_isProfile(tokenId)) {
+            // Remove the handle hash from _profileIdByHandleHash
+            DataTypes.Token memory profile = _tokenById[tokenId];
+            delete _profileIdByHandleHash[keccak256(bytes(profile.handle))];
 
-            // 1. Delete the profile from profile by id mapping.
-            delete _profileById[tokenId];
-
-            // 2. Remove the burned id from user's profile ids array.
-            uint256[] memory profileIds = _profileIdsByAddress[owner];
-
-            if (profileIds.length > 0) {
-                // Contruct a new profile ids array
-                uint256[] memory updatedProfileIds = new uint256[](
-                    profileIds.length - 1
-                );
-                uint256 index = 0;
-
-                // Loop though the current profile ids array to filter out the burned id
-                for (uint256 i = 0; i < profileIds.length; ) {
-                    if (profileIds[i] != tokenId) {
-                        // Keep only the id that doesn't equal tokenId.
-                        updatedProfileIds[index] = profileIds[i];
-                        index++;
-                    }
-                    unchecked {
-                        i++;
-                    }
-                }
-
-                _profileIdsByAddress[owner] = updatedProfileIds;
-
-                // If the burned id is a default profile and user still have some profiles left, set the first id in the remaining profile ids array as a default
-                if (profile.isDefault && updatedProfileIds.length > 0) {
-                    _profileById[updatedProfileIds[0]].isDefault = true;
-                }
+            // If it's the caller's default profile, remove it from _defaultProfileIdByAddress mapping
+            if (_defaultProfileIdByAddress[msg.sender] == tokenId) {
+                delete _defaultProfileIdByAddress[msg.sender];
             }
-        } else {}
+        }
+
+        // Remove the token from _tokenById mapping
+        delete _tokenById[tokenId];
 
         // Call the parent burn function.
         super.burn(tokenId);
@@ -462,6 +703,12 @@ contract ContentBase is
         override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
         returns (string memory)
     {
+        // If token visibility is off and the caller is not the owner, revert
+        if (
+            ownerOf(tokenId) != msg.sender &&
+            _tokenById[tokenId].visibility == DataTypes.Visibility.OFF
+        ) revert("Forbidden");
+
         return super.tokenURI(tokenId);
     }
 

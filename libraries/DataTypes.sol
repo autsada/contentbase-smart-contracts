@@ -3,105 +3,97 @@ pragma solidity ^0.8.9;
 
 library DataTypes {
     /**
-     * A struct containing profile data.
-     * @param  profileId {number} - a token id
-     * @param isDefault {boolean} - to identify if the profile is a default
-     * @param owner {address} - an address that owns the profile
-     * @param handle {string} - a user given name which must be unique
-     * @param imageURI {string} - a url of the profile image stored on cloud storage
-     *
+     * An enum to use as a token type
      */
-    struct Profile {
-        uint256 profileId;
-        bool isDefault;
-        address owner;
-        string handle;
-        string imageURI;
+    enum TokenType {
+        Profile,
+        Publish,
+        Follow,
+        Like
     }
 
     /**
-     * A struct containing the required parameters for the "createProfile" function.
-     * @param handle {string} - a user given name which must be unique
-     * @param imageURI {string} - a uri of the profile image
-     * @param tokenURI {string} - a uri of token's metadata
-     */
-    struct CreateProfileParams {
-        string handle;
-        string imageURI;
-    }
-
-    /**
-     * A struct containing the required parameters for the "createProfile" function.
-     * @param profileId {number} - a token id to be updated
-     * @param imageURI {string} - a uri of the profile image
-     * @param tokenURI {string} - a uri of token's metadata
-     */
-    struct UpdateProfileImageParams {
-        uint256 profileId;
-        string imageURI;
-        string tokenURI;
-    }
-
-    /**
-     * Publish's category
-     * @dev when a pubish is created, it must be classified to at least one category and at most 3 categories
-     */
-    enum Category {
-        Music,
-        Entertainment,
-        Sports,
-        Food,
-        Travel,
-        Gaming,
-        News,
-        Animals,
-        Education,
-        Technology,
-        LifeStyle,
-        Vehicles,
-        Children,
-        Other
-    }
-
-    /**
-     * Publis's visibility
+     * An enum for token visibility
      */
     enum Visibility {
+        UNSET,
         OFF,
         ON
     }
 
     /**
-     * A struct containing publish struct data.
-     * @param publishId {number} - a token id
-     * @param owner {address} - an address that owns the publish
-     * @param categories {enum[]} - a publish's categories
-     * @param visibility {enum} - a publish's visibility
-     * @param handle {string} - a handle that owns the publish
-     * @param thumbnailURI {string} - a uri of the publish's thumbnail image
-     * @param contentURI {string} - a uri of the publish's content
-     * @param title {string} - a publish's title
-     * @param description {string} - a publish's description
+     * A struct containing token data.
+     * @dev There are 4 types of token.
+     * - Profile token
+     * - Publish token
+     * - Follow token
+     * - Like token
+     * These tokens use the same struct with different properties value and meaning depending on its type. Refer to explanation below.
+     * @param tokenId {uint256} - an id of the token
+     * @param associatedId {uint256} - an id of the token as detail below
+     * - For Profile token - same as tokenId
+     * - For Publish token - same as tokenId
+     * - For Follow token - a token id of the following profile
+     * - For Like token - a token id of the liked publish
+     * @param owner {address} - an address that owns the token
+     * @param tokenType {enum} - a type of the token
+     * @param visibility {enum} - visibility of the token, for Publish token it can be ON or OFF, for other tokens it must be UNSET
+     * @param handle {string} - a handle that associate with the owner address
+     * @param imageURI {string} - a uri of the image as detail below
+     * - For Profile token - a uri of the profile image
+     * - For Publish token - a uri of the publish's thumbnail image
+     * - For Follow token - empty
+     * - For Like token - empty
+     * @param contentURI {string} - a uri of the token's content as detail below
+     * - For Profile token - empty
+     * - For Publish token - a uri of the publish's content
+     * - For Follow token - empty
+     * - For Like token - empty
      */
-    struct Publish {
-        uint256 publishId;
+    struct Token {
+        uint256 tokenId;
+        uint256 associatedId;
         address owner;
-        Category[] categories;
+        TokenType tokenType;
         Visibility visibility;
         string handle;
-        string thumbnailURI;
+        string imageURI;
         string contentURI;
-        string title;
-        string description;
     }
 
-    struct CreatePublishParams {
-        Category[] categories;
+    /**
+     * A struct containing data required to create a profile token.
+     * @param handle {string}
+     * @param imageURI {string}
+     */
+    struct CreateProfileData {
+        string handle;
+        string imageURI;
+    }
+
+    /**
+     * A struct containing data required to create a publish token.
+     * @param visibility {enum}
+     * @param handle {string}
+     * @param imageURI {string}
+     * @param contentURI {string}
+     */
+    struct CreatePublishData {
         Visibility visibility;
         string handle;
-        string thumbnailURI;
+        string imageURI;
         string contentURI;
-        string title;
-        string description;
+    }
+
+    /**
+     * A struct containing data required to create a publish token.
+     * @param visibility {enum}
+     * @param imageURI {string}
+     * @param contentURI {string}
+     */
+    struct UpdatePublishData {
+        Visibility visibility;
+        string imageURI;
+        string contentURI;
     }
 }
