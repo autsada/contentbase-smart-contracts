@@ -61,7 +61,7 @@ contract ContentBase is
     }
 
     /// ***********************
-    /// ***** Profile Logic *****
+    /// ***** Profile Token *****
     /// ***********************
 
     /**
@@ -75,14 +75,15 @@ contract ContentBase is
         DataTypes.CreateProfileData calldata createProfileData
     ) external override returns (uint256) {
         // Validate handle length and special characters, the helper function will revert with error message if the check is false so we don't have to set the error message here.
-        require(Helpers.onlyValidHandle(createProfileData.handle));
+        require(Helpers.validateHandle(createProfileData.handle));
 
         // Check if handle is already taken.
         require(
-            Helpers.onlyUniqueHandle(
+            Helpers.handleUnique(
                 createProfileData.handle,
                 _profileIdByHandleHash
-            )
+            ),
+            "Handle taken"
         );
 
         // Validate tokenURI, the helper function will revert with error message if the check is false so we don't have to set the error message here.
@@ -131,19 +132,22 @@ contract ContentBase is
         // The caller must own the token.
         require(ownerOf(tokenId) == msg.sender, "Forbidden");
 
-        // Must be a profile token
+        // Must be a profile token.
         require(_isProfile(tokenId), "Profile not found");
 
         // Validate the image uri.
-        require(Helpers.notTooShortURI(imageURI));
-        require(Helpers.notTooLongURI(imageURI));
+        // The image uri might not change, in this case imageURI is empty, only validate if it's not empty.
+        if (bytes(imageURI).length != 0) {
+            require(Helpers.notTooShortURI(imageURI));
+            require(Helpers.notTooLongURI(imageURI));
+        }
 
         // Validate the token uri.
         require(Helpers.notTooShortURI(uri));
         require(Helpers.notTooLongURI(uri));
 
-        // Validate if the tokenURI changed.
-        // Don't have to validate the imageURI as it might not be changed even the image changed.
+        // Check if the tokenURI changed.
+        // Don't have to check the imageURI as it might not be changed even the image changed.
         require(
             keccak256(abi.encodePacked(tokenURI(tokenId))) !=
                 keccak256(abi.encodePacked(uri)),
@@ -274,9 +278,7 @@ contract ContentBase is
         uint256 tokenId = _defaultProfileIdByAddress[msg.sender];
         require(tokenId != 0, "No default profile");
 
-        DataTypes.Token memory profile = _tokenById[tokenId];
-
-        return profile;
+        return _tokenById[tokenId];
     }
 
     /**
@@ -288,9 +290,9 @@ contract ContentBase is
         view
         returns (bool)
     {
-        require(Helpers.onlyValidHandle(handle));
-
-        return Helpers.onlyUniqueHandle(handle, _profileIdByHandleHash);
+        return
+            Helpers.handleUnique(handle, _profileIdByHandleHash) &&
+            Helpers.validateHandle(handle);
     }
 
     /**
@@ -301,7 +303,7 @@ contract ContentBase is
     }
 
     /// ***********************
-    /// ***** Publish Logic *****
+    /// ***** Publish Token *****
     /// ***********************
 
     /**
@@ -314,19 +316,17 @@ contract ContentBase is
         string calldata uri,
         DataTypes.CreatePublishData calldata createPublishData
     ) external override returns (uint256) {
-        // Handle must not empty
-        require(bytes(createPublishData.handle).length > 0, "Bad request");
+        // Profile id must exist
+        require(_exists(createPublishData.profileId), "Not allow");
 
-        // Get caller's profile id (token id) from the handle hash
-        uint256 profileId = _profileIdByHandleHash[
-            Helpers.hashHandle(createPublishData.handle)
-        ];
+        // The profile id must be a Profile token
+        require(_isProfile(createPublishData.profileId), "Bad request");
 
-        // Profile id (handle / token id) must exist
-        require(_exists(profileId), "Handle not found");
-
-        // Caller must own the handle (profile id / token id)
-        require(ownerOf(profileId) == msg.sender, "Forbidden");
+        // Caller must own the profile
+        require(
+            ownerOf(createPublishData.profileId) == msg.sender,
+            "Forbidden"
+        );
 
         // Validate tokenURI.
         require(Helpers.notTooShortURI(uri));
@@ -343,10 +343,14 @@ contract ContentBase is
         // Mint new token.
         uint256 tokenId = _mintToken(msg.sender, uri);
 
+        // Get the handle of the profile id
+        string memory handle = _tokenById[createPublishData.profileId].handle;
+
         return
             _createPublish({
                 owner: msg.sender,
                 tokenId: tokenId,
+                handle: handle,
                 createPublishData: createPublishData,
                 _tokenById: _tokenById
             });
@@ -380,18 +384,24 @@ contract ContentBase is
         require(Helpers.notTooShortURI(uri));
         require(Helpers.notTooLongURI(uri));
 
-        // Validate imageURI.
-        require(Helpers.notTooShortURI(updatePublishData.imageURI));
-        require(Helpers.notTooLongURI(updatePublishData.imageURI));
+        // Validate imageURI
+        // The image uri (which is a publish's thumbnail image) might not change, in this case updatePublishData.imageURI is empty, so only validate if it's not empty.
+        if (bytes(updatePublishData.imageURI).length != 0) {
+            require(Helpers.notTooShortURI(updatePublishData.imageURI));
+            require(Helpers.notTooLongURI(updatePublishData.imageURI));
+        }
 
         // Validate contentlURI.
-        require(Helpers.notTooShortURI(updatePublishData.contentURI));
-        require(Helpers.notTooLongURI(updatePublishData.contentURI));
+        // The content uri might not change, in this case updatePublishData.contentURI is empty, so only validate if it's not empty.
+        if (bytes(updatePublishData.contentURI).length != 0) {
+            require(Helpers.notTooShortURI(updatePublishData.contentURI));
+            require(Helpers.notTooLongURI(updatePublishData.contentURI));
+        }
 
-        // Validate if the tokenURI changed.
-        // Don't have to validate the imageURI as it might not be changed even the image changed.
+        // Check if the tokenURI changed.
+        // Don't have to check the imageURI and contentURI as it might not be changed even the image/content changed.
         require(
-            keccak256(abi.encodePacked(tokenURI(tokenId))) ==
+            keccak256(abi.encodePacked(tokenURI(tokenId))) !=
                 keccak256(abi.encodePacked(uri)),
             "Nothing change"
         );
@@ -424,13 +434,15 @@ contract ContentBase is
             tokenIds.length > Constants.PUBLISH_QUERY_LIMIT
         ) revert("Invalid parameter");
 
-        // Get the length of to be created publishes array, cannot use "tokenIds.length" as some id might not be a publish token and the caller might not be an owner
+        // Get the length of to be created publishes array, cannot use "tokenIds.length" as some id might not exits, not a publish token, and the caller might not be an owner
         uint256 publishesArrayLen;
 
-        // Loop through the tokenIds array to check if each id is a publish token and the caller is the owner
+        // Loop through the tokenIds array to check if each id exists, it's a publish token, and the caller is the owner
         for (uint256 i = 0; i < tokenIds.length; ) {
             if (
-                _isPublish(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)
+                _exists(tokenIds[i]) &&
+                _isPublish(tokenIds[i]) &&
+                (ownerOf(tokenIds[i]) == msg.sender)
             ) {
                 publishesArrayLen++;
             }
@@ -442,7 +454,7 @@ contract ContentBase is
         // Validate the length of to be created array
         if (publishesArrayLen == 0) revert("Publishes not found");
 
-        // Once we know the length of to be created array, loop through the tokenIds again and construct a publish token for each id (if the id is a publish and the caller is the owner) and put it in the new array
+        // Once we know the length of to be created array, loop through the tokenIds again and construct a publish token for each id (if the id exists, it's a publish, and the caller is the owner) and put it in the new array
         // Create an array first
         DataTypes.Token[] memory tokens = new DataTypes.Token[](
             publishesArrayLen
@@ -451,7 +463,9 @@ contract ContentBase is
         uint256 index;
         for (uint256 i = 0; i < tokenIds.length; ) {
             if (
-                _isPublish(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)
+                _exists(tokenIds[i]) &&
+                _isPublish(tokenIds[i]) &&
+                (ownerOf(tokenIds[i]) == msg.sender)
             ) {
                 // Find the token and put it in the array
                 tokens[index] = _tokenById[tokenIds[i]];
@@ -463,28 +477,6 @@ contract ContentBase is
         }
 
         return tokens;
-    }
-
-    /**
-     * An external function to get owner's publish by token id
-     * @dev return only the publish that the caller own
-     * @param tokenId {uint256}
-     */
-    function ownerPublish(uint256 tokenId)
-        external
-        view
-        returns (DataTypes.Token memory)
-    {
-        // Token id must exist
-        require(_exists(tokenId), "Not found");
-
-        // Must be a publish token
-        require(_isPublish(tokenId), "Not a publish");
-
-        // The caller must own the token
-        require(ownerOf(tokenId) == msg.sender, "Forbidden");
-
-        return _tokenById[tokenId];
     }
 
     /**
@@ -503,15 +495,12 @@ contract ContentBase is
             tokenIds.length > Constants.PUBLISH_QUERY_LIMIT
         ) revert("Invalid parameter");
 
-        // Get the length of to be created publishes array, cannot use "tokenIds.length" as some id might not be a publish token
+        // Get the length of to be created publishes array, cannot use "tokenIds.length" as some id might not exist and might not be a publish token
         uint256 publishesArrayLen;
 
-        // Loop through the tokenIds array to check if each id is a publish token and its visibility is ON
+        // Loop through the tokenIds array to check if each id exits, it's a publish token, and its visibility is ON
         for (uint256 i = 0; i < tokenIds.length; ) {
-            if (
-                _isPublish(tokenIds[i]) &&
-                (_tokenById[tokenIds[i]].visibility == DataTypes.Visibility.ON)
-            ) {
+            if (_exists(tokenIds[i]) && _isPublish(tokenIds[i])) {
                 publishesArrayLen++;
             }
             unchecked {
@@ -522,7 +511,7 @@ contract ContentBase is
         // Validate the length of to be created array
         if (publishesArrayLen == 0) revert("Publishes not found");
 
-        // Once we know the length of to be created array, loop through the tokenIds again and construct a publish token for each id (if the id is a publish and visibility is ON) and put it in the new array
+        // Once we know the length of to be created array, loop through the tokenIds again and construct a publish token for each id (if the id exists and it's a publish) and put it in the new array
         // Create an array first
         DataTypes.Token[] memory tokens = new DataTypes.Token[](
             publishesArrayLen
@@ -530,10 +519,7 @@ contract ContentBase is
         // Track the index
         uint256 index;
         for (uint256 i = 0; i < tokenIds.length; ) {
-            if (
-                _isPublish(tokenIds[i]) &&
-                (_tokenById[tokenIds[i]].visibility == DataTypes.Visibility.ON)
-            ) {
+            if (_exists(tokenIds[i]) && _isPublish(tokenIds[i])) {
                 // Find the token and put it in the array
                 tokens[index] = _tokenById[tokenIds[i]];
                 index++;
@@ -562,12 +548,6 @@ contract ContentBase is
         // Must be a publish token
         require(_isPublish(tokenId), "Not a publish");
 
-        // Visibility must be ON
-        require(
-            _tokenById[tokenId].visibility == DataTypes.Visibility.ON,
-            "Forbidden"
-        );
-
         return _tokenById[tokenId];
     }
 
@@ -581,7 +561,7 @@ contract ContentBase is
     }
 
     /// ***********************
-    /// ***** General Logic *****
+    /// ***** General *****
     /// ***********************
 
     /**
@@ -686,6 +666,19 @@ contract ContentBase is
         internal
         override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
     {
+        if (_exists(tokenId)) {
+            // If the token is a profile token
+            if (_isProfile(tokenId)) {
+                // If the token is a default profile, revert
+                if (_defaultProfileIdByAddress[msg.sender] == tokenId)
+                    revert("Not allow");
+                string memory handle = _tokenById[tokenId].handle;
+                delete _profileIdByHandleHash[keccak256(bytes(handle))];
+            }
+            // Remove token from _tokenById
+            delete _tokenById[tokenId];
+        }
+
         super._burn(tokenId);
     }
 
@@ -703,12 +696,6 @@ contract ContentBase is
         override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
         returns (string memory)
     {
-        // If token visibility is off and the caller is not the owner, revert
-        if (
-            ownerOf(tokenId) != msg.sender &&
-            _tokenById[tokenId].visibility == DataTypes.Visibility.OFF
-        ) revert("Forbidden");
-
         return super.tokenURI(tokenId);
     }
 

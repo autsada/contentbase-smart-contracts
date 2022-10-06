@@ -21,21 +21,18 @@ library Helpers {
      * A helper function to check if handle is unique
      * @param handle {string} - a handle
      */
-    function onlyUniqueHandle(
+    function handleUnique(
         string calldata handle,
         mapping(bytes32 => uint256) storage _profileIdByHandleHash
     ) internal view returns (bool) {
-        if (_profileIdByHandleHash[Helpers.hashHandle(handle)] != 0)
-            revert("Handle taken");
-
-        return true;
+        return _profileIdByHandleHash[Helpers.hashHandle(handle)] == 0;
     }
 
     /**
      * A helper function to check if handle is vaild
      * @param handle {string} - a handle
      */
-    function onlyValidHandle(string calldata handle)
+    function validateHandle(string calldata handle)
         internal
         pure
         returns (bool)

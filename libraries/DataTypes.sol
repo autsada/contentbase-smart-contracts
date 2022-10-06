@@ -13,15 +13,6 @@ library DataTypes {
     }
 
     /**
-     * An enum for token visibility
-     */
-    enum Visibility {
-        UNSET,
-        OFF,
-        ON
-    }
-
-    /**
      * A struct containing token data.
      * @dev There are 4 types of token.
      * - Profile token
@@ -37,7 +28,6 @@ library DataTypes {
      * - For Like token - a token id of the liked publish
      * @param owner {address} - an address that owns the token
      * @param tokenType {enum} - a type of the token
-     * @param visibility {enum} - visibility of the token, for Publish token it can be ON or OFF, for other tokens it must be UNSET
      * @param handle {string} - a handle that associate with the owner address
      * @param imageURI {string} - a uri of the image as detail below
      * - For Profile token - a uri of the profile image
@@ -55,7 +45,6 @@ library DataTypes {
         uint256 associatedId;
         address owner;
         TokenType tokenType;
-        Visibility visibility;
         string handle;
         string imageURI;
         string contentURI;
@@ -73,26 +62,22 @@ library DataTypes {
 
     /**
      * A struct containing data required to create a publish token.
-     * @param visibility {enum}
-     * @param handle {string}
+     * @param profileId {uint256} - a profile token id the caller
      * @param imageURI {string}
      * @param contentURI {string}
      */
     struct CreatePublishData {
-        Visibility visibility;
-        string handle;
+        uint256 profileId;
         string imageURI;
         string contentURI;
     }
 
     /**
      * A struct containing data required to create a publish token.
-     * @param visibility {enum}
      * @param imageURI {string}
      * @param contentURI {string}
      */
     struct UpdatePublishData {
-        Visibility visibility;
         string imageURI;
         string contentURI;
     }

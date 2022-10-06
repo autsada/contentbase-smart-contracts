@@ -6,8 +6,8 @@ import {DataTypes} from "../libraries/DataTypes.sol";
 import {Constants} from "../libraries/Constants.sol";
 
 abstract contract ContentBasePublish {
-    event PublishCreated(uint256 tokenId, address owner);
-    event PublishUpdated(uint256 tokenId, address owner);
+    event PublishCreated(DataTypes.Token token, address owner);
+    event PublishUpdated(DataTypes.Token token, address owner);
 
     /**
      * An external function signature to mint a publish nft that to be implemented by the derived contract.
@@ -23,13 +23,16 @@ abstract contract ContentBasePublish {
      * An internal function that contains the logic to create a publish token.
      * @param owner {address} - an address to be set as an owner of the profile
      * @param tokenId {uint256} - an id of the token
+     * @param handle {string} - a handle of the caller
      * @param createPublishData {struct} - refer to DataTypes.CreatePublishData struct
      * @param _tokenById {mapping}
+     * @dev visibility "UNSET" is not allowed for Publish, if it's set, force it to "ON"
      *
      */
     function _createPublish(
         address owner,
         uint256 tokenId,
+        string memory handle,
         DataTypes.CreatePublishData calldata createPublishData,
         mapping(uint256 => DataTypes.Token) storage _tokenById
     ) internal returns (uint256) {
@@ -39,8 +42,7 @@ abstract contract ContentBasePublish {
             associatedId: tokenId,
             owner: owner,
             tokenType: DataTypes.TokenType.Publish,
-            visibility: createPublishData.visibility,
-            handle: createPublishData.handle,
+            handle: handle,
             imageURI: createPublishData.imageURI,
             contentURI: createPublishData.contentURI
         });
@@ -49,7 +51,7 @@ abstract contract ContentBasePublish {
         _tokenById[tokenId] = newPublish;
 
         // Emit publish created event
-        emit PublishCreated(tokenId, owner);
+        emit PublishCreated(_tokenById[tokenId], owner);
 
         return tokenId;
     }
@@ -80,13 +82,26 @@ abstract contract ContentBasePublish {
         DataTypes.UpdatePublishData calldata updatePublishData,
         mapping(uint256 => DataTypes.Token) storage _tokenById
     ) internal returns (uint256) {
-        // Update the token
-        _tokenById[tokenId].visibility = updatePublishData.visibility;
-        _tokenById[tokenId].imageURI = updatePublishData.imageURI;
-        _tokenById[tokenId].contentURI = updatePublishData.contentURI;
+        // If imageURI is empty, use the existing data otherwise use the updated data
+        string memory oldImageURI = _tokenById[tokenId].imageURI;
+        string memory newImageURI = bytes(updatePublishData.imageURI).length ==
+            0
+            ? oldImageURI
+            : updatePublishData.imageURI;
+
+        // If contentURI is empty, use the existing data otherwise use the updated data
+        string memory oldContentURI = _tokenById[tokenId].contentURI;
+        string memory newContentURI = bytes(updatePublishData.contentURI).length ==
+            0
+            ? oldContentURI
+            : updatePublishData.contentURI;
+
+        // Update the data in storage
+        _tokenById[tokenId].imageURI = newImageURI;
+        _tokenById[tokenId].contentURI = newContentURI;
 
         // Emit publish created event
-        emit PublishUpdated(tokenId, owner);
+        emit PublishUpdated(_tokenById[tokenId], owner);
 
         return tokenId;
     }

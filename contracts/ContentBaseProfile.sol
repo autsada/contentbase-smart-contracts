@@ -26,6 +26,7 @@ abstract contract ContentBaseProfile {
      * @param createProfileData {struct} - refer to DataTypes.CreateProfileData struct
      * @param _profileIdByHandleHash {mapping}
      * @param _tokenById {mapping}
+     * @dev visibility has to be "UNSET" for Profile
      *
      */
     function _createProfile(
@@ -46,7 +47,6 @@ abstract contract ContentBaseProfile {
             associatedId: tokenId,
             owner: owner,
             tokenType: DataTypes.TokenType.Profile,
-            visibility: DataTypes.Visibility.UNSET,
             handle: createProfileData.handle,
             imageURI: createProfileData.imageURI,
             contentURI: ""
@@ -88,7 +88,12 @@ abstract contract ContentBaseProfile {
         mapping(uint256 => DataTypes.Token) storage _tokenById
     ) internal returns (uint256) {
         // Update the profile
-        _tokenById[tokenId].imageURI = imageURI;
+        // If imageURI not provided, use the existing data otherwise use the new data.
+        string memory oldImageURI = _tokenById[tokenId].imageURI;
+        string memory newImageURI = bytes(imageURI).length == 0
+            ? oldImageURI
+            : imageURI;
+        _tokenById[tokenId].imageURI = newImageURI;
 
         // Emit update profile event.
         emit ProfileImageUpdated(_tokenById[tokenId], owner);
