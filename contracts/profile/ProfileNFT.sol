@@ -51,6 +51,7 @@ contract ProfileNFT is
     // Events
     event ProfileCreated(DataTypes.ProfileStruct token, address owner);
     event ProfileImageUpdated(DataTypes.ProfileStruct token, address owner);
+    event DefaultProfileUpdated(DataTypes.ProfileStruct token, address owner);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -86,7 +87,7 @@ contract ProfileNFT is
 
     /**
      * An external function to create Profile NFT.
-     * @dev parameters validation must be done in this function.
+     * @dev validations must be done in this function.
      * @param createProfileData {struct} - refer to DataTypes.CreateProfileData struct
      * @return tokenId
      *
@@ -122,7 +123,7 @@ contract ProfileNFT is
 
     /**
      * A private function that contains the logic to create Profile NFT.
-     * @dev parameters validation will be done by caller function.
+     * @dev validations will be done by caller function.
      * @param owner {address} - an address to be set as an owner of the NFT
      * @param createProfileData {struct} - refer to DataTypes.CreateProfileData struct
      * @return tokenId {uint256}
@@ -169,10 +170,10 @@ contract ProfileNFT is
 
     /**
      * An external function to update profile image.
-     * @dev parameters validation must be done in this function.
+     * @dev validations must be done in this function.
      * @param updateProfileImageData - refer to DataTypes.UpdateProfileImageData struct
      * @return tokenId
-     * 
+     *
      */
     function updateProfileImage(
         DataTypes.UpdateProfileImageData calldata updateProfileImageData
@@ -216,7 +217,7 @@ contract ProfileNFT is
 
     /**
      * A private function that contain the logic to update profile image.
-     * @dev parameters validation will be done by caller function.
+     * @dev validations will be done by caller function.
      * @param owner {address}
      * @param updateProfileImageData - refer to DataTypes.UpdateProfileImageData
      * @return tokenId
@@ -247,10 +248,107 @@ contract ProfileNFT is
     }
 
     /**
-     * An external function to get a profile by id
+     * An external function to set default profile.
+     * @dev validations must be done in this function.
+     * @param tokenId - a token id
+     */
+    function setDefaultProfile(uint256 tokenId) external override {
+        // The id must exist
+        require(_exists(tokenId), "Profile not found");
+
+        // The Caller must own the token
+        require(ownerOf(tokenId) == msg.sender, "Forbidden");
+
+        // If the id is already a default, revert
+        if (_defaultTokenIdByAddress[msg.sender] == tokenId)
+            revert("Already a default");
+
+        _setDefaultProfile({owner: msg.sender, tokenId: tokenId});
+    }
+
+    /**
+     * A private function that contain the logic to set default profile.
+     * @dev validations will be done by caller function.
+     * @param owner {address}
+     * @param tokenId {uint256}
+     */
+    function _setDefaultProfile(address owner, uint256 tokenId) private {
+        // Update the mapping
+        _defaultTokenIdByAddress[owner] = tokenId;
+
+        // Emit an event
+        emit DefaultProfileUpdated(_tokenById[tokenId], owner);
+    }
+
+    /**
+     * An external function to list user's profiles.
+     * @dev limit to 10 ids at a time
+     * @param tokenIds {uint256[]} - An array of token ids
+     * @return profiles {struct[]}
+     */
+    function ownerProfiles(uint256[] calldata tokenIds)
+        external
+        view
+        override
+        returns (DataTypes.ProfileStruct[] memory)
+    {
+        require(tokenIds.length < 11, "Limit to 10 profiles per request");
+
+        // Get the length of to be created array, cannot use "tokenIds.length" as some id might not own by the caller.
+        uint256 profileArrayLen;
+
+        // Loop through the token ids array and check if the token exists and the caller is the owner.
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (_exists(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)) {
+                profileArrayLen++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        require(profileArrayLen > 0, "No profiles found");
+
+        // Create a profiles array in memory with the fix size of the array length.
+        DataTypes.ProfileStruct[]
+            memory profiles = new DataTypes.ProfileStruct[](profileArrayLen);
+
+        // Loop through the ids array again to find the Profile struct for each id.
+        // Track the index of to be created array.
+        uint index;
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (_exists(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)) {
+                profiles[index] = _tokenById[tokenIds[i]];
+                index++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        return profiles;
+    }
+
+    /**
+     * An external function to get the caller's default profile.
+     */
+    function defaultProfile()
+        external
+        view
+        override
+        returns (DataTypes.ProfileStruct memory)
+    {
+        uint256 tokenId = _defaultTokenIdByAddress[msg.sender];
+        require(tokenId != 0, "Not found");
+
+        return _tokenById[tokenId];
+    }
+
+    /**
+     * An external function to get a profile by id.
      * @param tokenId {uint256}
      * @return token {struct}
-     * 
+     *
      */
     function profileById(uint256 tokenId)
         external
@@ -267,10 +365,25 @@ contract ProfileNFT is
     /**
      * An external function to get total NFTs count.
      * @return count {uint256}
-     * 
+     *
      */
     function totalProfiles() external view returns (uint256) {
         return _tokenIdCounter.current();
+    }
+
+    /**
+     * An external function to validate handle - validate length, special characters and uniqueness.
+     * @param handle {string}
+     * @return boolean
+     */
+    function validateHandle(string calldata handle)
+        external
+        view
+        returns (bool)
+    {
+        return
+            Helpers.handleUnique(handle, _tokenIdByHandleHash) &&
+            Helpers.validateHandle(handle);
     }
 
     /**

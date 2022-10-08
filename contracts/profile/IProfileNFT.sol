@@ -29,10 +29,42 @@ interface IProfileNFT {
     ) external returns (uint256);
 
     /**
+     * An external function to set default profile.
+     * @param tokenId - a token id
+     */
+    function setDefaultProfile(uint256 tokenId) external;
+
+    /**
+     * An external function to list user's profiles.
+     * @param tokenIds {uint256[]} - An array of token ids, limit to 10 ids
+     */
+    function ownerProfiles(uint256[] calldata tokenIds)
+        external
+        view
+        returns (DataTypes.ProfileStruct[] memory);
+
+    /**
+     * An external function to get user's default profile.
+     */
+    function defaultProfile()
+        external
+        view
+        returns (DataTypes.ProfileStruct memory);
+
+    /**
      * An external function get profile struct by id.
      */
     function profileById(uint256 tokenId)
         external
         view
         returns (DataTypes.ProfileStruct memory);
+
+    /**
+     * An external function to validate handle - validate length, special characters and uniqueness.
+     * @param handle {string}
+     */
+    function validateHandle(string calldata handle)
+        external
+        view
+        returns (bool);
 }
