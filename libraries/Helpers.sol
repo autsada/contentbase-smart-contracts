@@ -23,9 +23,9 @@ library Helpers {
      */
     function handleUnique(
         string calldata handle,
-        mapping(bytes32 => uint256) storage _profileIdByHandleHash
+        mapping(bytes32 => uint256) storage _tokenIdByHandleHash
     ) internal view returns (bool) {
-        return _profileIdByHandleHash[Helpers.hashHandle(handle)] == 0;
+        return _tokenIdByHandleHash[Helpers.hashHandle(handle)] == 0;
     }
 
     /**
@@ -39,11 +39,13 @@ library Helpers {
     {
         bytes memory bytesHandle = bytes(handle);
 
+        // Check the length
         if (
             bytesHandle.length < Constants.MIN_HANDLE_LENGTH ||
             bytesHandle.length > Constants.MAX_HANDLE_LENGTH
         ) revert("Handle is too short or too long.");
 
+        // Check if the handle contains invalid characters (Capital letters, spcecial characters).
         for (uint256 i = 0; i < bytesHandle.length; ) {
             if (
                 (bytesHandle[i] < "0" ||
@@ -62,7 +64,7 @@ library Helpers {
     }
 
     /**
-     * A Helper function to validate the uri is not too long
+     * A Helper function to validate the uri is not too short.
      * @param uri {string} - a uri to be validated
      */
     function notTooShortURI(string calldata uri) internal pure returns (bool) {
@@ -75,7 +77,7 @@ library Helpers {
     }
 
     /**
-     * A Helper function to validate the uri is not too long
+     * A Helper function to validate the uri is not too long.
      * @param uri {string} - a uri to be validated
      */
     function notTooLongURI(string calldata uri) internal pure returns (bool) {

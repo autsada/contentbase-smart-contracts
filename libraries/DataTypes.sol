@@ -3,81 +3,71 @@ pragma solidity ^0.8.9;
 
 library DataTypes {
     /**
-     * An enum to use as a token type
-     */
-    enum TokenType {
-        Profile,
-        Publish,
-        Follow,
-        Like
-    }
-
-    /**
-     * A struct containing token data.
-     * @dev There are 4 types of token.
-     * - Profile token
-     * - Publish token
-     * - Follow token
-     * - Like token
-     * These tokens use the same struct with different properties value and meaning depending on its type. Refer to explanation below.
+     * A struct containing token data of Profile NFT
      * @param tokenId {uint256} - an id of the token
-     * @param associatedId {uint256} - an id of the token as detail below
-     * - For Profile token - same as tokenId
-     * - For Publish token - same as tokenId
-     * - For Follow token - a token id of the following profile
-     * - For Like token - a token id of the liked publish
      * @param owner {address} - an address that owns the token
-     * @param tokenType {enum} - a type of the token
      * @param handle {string} - a handle that associate with the owner address
-     * @param imageURI {string} - a uri of the image as detail below
-     * - For Profile token - a uri of the profile image
-     * - For Publish token - a uri of the publish's thumbnail image
-     * - For Follow token - empty
-     * - For Like token - empty
-     * @param contentURI {string} - a uri of the token's content as detail below
-     * - For Profile token - empty
-     * - For Publish token - a uri of the publish's content
-     * - For Follow token - empty
-     * - For Like token - empty
+     * @param imageURI {string} - a uri of the profile image
      */
-    struct Token {
+    struct ProfileStruct {
         uint256 tokenId;
-        uint256 associatedId;
         address owner;
-        TokenType tokenType;
         string handle;
         string imageURI;
-        string contentURI;
     }
 
     /**
-     * A struct containing data required to create a profile token.
+     * A struct containing data required to create a profile NFT.
+     * @param tokenURI {string} - a uri of the token metadata's file
      * @param handle {string}
-     * @param imageURI {string}
+     * @param imageURI {string} - can be empty at the time of creation as the owner can set it later.
      */
     struct CreateProfileData {
+        string tokenURI;
         string handle;
         string imageURI;
     }
 
     /**
-     * A struct containing data required to create a publish token.
-     * @param profileId {uint256} - a profile token id the caller
-     * @param imageURI {string}
-     * @param contentURI {string}
+     * A struct containing data required to update profile image.
+     * @param tokenId {uint256} - a token id to be updated
+     * @param tokenURI {string} - a uri of the token metadata's file
+     * @param imageURI {string} - a profile's image uri, can be empty in the case that the uri isn't changed
      */
-    struct CreatePublishData {
-        uint256 profileId;
+    struct UpdateProfileImageData {
+        uint256 tokenId;
+        string tokenURI;
+        string imageURI;
+    }
+
+    /**
+     * A struct containing token data of Publish NFT
+     * @param tokenId {uint256} - an id of the token
+     * @param creatorId {uint256} - a profile token id of the creator
+     * @param owner {address} - an address that owns the token
+     * @param imageURI {string} - a publish's thumbnail image uri
+     * @param contentURI {string} - a publish's content uri
+     */
+    struct PublishStruct {
+        uint256 tokenId;
+        uint256 creatorId;
+        address owner;
         string imageURI;
         string contentURI;
     }
 
     /**
-     * A struct containing data required to create a publish token.
-     * @param imageURI {string}
-     * @param contentURI {string}
+     * A struct containing data required to create a publish NFT.
+     * @param creatorId {uint256} - refer to PublishStruct
+     * @param owner {address} - refer to PublishStruct
+     * @param tokenURI {string} - a uri of the token metadata's file
+     * @param imageURI {string} - refer to PublishStruct
+     * @param contentURI {string} - refer to PublishStruct
      */
-    struct UpdatePublishData {
+    struct CreatePublishData {
+        uint256 creatorId;
+        address owner;
+        string tokenURI;
         string imageURI;
         string contentURI;
     }
