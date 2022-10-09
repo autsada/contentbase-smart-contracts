@@ -38,12 +38,12 @@
     },
     {
       "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0xc50767c4ee4472770281a5c17d16e16ba35f6fe5fc93ee6432f0eafb9f39d7b6",
+      "txHash": "0x9d14fc4f277dd3b2aaca78d5c99f65db1af98f3ddac1ae765c8b390cbf452f76",
       "kind": "uups"
     },
     {
       "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-      "txHash": "0x212ec8d5f9292e8a82126b89a03e9004436560493cd7f2a0ba07e47f167b3d59",
+      "txHash": "0x295085caf93583acd9853b4086dd2416fabe7b9ebef438daf8d79b6063911df2",
       "kind": "uups"
     }
   ],
@@ -1451,9 +1451,9 @@
         }
       }
     },
-    "5dd5c1372edb3fcde0deca374489f4db4c0fa3be3effb2e8c4d4bf53887c23a6": {
+    "5f917b0cb90e53c0777ee1a74738cd4c01f422c85b1d7a103beb723788494f38": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x7a09f4ec8962ae98d44c1b308cb9deb230962747cfa1480783ab90b0d57d0000",
+      "txHash": "0xbe56038bccbc36e04d1dce6c4dce464e996f134d340d666a05b998989c5ba732",
       "layout": {
         "storage": [
           {
@@ -1606,32 +1606,32 @@
             "offset": 0,
             "slot": "401",
             "type": "t_struct(Counter)2627_storage",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:34"
+            "contract": "ProfileNFT",
+            "src": "contracts\\profile\\ProfileNFT.sol:37"
           },
           {
-            "label": "_profileIdByHandleHash",
+            "label": "_tokenIdByHandleHash",
             "offset": 0,
             "slot": "402",
             "type": "t_mapping(t_bytes32,t_uint256)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:37"
+            "contract": "ProfileNFT",
+            "src": "contracts\\profile\\ProfileNFT.sol:40"
           },
           {
-            "label": "_defaultProfileIdByAddress",
+            "label": "_defaultTokenIdByAddress",
             "offset": 0,
             "slot": "403",
             "type": "t_mapping(t_address,t_uint256)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:39"
+            "contract": "ProfileNFT",
+            "src": "contracts\\profile\\ProfileNFT.sol:42"
           },
           {
             "label": "_tokenById",
             "offset": 0,
             "slot": "404",
-            "type": "t_mapping(t_uint256,t_struct(Token)13009_storage)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:41"
+            "type": "t_mapping(t_uint256,t_struct(ProfileStruct)13179_storage)",
+            "contract": "ProfileNFT",
+            "src": "contracts\\profile\\ProfileNFT.sol:44"
           }
         ],
         "types": {
@@ -1658,16 +1658,6 @@
           "t_bytes32": {
             "label": "bytes32",
             "numberOfBytes": "32"
-          },
-          "t_enum(TokenType)12993": {
-            "label": "enum DataTypes.TokenType",
-            "members": [
-              "Profile",
-              "Publish",
-              "Follow",
-              "Like"
-            ],
-            "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)",
@@ -1697,8 +1687,8 @@
             "label": "mapping(uint256 => string)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Token)13009_storage)": {
-            "label": "mapping(uint256 => struct DataTypes.Token)",
+          "t_mapping(t_uint256,t_struct(ProfileStruct)13179_storage)": {
+            "label": "mapping(uint256 => struct DataTypes.ProfileStruct)",
             "numberOfBytes": "32"
           },
           "t_string_storage": {
@@ -1717,6 +1707,36 @@
             ],
             "numberOfBytes": "32"
           },
+          "t_struct(ProfileStruct)13179_storage": {
+            "label": "struct DataTypes.ProfileStruct",
+            "members": [
+              {
+                "label": "tokenId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "handle",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "imageURI",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",
             "members": [
@@ -1734,54 +1754,6 @@
               }
             ],
             "numberOfBytes": "64"
-          },
-          "t_struct(Token)13009_storage": {
-            "label": "struct DataTypes.Token",
-            "members": [
-              {
-                "label": "tokenId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "associatedId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "owner",
-                "type": "t_address",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "tokenType",
-                "type": "t_enum(TokenType)12993",
-                "offset": 20,
-                "slot": "2"
-              },
-              {
-                "label": "handle",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "3"
-              },
-              {
-                "label": "imageURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "4"
-              },
-              {
-                "label": "contentURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "5"
-              }
-            ],
-            "numberOfBytes": "192"
           },
           "t_uint256": {
             "label": "uint256",
@@ -1794,9 +1766,9 @@
         }
       }
     },
-    "ad8ec05ae54628426a4e2d3f8bc4012cb39c43e87ddeaa012eb0433b7edfbb00": {
+    "9e5f80ebad65f84f2156981f4165855004e883e628688ec8054b16f90d3eaebd": {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x6db72b9bd1359230b8afe4df699bda9da37ba663cef65ee3af0edd84fe812bba",
+      "txHash": "0x3168a032f428768bae58920f0f6c9e8f08e11db9a9dda3d5a40fc97616158222",
       "layout": {
         "storage": [
           {
@@ -1949,32 +1921,24 @@
             "offset": 0,
             "slot": "401",
             "type": "t_struct(Counter)2627_storage",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:34"
+            "contract": "PublishNFT",
+            "src": "contracts\\publish\\PublishNFT.sol:38"
           },
           {
-            "label": "_profileIdByHandleHash",
+            "label": "_profileContract",
             "offset": 0,
             "slot": "402",
-            "type": "t_mapping(t_bytes32,t_uint256)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:37"
-          },
-          {
-            "label": "_defaultProfileIdByAddress",
-            "offset": 0,
-            "slot": "403",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:39"
+            "type": "t_contract(IProfileNFT)3117",
+            "contract": "PublishNFT",
+            "src": "contracts\\publish\\PublishNFT.sol:41"
           },
           {
             "label": "_tokenById",
             "offset": 0,
-            "slot": "404",
-            "type": "t_mapping(t_uint256,t_struct(Token)13009_storage)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:41"
+            "slot": "403",
+            "type": "t_mapping(t_uint256,t_struct(PublishStruct)13204_storage)",
+            "contract": "PublishNFT",
+            "src": "contracts\\publish\\PublishNFT.sol:44"
           }
         ],
         "types": {
@@ -2002,15 +1966,9 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_enum(TokenType)12993": {
-            "label": "enum DataTypes.TokenType",
-            "members": [
-              "Profile",
-              "Publish",
-              "Follow",
-              "Like"
-            ],
-            "numberOfBytes": "1"
+          "t_contract(IProfileNFT)3117": {
+            "label": "contract IProfileNFT",
+            "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)",
@@ -2028,10 +1986,6 @@
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_uint256)": {
-            "label": "mapping(bytes32 => uint256)",
-            "numberOfBytes": "32"
-          },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
@@ -2040,8 +1994,8 @@
             "label": "mapping(uint256 => string)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Token)13009_storage)": {
-            "label": "mapping(uint256 => struct DataTypes.Token)",
+          "t_mapping(t_uint256,t_struct(PublishStruct)13204_storage)": {
+            "label": "mapping(uint256 => struct DataTypes.PublishStruct)",
             "numberOfBytes": "32"
           },
           "t_string_storage": {
@@ -2060,6 +2014,42 @@
             ],
             "numberOfBytes": "32"
           },
+          "t_struct(PublishStruct)13204_storage": {
+            "label": "struct DataTypes.PublishStruct",
+            "members": [
+              {
+                "label": "tokenId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "creatorId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "imageURI",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "contentURI",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",
             "members": [
@@ -2077,54 +2067,6 @@
               }
             ],
             "numberOfBytes": "64"
-          },
-          "t_struct(Token)13009_storage": {
-            "label": "struct DataTypes.Token",
-            "members": [
-              {
-                "label": "tokenId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "associatedId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "owner",
-                "type": "t_address",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "tokenType",
-                "type": "t_enum(TokenType)12993",
-                "offset": 20,
-                "slot": "2"
-              },
-              {
-                "label": "handle",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "3"
-              },
-              {
-                "label": "imageURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "4"
-              },
-              {
-                "label": "contentURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "5"
-              }
-            ],
-            "numberOfBytes": "192"
           },
           "t_uint256": {
             "label": "uint256",

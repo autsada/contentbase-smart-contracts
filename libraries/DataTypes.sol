@@ -32,13 +32,36 @@ library DataTypes {
      * A struct containing data required to update profile image.
      * @param tokenId {uint256} - a token id to be updated
      * @param tokenURI {string} - a uri of the token metadata's file
-     * @param imageURI {string} - a profile's image uri, can be empty in the case that the uri isn't changed
+     * @param imageURI {string} - see ProfileStruct
      */
     struct UpdateProfileImageData {
         uint256 tokenId;
         string tokenURI;
         string imageURI;
     }
+
+    // /**
+    //  * Publish's Category
+    //  * @dev when a pubish is created, it must be classified to at least one category and at most 3 categories.
+    //  */
+    // enum Category {
+    //     Empty,
+    //     Music,
+    //     Entertainment,
+    //     Sports,
+    //     Food,
+    //     Travel,
+    //     Gaming,
+    //     News,
+    //     Animals,
+    //     Education,
+    //     Technology,
+    //     LifeStyle,
+    //     Vehicles,
+    //     Children,
+    //     Other,
+    //     NotExist
+    // }
 
     /**
      * A struct containing token data of Publish NFT
@@ -58,17 +81,31 @@ library DataTypes {
 
     /**
      * A struct containing data required to create a publish NFT.
-     * @param creatorId {uint256} - refer to PublishStruct
-     * @param owner {address} - refer to PublishStruct
+     * @param creatorId {uint256} - see PublishStruct
+     * @param imageURI {string} - see PublishStruct
+     * @param contentURI {string} - see PublishStruct
      * @param tokenURI {string} - a uri of the token metadata's file
-     * @param imageURI {string} - refer to PublishStruct
-     * @param contentURI {string} - refer to PublishStruct
      */
     struct CreatePublishData {
         uint256 creatorId;
-        address owner;
-        string tokenURI;
         string imageURI;
         string contentURI;
+        string tokenURI;
+    }
+
+    /**
+     * A struct containing data required to update publish NFT.
+     * @param tokenId {uint256} - an id of the token to be updated
+     * @param creatorId {uint256} - see PublishStruct
+     * @param imageURI {string} - see PublishStruct
+     * @param contentURI {string} - see PublishStruct
+     * @param tokenURI {string} - a uri of the token metadata's file
+     */
+    struct UpdatePublishData {
+        uint256 tokenId;
+        uint256 creatorId;
+        string imageURI;
+        string contentURI;
+        string tokenURI;
     }
 }

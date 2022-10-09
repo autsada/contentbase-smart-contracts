@@ -10,15 +10,13 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
 import "./IProfileNFT.sol";
-import "../publish/IPublishNFT.sol";
 import {Constants} from "../../libraries/Constants.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
  * @title ProfileNFT
- *
- * @notice This is the entrypoint to other Content Base Contracts. To mint other NFTs (Publish, Follow, Like, Share) and calling write functions in other contracts must be done via ProfileNFT Contract.
+ * @dev frontend needs to track token ids own by each address and handle so it can query tokens for each address/handle.
  */
 
 contract ProfileNFT is
@@ -37,9 +35,6 @@ contract ProfileNFT is
 
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
-
-    // Publish contract.
-    IPublishNFT private _publishContract;
 
     // Mapping of token id by handle hash.
     mapping(bytes32 => uint256) private _tokenIdByHandleHash;
@@ -74,23 +69,7 @@ contract ProfileNFT is
     }
 
     /**
-     * An external function to set Publish contract for use to create Publish NFT.
-     * @dev only allow ADMIN_ROLE
-     */
-    function setPublishContract(address publishContractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
-        _publishContract = IPublishNFT(publishContractAddress);
-    }
-
-    /**
-     * An external function to create Profile NFT.
-     * @dev validations must be done in this function.
-     * @param createProfileData {struct} - refer to DataTypes.CreateProfileData struct
-     * @return tokenId
-     *
+     * @dev see IProfileNFT - createProfile
      */
     function createProfile(
         DataTypes.CreateProfileData calldata createProfileData
@@ -125,7 +104,7 @@ contract ProfileNFT is
      * A private function that contains the logic to create Profile NFT.
      * @dev validations will be done by caller function.
      * @param owner {address} - an address to be set as an owner of the NFT
-     * @param createProfileData {struct} - refer to DataTypes.CreateProfileData struct
+     * @param createProfileData {struct} - see DataTypes.CreateProfileData struct
      * @return tokenId {uint256}
      *
      */
@@ -140,7 +119,7 @@ contract ProfileNFT is
         // Mint an NFT to owner
         _safeMint(owner, tokenId);
 
-        // Store tokenURI
+        // Update tokenURI
         _setTokenURI(tokenId, createProfileData.tokenURI);
 
         // Update _tokenIdByHandleHash mapping.
@@ -169,11 +148,7 @@ contract ProfileNFT is
     }
 
     /**
-     * An external function to update profile image.
-     * @dev validations must be done in this function.
-     * @param updateProfileImageData - refer to DataTypes.UpdateProfileImageData struct
-     * @return tokenId
-     *
+     * @dev see IProfileNFT - updateProfileImage
      */
     function updateProfileImage(
         DataTypes.UpdateProfileImageData calldata updateProfileImageData
@@ -219,7 +194,7 @@ contract ProfileNFT is
      * A private function that contain the logic to update profile image.
      * @dev validations will be done by caller function.
      * @param owner {address}
-     * @param updateProfileImageData - refer to DataTypes.UpdateProfileImageData
+     * @param updateProfileImageData - see DataTypes.UpdateProfileImageData
      * @return tokenId
      *
      */
@@ -248,9 +223,7 @@ contract ProfileNFT is
     }
 
     /**
-     * An external function to set default profile.
-     * @dev validations must be done in this function.
-     * @param tokenId - a token id
+     * @dev see IProfileNFT - setDefaultProfile
      */
     function setDefaultProfile(uint256 tokenId) external override {
         // The id must exist
@@ -281,10 +254,7 @@ contract ProfileNFT is
     }
 
     /**
-     * An external function to list user's profiles.
-     * @dev limit to 10 ids at a time
-     * @param tokenIds {uint256[]} - An array of token ids
-     * @return profiles {struct[]}
+     * @dev see IProfileNFT - ownerProfiles
      */
     function ownerProfiles(uint256[] calldata tokenIds)
         external
@@ -292,30 +262,36 @@ contract ProfileNFT is
         override
         returns (DataTypes.ProfileStruct[] memory)
     {
-        require(tokenIds.length < 11, "Limit to 10 profiles per request");
+        // Validate the param.
+        require(
+            tokenIds.length > 0 &&
+                tokenIds.length <= Constants.TOKEN_QUERY_LIMIT,
+            "Bad input"
+        );
 
-        // Get the length of to be created array, cannot use "tokenIds.length" as some id might not own by the caller.
-        uint256 profileArrayLen;
+        // Get to be created array length first.
+        uint256 profilesArrayLen;
 
-        // Loop through the token ids array and check if the token exists and the caller is the owner.
+        // Loop through the given tokenIds array to check each id if it exists and the caller is the owner.
         for (uint256 i = 0; i < tokenIds.length; ) {
-            if (_exists(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)) {
-                profileArrayLen++;
+            if (_exists(tokenIds[i]) && ownerOf(tokenIds[i]) == msg.sender) {
+                profilesArrayLen++;
             }
             unchecked {
                 i++;
             }
         }
 
-        require(profileArrayLen > 0, "No profiles found");
+        // Revert if no profile found.
+        if (profilesArrayLen == 0) revert("Not found");
 
-        // Create a profiles array in memory with the fix size of the array length.
+        // Create a fix size empty array.
         DataTypes.ProfileStruct[]
-            memory profiles = new DataTypes.ProfileStruct[](profileArrayLen);
+            memory profiles = new DataTypes.ProfileStruct[](profilesArrayLen);
+        // Track the array index
+        uint256 index;
 
-        // Loop through the ids array again to find the Profile struct for each id.
-        // Track the index of to be created array.
-        uint index;
+        // Loop through the given token ids again to find a token for each id and put it in the array.
         for (uint256 i = 0; i < tokenIds.length; ) {
             if (_exists(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)) {
                 profiles[index] = _tokenById[tokenIds[i]];
@@ -330,7 +306,7 @@ contract ProfileNFT is
     }
 
     /**
-     * An external function to get the caller's default profile.
+     * @dev see IProfileNFT - defaultProfile
      */
     function defaultProfile()
         external
@@ -345,10 +321,7 @@ contract ProfileNFT is
     }
 
     /**
-     * An external function to get a profile by id.
-     * @param tokenId {uint256}
-     * @return token {struct}
-     *
+     * @dev see IProfileNFT - profileById
      */
     function profileById(uint256 tokenId)
         external
@@ -363,22 +336,31 @@ contract ProfileNFT is
     }
 
     /**
-     * An external function to get total NFTs count.
-     * @return count {uint256}
-     *
+     * @dev see IProfileNFT - totalProfiles
      */
-    function totalProfiles() external view returns (uint256) {
+    function totalProfiles() external view override returns (uint256) {
         return _tokenIdCounter.current();
     }
 
     /**
-     * An external function to validate handle - validate length, special characters and uniqueness.
-     * @param handle {string}
-     * @return boolean
+     * @dev see IProfileNFT - ownerOfProfile
+     */
+    function ownerOfProfile(uint256 tokenId)
+        external
+        view
+        override
+        returns (address)
+    {
+        return ownerOf(tokenId);
+    }
+
+    /**
+     * @dev see IProfileNFT - validateHandle
      */
     function validateHandle(string calldata handle)
         external
         view
+        override
         returns (bool)
     {
         return
@@ -415,7 +397,7 @@ contract ProfileNFT is
     }
 
     /**
-     * @notice If it's not the first creation or burn token, the token in non-transferable
+     * @notice If it's not the first creation or burn token, the token is non-transferable.
      * @param from {address}
      * @param to {address}
      * @param tokenId {uint256}
@@ -453,14 +435,6 @@ contract ProfileNFT is
         super._burn(tokenId);
     }
 
-    /**
-     * @param tokenId {number}
-     * @return tokenURI {string} - a url point the metadata.json containing the token data consist of:
-     * - name {string} - "Content Base Profile"
-     * - description {string} - "A profile of ${handle}", handle is the name who owns the profile
-     * - image {string} - An ipfs uri point to an image stored on ipfs
-     * - properties {object} - Other additional information of the token
-     */
     function tokenURI(uint256 tokenId)
         public
         view

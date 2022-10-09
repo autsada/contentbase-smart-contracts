@@ -64,7 +64,7 @@ library Helpers {
     }
 
     /**
-     * A Helper function to validate the uri is not too short.
+     * A helper function to validate the uri is not too short.
      * @param uri {string} - a uri to be validated
      */
     function notTooShortURI(string calldata uri) internal pure returns (bool) {
@@ -77,8 +77,9 @@ library Helpers {
     }
 
     /**
-     * A Helper function to validate the uri is not too long.
+     * A helper function to validate the uri is not too long.
      * @param uri {string} - a uri to be validated
+     * @return boolean
      */
     function notTooLongURI(string calldata uri) internal pure returns (bool) {
         bytes memory bytesURI = bytes(uri);

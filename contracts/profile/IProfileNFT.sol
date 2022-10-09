@@ -6,15 +6,9 @@ import {Constants} from "../../libraries/Constants.sol";
 
 interface IProfileNFT {
     /**
-     * An external function to set Publish contract for use to create Publish NFT.
-     * @dev only allow ADMIN_ROLE
-     */
-    function setPublishContract(address publishContractAddress) external;
-
-    /**
      * An external function to create Profile NFT.
      * @param createProfileData {struct} - refer to DataTypes.CreateProfileData struct
-     *
+     * @return tokenId {uint256}
      */
     function createProfile(
         DataTypes.CreateProfileData calldata createProfileData
@@ -23,6 +17,7 @@ interface IProfileNFT {
     /**
      * An external to update profile image.
      * @param updateProfileImageData {struct} - refer to DataTypes.UpdateProfileImageData struct
+     * @return tokenId {uint256}
      */
     function updateProfileImage(
         DataTypes.UpdateProfileImageData calldata updateProfileImageData
@@ -36,7 +31,8 @@ interface IProfileNFT {
 
     /**
      * An external function to list user's profiles.
-     * @param tokenIds {uint256[]} - An array of token ids, limit to 10 ids
+     * @param tokenIds {uint256[]} - an array of token ids
+     * @return tokens {ProfileStruct[]}
      */
     function ownerProfiles(uint256[] calldata tokenIds)
         external
@@ -45,6 +41,7 @@ interface IProfileNFT {
 
     /**
      * An external function to get user's default profile.
+     * @return token {ProfileStruct}
      */
     function defaultProfile()
         external
@@ -53,6 +50,8 @@ interface IProfileNFT {
 
     /**
      * An external function get profile struct by id.
+     * @param tokenId {uint256}
+     * @return token {ProfileStruct}
      */
     function profileById(uint256 tokenId)
         external
@@ -60,8 +59,22 @@ interface IProfileNFT {
         returns (DataTypes.ProfileStruct memory);
 
     /**
+     * An external function to get total profiles count.
+     * @return count {uint256}
+     */
+    function totalProfiles() external view returns (uint256);
+
+    /**
+     * An external function to get a Profile NFT owner.
+     * @param tokenId {uint256} - a token if of the Profile NFT
+     * @return owner {address}
+     */
+    function ownerOfProfile(uint256 tokenId) external view returns (address);
+
+    /**
      * An external function to validate handle - validate length, special characters and uniqueness.
      * @param handle {string}
+     * @return boolean
      */
     function validateHandle(string calldata handle)
         external
