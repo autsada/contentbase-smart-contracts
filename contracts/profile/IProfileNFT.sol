@@ -66,10 +66,18 @@ interface IProfileNFT {
 
     /**
      * An external function to get a Profile NFT owner.
-     * @param tokenId {uint256} - a token if of the Profile NFT
+     * @param tokenId {uint256} - a token id of the Profile NFT
      * @return owner {address}
      */
     function ownerOfProfile(uint256 tokenId) external view returns (address);
+
+    /**
+     * An external function to check if profile exist.
+     * @dev use this function when want to check if profile exists in other contracts.
+     * @param tokenId {uint256} - a token id of the Profile NFT
+     * @return boolean
+     */
+    function exists(uint256 tokenId) external view returns (bool);
 
     /**
      * An external function to validate handle - validate length, special characters and uniqueness.

@@ -355,6 +355,13 @@ contract ProfileNFT is
     }
 
     /**
+     * @dev see IProfileNFT - exists
+     */
+    function exists(uint256 tokenId) external view override returns (bool) {
+        return _exists(tokenId);
+    }
+
+    /**
      * @dev see IProfileNFT - validateHandle
      */
     function validateHandle(string calldata handle)
