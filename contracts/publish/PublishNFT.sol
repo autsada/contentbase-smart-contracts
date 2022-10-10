@@ -381,10 +381,8 @@ contract PublishNFT is
         // Token must exist.
         require(_exists(tokenId), "Token not found");
 
-        // Find the owner.
-        address owner = ownerOf(tokenId);
         // The caller must be the owner.
-        require(msg.sender == owner);
+        require(msg.sender == ownerOf(tokenId), "Forbidden");
 
         // Remove the token from _tokenById mapping.
         delete _tokenById[tokenId];

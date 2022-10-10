@@ -383,10 +383,8 @@ contract ProfileNFT is
         // Token must exist.
         require(_exists(tokenId), "Token not found");
 
-        // Find the owner.
-        address owner = ownerOf(tokenId);
         // The caller must be the owner.
-        require(msg.sender == owner);
+        require(msg.sender == ownerOf(tokenId), "Forbidden");
 
         // If the token id is a default profile, revert.
         if (_defaultTokenIdByAddress[msg.sender] == tokenId)
