@@ -327,7 +327,7 @@ contract PublishNFT is
             }
         }
 
-        // Revert if no profile found.
+        // Revert if no any Publish found.
         if (publishesArrayLen == 0) revert("Not found");
 
         // Create a fix size empty array.
