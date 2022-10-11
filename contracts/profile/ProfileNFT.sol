@@ -3,7 +3,6 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -23,7 +22,6 @@ contract ProfileNFT is
     Initializable,
     ERC721Upgradeable,
     ERC721URIStorageUpgradeable,
-    ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
     IProfileNFT
@@ -56,7 +54,6 @@ contract ProfileNFT is
     function initialize() public initializer {
         __ERC721_init("Content Base Profile", "CBPr");
         __ERC721URIStorage_init();
-        __ERC721Burnable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
         _setRoleAdmin(DEFAULT_ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
@@ -373,32 +370,6 @@ contract ProfileNFT is
         return
             Helpers.handleUnique(handle, _tokenIdByHandleHash) &&
             Helpers.validateHandle(handle);
-    }
-
-    /**
-     * A public function to burn a token.
-     * @param tokenId {number} - a token id to be burned
-     */
-    function burn(uint256 tokenId) public override {
-        // Token must exist.
-        require(_exists(tokenId), "Token not found");
-
-        // The caller must be the owner.
-        require(msg.sender == ownerOf(tokenId), "Forbidden");
-
-        // If the token id is a default profile, revert.
-        if (_defaultTokenIdByAddress[msg.sender] == tokenId)
-            revert("Burn default profile not allowed");
-
-        // Clear token id from _tokenIdByHandleHash mapping.
-        string memory handle = _tokenById[tokenId].handle;
-        delete _tokenIdByHandleHash[keccak256(bytes(handle))];
-
-        // Clear the token from _tokenById mapping.
-        delete _tokenById[tokenId];
-
-        // Call the parent burn function.
-        super.burn(tokenId);
     }
 
     /**
