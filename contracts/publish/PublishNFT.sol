@@ -375,7 +375,7 @@ contract PublishNFT is
     /**
      * @dev see IPublishNFT - ownerOfPublish
      */
-    function onwerOfPublish(uint256 publishId) external view returns (address) {
+    function ownerOfPublish(uint256 publishId) external view returns (address) {
         // Publish must exist.
         require(_exists(publishId), "Publish not found");
 

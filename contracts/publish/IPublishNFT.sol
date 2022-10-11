@@ -69,5 +69,5 @@ interface IPublishNFT {
      * @param publishId {uint256}
      * @return owner {address}
      */
-    function onwerOfPublish(uint256 publishId) external view returns (address);
+    function ownerOfPublish(uint256 publishId) external view returns (address);
 }
