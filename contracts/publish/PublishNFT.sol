@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
 import "./IPublishNFT.sol";
 import "../profile/IProfileNFT.sol";
+import "../like/ILikeNFT.sol";
 import {Constants} from "../../libraries/Constants.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
@@ -39,6 +40,8 @@ contract PublishNFT is
 
     // Profile contract.
     IProfileNFT private _profileContract;
+    // Like contract address.
+    address private _likeContractAddress;
 
     // Mapping of publish struct by token id.
     mapping(uint256 => DataTypes.PublishStruct) private _tokenById;
@@ -76,6 +79,17 @@ contract PublishNFT is
         onlyRole(ADMIN_ROLE)
     {
         _profileContract = IProfileNFT(profileContractAddress);
+    }
+
+    /**
+     * @dev see IPublishNFT - setLikeContractAddress
+     */
+    function setLikeContractAddress(address likeContractAddress)
+        external
+        override
+        onlyRole(ADMIN_ROLE)
+    {
+        _likeContractAddress = likeContractAddress;
     }
 
     /**
@@ -134,8 +148,9 @@ contract PublishNFT is
 
         // Update _tokenById mapping.
         DataTypes.PublishStruct memory newToken = DataTypes.PublishStruct({
-            creatorId: createPublishData.creatorId,
             owner: owner,
+            creatorId: createPublishData.creatorId,
+            likes: 0,
             imageURI: createPublishData.imageURI,
             contentURI: createPublishData.contentURI
         });
@@ -244,6 +259,32 @@ contract PublishNFT is
         emit PublishUpdated(_tokenById[updatePublishData.tokenId], owner);
 
         return updatePublishData.tokenId;
+    }
+
+    /**
+     * @dev see IPublishNFT - like
+     */
+    function like(uint256 tokenId) external override returns (bool) {
+        // Validate the caller, it must be the Like contract.
+        if (msg.sender != _likeContractAddress) revert("Forbidden");
+
+        // Update the publish's likes.
+        _tokenById[tokenId].likes++;
+
+        return true;
+    }
+
+    /**
+     * @dev see IPublishNFT - unLike
+     */
+    function unLike(uint256 tokenId) external override returns (bool) {
+        // Validate the caller, it must be the Like contract.
+        if (msg.sender != _likeContractAddress) revert("Forbidden");
+
+        // Update the publish's likes.
+        _tokenById[tokenId].likes--;
+
+        return true;
     }
 
     /**

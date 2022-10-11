@@ -67,14 +67,16 @@ library DataTypes {
 
     /**
      * A struct containing data of Publish NFT.
-     * @param creatorId {uint256} - a profile token id of the creator
      * @param owner {address} - an address that owns the token
+     * @param creatorId {uint256} - a profile token id of the creator
+     * @param likes {uint256} - number of likes a publish has
      * @param imageURI {string} - a publish's thumbnail image uri
      * @param contentURI {string} - a publish's content uri
      */
     struct PublishStruct {
-        uint256 creatorId;
         address owner;
+        uint256 creatorId;
+        uint256 likes;
         string imageURI;
         string contentURI;
     }

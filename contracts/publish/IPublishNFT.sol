@@ -12,6 +12,12 @@ interface IPublishNFT {
     function setProfileContract(address profileContractAddress) external;
 
     /**
+     * An external function to set Like contract address.
+     * @dev make sure to add modifier to only ADMIN_ROLE.
+     */
+    function setLikeContractAddress(address likeContractAddress) external;
+
+    /**
      * An external function to crate Publish NFT.
      * @param createPublishData {struct} - see DataTypes.CreatePublishData struct
      * @return tokenId {uint256}
@@ -27,6 +33,22 @@ interface IPublishNFT {
     function updatePublish(
         DataTypes.UpdatePublishData calldata updatePublishData
     ) external returns (uint256);
+
+    /**
+     * An external function to update likes of a publish.
+     * @dev must be only called from the Like Contract.
+     * @param tokenId {uint256} - a publish token id
+     * @return success {bool}
+     */
+    function like(uint256 tokenId) external returns (bool);
+
+    /**
+     * An external function to update likes of a publish.
+     * @dev must be only called from the Like Contract.
+     * @param tokenId {uint256} - a publish token id
+     * @return success {bool}
+     */
+    function unLike(uint256 tokenId) external returns (bool);
 
     /**
      * An external function to get user's Publish NFTs.
