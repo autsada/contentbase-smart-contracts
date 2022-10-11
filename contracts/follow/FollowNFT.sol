@@ -17,7 +17,8 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
  * @title FollowNFT
- * @dev frontend needs to track token ids own by each address so it can query tokens for each address.
+ * @notice This NFT will be minted when a Profile NFT follows other Profile NFT.
+ * @dev frontend needs to track token ids so it can query tokens for each address.
  */
 
 contract FollowNFT is
@@ -42,13 +43,17 @@ contract FollowNFT is
 
     // Mapping of Follow struct by token id.
     mapping(uint256 => DataTypes.FollowStruct) private _tokenById;
-    // Mapping of how many profiles follow a specific profile id.
-    mapping(uint256 => uint256) private _followerCountByProfileId;
-    // Mapping of how many profiles that a specific profile id follows.
+    // Mapping that shows following count of a specific profile id.
     mapping(uint256 => uint256) private _followingCountByProfileId;
+    // Mapping that shows followers count of a specific profile id.
+    mapping(uint256 => uint256) private _followersCountByProfileId;
 
     // Events
-    event FollowCreated(DataTypes.FollowStruct token, address owner);
+    event Follow(
+        DataTypes.FollowStruct token,
+        address follower,
+        address followee
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -89,24 +94,29 @@ contract FollowNFT is
         override
         returns (uint256)
     {
-        // Follower id and following must exist
+        // Follower's profile id must exist.
         require(
-            _profileContract.exists(createFollowData.followerId) &&
-                _profileContract.exists(createFollowData.followingId),
-            "Bad request"
+            _profileContract.exists(createFollowData.followerId),
+            "Profile not found"
         );
 
-        // Caller must own the follower id.
+        // Caller must own the follower profile.
         require(
             msg.sender ==
                 _profileContract.ownerOfProfile(createFollowData.followerId),
             "Forbidden"
         );
 
-        // Follower id must not equal following id
+        // Followee profile id must exist.
         require(
-            createFollowData.followerId != createFollowData.followingId,
-            "Bad input"
+            _profileContract.exists(createFollowData.followeeId),
+            "Followee profile not found"
+        );
+
+        // Follower profile id must not same as followee profile id.
+        require(
+            createFollowData.followerId != createFollowData.followeeId,
+            "Not allow"
         );
 
         // Validate tokenURI.
@@ -140,81 +150,125 @@ contract FollowNFT is
 
         // Update _tokenById mapping.
         DataTypes.FollowStruct memory newToken = DataTypes.FollowStruct({
-            tokenId: tokenId,
+            owner: owner,
             followerId: createFollowData.followerId,
-            followingId: createFollowData.followingId,
-            owner: owner
+            followeeId: createFollowData.followeeId
         });
         _tokenById[tokenId] = newToken;
 
-        // Increase follower count of the following id by 1.
-        _followerCountByProfileId[createFollowData.followingId]++;
+        // Update following count of the follower.
+        _followingCountByProfileId[createFollowData.followerId];
+        // Update followers count of the followee.
+        _followersCountByProfileId[createFollowData.followeeId];
 
-        // Increase following count of the follower id by 1.
-        _followingCountByProfileId[createFollowData.followerId]++;
-
-        // Emit publish created event.
-        emit FollowCreated(_tokenById[tokenId], owner);
+        // Get the followee's owner.
+        address followeeAddress = _profileContract.ownerOfProfile(
+            createFollowData.followeeId
+        );
+        // Emit FollowingCreated event.
+        emit Follow(_tokenById[tokenId], owner, followeeAddress);
 
         return tokenId;
     }
 
     /**
-     * @dev see IFollowNFT - unFollow
+     * @dev see IFollowNFT - followingCount
      */
-    function unFollow(uint256 tokenId) external override returns (bool) {
-        // Token must exists
-        require(_exists(tokenId), "Not found");
-
-        // Caller must own the token
-        require(msg.sender == ownerOf(tokenId), "Forbidden");
-
-        // Get token struct
-        DataTypes.FollowStruct memory token = _tokenById[tokenId];
-
-        // Decrease follower count of the following id.
-        _followerCountByProfileId[token.followingId]--;
-
-        // Decrease following count of the follower id.
-        _followingCountByProfileId[token.followerId]--;
-
-        // Remove the token from _tokenById mapping.
-        delete _tokenById[tokenId];
-
-        // Call the parent burn function.
-        super.burn(tokenId);
-
-        return true;
-    }
-
-    /**
-     * @dev see IFollowNFT - getFollower
-     */
-    function getFollower(uint256 profileId)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        // Profile id must exist.
-        require(_profileContract.exists(profileId), "Profile not found");
-
-        return _followerCountByProfileId[profileId];
-    }
-
-    /**
-     * @dev see IFollowNFT - getFollowing
-     */
-    function getFollowing(uint256 profileId)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function followingCount(uint256 profileId) external view returns (uint256) {
         // Profile id must exist.
         require(_profileContract.exists(profileId), "Profile not found");
 
         return _followingCountByProfileId[profileId];
+    }
+
+    /**
+     * @dev see IFollowNFT - followersCount
+     */
+    function followersCount(uint256 profileId) external view returns (uint256) {
+        // Profile id must exist.
+        require(_profileContract.exists(profileId), "Profile not found");
+
+        return _followersCountByProfileId[profileId];
+    }
+
+    /**
+     * @dev see IFollowNFT - getFollows
+     */
+    function getFollows(uint256[] calldata tokenIds)
+        external
+        view
+        returns (DataTypes.FollowStruct[] memory)
+    {
+        // Validate the ids array.
+        require(
+            tokenIds.length > 0 &&
+                tokenIds.length <= Constants.TOKEN_QUERY_LIMIT,
+            "Bad input"
+        );
+
+        // Get to be created array length first.
+        uint256 followsArrayLen;
+
+        // Loop through the given tokenIds array to check each id if it exists.
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (_exists(tokenIds[i])) {
+                followsArrayLen++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        // Revert if no any Follow found.
+        if (followsArrayLen == 0) revert("Not found");
+
+        // Create a fix size empty array.
+        DataTypes.FollowStruct[] memory follows = new DataTypes.FollowStruct[](
+            followsArrayLen
+        );
+        // Track the array index
+        uint256 index;
+
+        // Loop through the given token ids again to find a token for each id and put it in the array.
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            if (_exists(tokenIds[i])) {
+                follows[index] = _tokenById[tokenIds[i]];
+                index++;
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        return follows;
+    }
+
+    /**
+     * A public function to burn a token.
+     * @dev use this function to unfollow.
+     * @param tokenId {number} - a token id to be burned
+     */
+    function burn(uint256 tokenId) public override {
+        // Token must exist.
+        require(_exists(tokenId), "Token not found");
+
+        // The caller must be the owner.
+        require(msg.sender == ownerOf(tokenId), "Forbidden");
+
+        // Get token struct.
+        DataTypes.FollowStruct memory token = _tokenById[tokenId];
+
+        // Update following count of the follower.
+        _followingCountByProfileId[token.followerId]--;
+
+        // Update followers count of the follwee.
+        _followersCountByProfileId[token.followeeId]--;
+
+        // Clear the token from _tokenById mapping.
+        delete _tokenById[tokenId];
+
+        // Call the parent burn function.
+        super.burn(tokenId);
     }
 
     function _authorizeUpgrade(address newImplementation)

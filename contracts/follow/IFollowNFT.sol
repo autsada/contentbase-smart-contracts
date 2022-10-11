@@ -12,7 +12,8 @@ interface IFollowNFT {
     function setProfileContract(address profileContractAddress) external;
 
     /**
-     * An external function to follow other profile, this funtion will create a Follow NFT.
+     * An external function to follow Profile NFT.
+     * @dev This funtion will create a Follow NFT.
      * @param createFollowData {struct} - see DataTypes.CreateFollowData struct
      * @return tokenId {uint256}
      */
@@ -21,23 +22,26 @@ interface IFollowNFT {
         returns (uint256);
 
     /**
-     * An external function to unfollow other profile, this funtion will burn a Follow NFT.
-     * @param tokenId {uint256} - a Follow NFT token id
-     * @return success {boolean}
-     */
-    function unFollow(uint256 tokenId) external returns (bool);
-
-    /**
-     * An external function to get follower count of a specific profile id.
-     * @param profileId {uint256} - a token id of the Profile NFT
+     * An external function to get following count of a Profile NFT.
+     * @param profileId {uint256}
      * @return count {uint256}
      */
-    function getFollower(uint256 profileId) external view returns (uint256);
+    function followingCount(uint256 profileId) external view returns (uint256);
 
     /**
-     * An external function to get following count of a specific profile id.
-     * @param profileId {uint256} - a token id of the Profile NFT
+     * An external function to get followers count of a Profile NFT.
+     * @param profileId {uint256}
      * @return count {uint256}
      */
-    function getFollowing(uint256 profileId) external view returns (uint256);
+    function followersCount(uint256 profileId) external view returns (uint256);
+
+    /**
+     * An external function to get Follow structs from a given ids array.
+     * @param tokenIds {uint256[]}
+     * @return tokens {FollowStruct[]}
+     */
+    function getFollows(uint256[] calldata tokenIds)
+        external
+        view
+        returns (DataTypes.FollowStruct[] memory);
 }

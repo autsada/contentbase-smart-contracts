@@ -111,27 +111,25 @@ library DataTypes {
 
     /**
      * A struct containing data of Follow NFT.
-     * @param tokenId {uint256} - an id of the token
-     * @param followerId {uint256} - a token id of the Profile NFT that follows other Profile.
-     * @param followingId {uint256} - a token id of the Profile NFT that is followed by follwerId.
-     * @param owner {address} - an address that owns the token (and owns the followerId).
+     * @param owner {address} - an address that owns the token.
+     * @param followerId {uint256} - a Profile NFT id that follows followeeId.
+     * @param followeeId {uint256} - a Profile NFT id that is being followed by followerId.
      */
     struct FollowStruct {
-        uint256 tokenId;
-        uint256 followerId;
-        uint256 followingId;
         address owner;
+        uint256 followerId;
+        uint256 followeeId;
     }
 
     /**
      * A struct containing data required to create Follow NFT.
-     * @param followerId {uint256} - see FollowStruct
-     * @param followingId {uint256} - see FollowStruct
      * @param tokenURI {string} - a uri of the token metadata's file
+     * @param followerId {uint256} - see FollowStruct
+     * @param followeeId {uint256} - see FollowStruct
      */
     struct CreateFollowData {
-        uint256 followerId;
-        uint256 followingId;
         string tokenURI;
+        uint256 followerId;
+        uint256 followeeId;
     }
 }
