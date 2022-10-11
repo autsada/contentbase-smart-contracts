@@ -8,13 +8,11 @@ pragma solidity ^0.8.9;
 library DataTypes {
     /**
      * A struct containing data of Profile NFT.
-     * @param tokenId {uint256} - an id of the token
      * @param owner {address} - an address that owns the token
      * @param handle {string} - a handle that associate with the owner address
      * @param imageURI {string} - a uri of the profile image
      */
     struct ProfileStruct {
-        uint256 tokenId;
         address owner;
         string handle;
         string imageURI;
@@ -69,14 +67,12 @@ library DataTypes {
 
     /**
      * A struct containing data of Publish NFT.
-     * @param tokenId {uint256} - an id of the token
      * @param creatorId {uint256} - a profile token id of the creator
      * @param owner {address} - an address that owns the token
      * @param imageURI {string} - a publish's thumbnail image uri
      * @param contentURI {string} - a publish's content uri
      */
     struct PublishStruct {
-        uint256 tokenId;
         uint256 creatorId;
         address owner;
         string imageURI;

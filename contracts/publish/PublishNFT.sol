@@ -134,7 +134,6 @@ contract PublishNFT is
 
         // Update _tokenById mapping.
         DataTypes.PublishStruct memory newToken = DataTypes.PublishStruct({
-            tokenId: tokenId,
             creatorId: createPublishData.creatorId,
             owner: owner,
             imageURI: createPublishData.imageURI,
