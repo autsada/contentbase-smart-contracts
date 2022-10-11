@@ -38,17 +38,15 @@ interface IPublishNFT {
      * An external function to update likes of a publish.
      * @dev must be only called from the Like Contract.
      * @param tokenId {uint256} - a publish token id
-     * @return success {bool}
      */
-    function like(uint256 tokenId) external returns (bool);
+    function like(uint256 tokenId) external;
 
     /**
      * An external function to update likes of a publish.
      * @dev must be only called from the Like Contract.
      * @param tokenId {uint256} - a publish token id
-     * @return success {bool}
      */
-    function unLike(uint256 tokenId) external returns (bool);
+    function unLike(uint256 tokenId) external;
 
     /**
      * An external function to get user's Publish NFTs.

@@ -264,27 +264,23 @@ contract PublishNFT is
     /**
      * @dev see IPublishNFT - like
      */
-    function like(uint256 tokenId) external override returns (bool) {
+    function like(uint256 tokenId) external override {
         // Validate the caller, it must be the Like contract.
-        if (msg.sender != _likeContractAddress) revert("Forbidden");
+        require(msg.sender == _likeContractAddress, "Forbidden");
 
         // Update the publish's likes.
         _tokenById[tokenId].likes++;
-
-        return true;
     }
 
     /**
      * @dev see IPublishNFT - unLike
      */
-    function unLike(uint256 tokenId) external override returns (bool) {
+    function unLike(uint256 tokenId) external override {
         // Validate the caller, it must be the Like contract.
-        if (msg.sender != _likeContractAddress) revert("Forbidden");
+        require(msg.sender == _likeContractAddress, "Forbidden");
 
         // Update the publish's likes.
         _tokenById[tokenId].likes--;
-
-        return true;
     }
 
     /**
