@@ -373,6 +373,16 @@ contract PublishNFT is
     }
 
     /**
+     * @dev see IPublishNFT - ownerOfPublish
+     */
+    function onwerOfPublish(uint256 publishId) external view returns (address) {
+        // Publish must exist.
+        require(_exists(publishId), "Publish not found");
+
+        return ownerOf(publishId);
+    }
+
+    /**
      * A public function to burn a token.
      * @param tokenId {number} - a token id to be burned
      */

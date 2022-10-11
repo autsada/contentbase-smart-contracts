@@ -63,4 +63,11 @@ interface IPublishNFT {
      * @return total {uint256} - total number of NFTs already minted
      */
     function publishesCount() external view returns (uint256);
+
+    /**
+     * An external function to get a Publish's owner.
+     * @param publishId {uint256}
+     * @return owner {address}
+     */
+    function onwerOfPublish(uint256 publishId) external view returns (address);
 }
