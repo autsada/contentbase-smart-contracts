@@ -2,7 +2,6 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -17,14 +16,14 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
  * @title FollowNFT
- * @notice This NFT will be minted when a Profile NFT follows other Profile NFT.
+ * @notice An NFT will be minted when a Profile NFT follows other Profile NFT.
+ * @notice This contract doesn't need to be URIStorage.
  * @dev frontend needs to track token ids so it can query tokens for each address.
  */
 
 contract FollowNFT is
     Initializable,
     ERC721Upgradeable,
-    ERC721URIStorageUpgradeable,
     ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
@@ -62,7 +61,6 @@ contract FollowNFT is
 
     function initialize() public initializer {
         __ERC721_init("Content Base Follow", "CBF");
-        __ERC721URIStorage_init();
         __ERC721Burnable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -119,10 +117,6 @@ contract FollowNFT is
             "Not allow"
         );
 
-        // Validate tokenURI.
-        require(Helpers.notTooShortURI(createFollowData.tokenURI));
-        require(Helpers.notTooLongURI(createFollowData.tokenURI));
-
         return _follow({owner: msg.sender, createFollowData: createFollowData});
     }
 
@@ -144,9 +138,6 @@ contract FollowNFT is
 
         // Mint an NFT to the owner.
         _safeMint(owner, tokenId);
-
-        // Update tokenURI.
-        _setTokenURI(tokenId, createFollowData.tokenURI);
 
         // Update _tokenById mapping.
         DataTypes.FollowStruct memory newToken = DataTypes.FollowStruct({
@@ -301,22 +292,6 @@ contract FollowNFT is
         }
 
         super._beforeTokenTransfer(from, to, tokenId);
-    }
-
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-    {
-        super._burn(tokenId);
-    }
-
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-        returns (string memory)
-    {
-        return super.tokenURI(tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)

@@ -123,12 +123,10 @@ library DataTypes {
 
     /**
      * A struct containing data required to create Follow NFT.
-     * @param tokenURI {string} - a uri of the token metadata's file
      * @param followerId {uint256} - see FollowStruct
      * @param followeeId {uint256} - see FollowStruct
      */
     struct CreateFollowData {
-        string tokenURI;
         uint256 followerId;
         uint256 followeeId;
     }
