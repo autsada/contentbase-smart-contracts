@@ -27,23 +27,23 @@
       "kind": "uups"
     },
     {
-      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-      "txHash": "0x7aac7cad71e75792ff02a822497d3861006dd95615ede18cfb7356fa733fd19d",
-      "kind": "uups"
-    },
-    {
-      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0xa508d9346d6089a054993b6c9c7ea429e85c67fd4ed47e723fc7e0ff4c002d36",
+      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "txHash": "0x29cd3f8f1af396616500504205aeb0be5036fd8fbc44c1e2633c3f6e9f6272a2",
       "kind": "uups"
     },
     {
       "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-      "txHash": "0x295085caf93583acd9853b4086dd2416fabe7b9ebef438daf8d79b6063911df2",
+      "txHash": "0x74167b3d246b9d6a6bcc85bd9c3a2ce99f0b1c64fab07c43d041e233cda94c0c",
       "kind": "uups"
     },
     {
-      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0xad95eaea58cca3a6c18d81600da02a96ad9d9111c8864326ad9bbf7b18484e3d",
+      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      "txHash": "0xe2f528f59bfc602783f1c1e325ea6be7b6a1a78ef49c8d5500918d24c78f2275",
+      "kind": "uups"
+    },
+    {
+      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "txHash": "0xae606eca9b56249bd56177e5e96b7c8816143190e431671987486448d86c1ee9",
       "kind": "uups"
     }
   ],
@@ -735,9 +735,9 @@
         }
       }
     },
-    "c94a599516377501dc0c84e951d445f0e21bbf830e449170687cd05fa42ea3a6": {
-      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "txHash": "0x04dfca718ba032d559c234c673e73c077780e5b07c5d84e36ee015411f63082b",
+    "ccf72186060c6296f4b3704bdd5714fcc3a12064c0c7ea65b05873963268b405": {
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "txHash": "0x5f11c6788079bd88df1395ffad35a63f5d6f4d2feb375e88fc1d241898f78567",
       "layout": {
         "storage": [
           {
@@ -830,25 +830,9 @@
             "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:465"
           },
           {
-            "label": "_tokenURIs",
+            "label": "__gap",
             "offset": 0,
             "slot": "151",
-            "type": "t_mapping(t_uint256,t_string_storage)",
-            "contract": "ERC721URIStorageUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721URIStorageUpgradeable.sol:21"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "152",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "ERC721URIStorageUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721URIStorageUpgradeable.sol:74"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "201",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ERC721BurnableUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721BurnableUpgradeable.sol:38"
@@ -856,7 +840,7 @@
           {
             "label": "_roles",
             "offset": 0,
-            "slot": "251",
+            "slot": "201",
             "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
             "contract": "AccessControlUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:61"
@@ -864,7 +848,7 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "252",
+            "slot": "202",
             "type": "t_array(t_uint256)49_storage",
             "contract": "AccessControlUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:259"
@@ -872,7 +856,7 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "301",
+            "slot": "251",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ERC1967UpgradeUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:211"
@@ -880,7 +864,7 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "351",
+            "slot": "301",
             "type": "t_array(t_uint256)50_storage",
             "contract": "UUPSUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
@@ -888,34 +872,58 @@
           {
             "label": "_tokenIdCounter",
             "offset": 0,
-            "slot": "401",
+            "slot": "351",
             "type": "t_struct(Counter)2627_storage",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:34"
+            "contract": "LikeNFT",
+            "src": "contracts\\like\\LikeNFT.sol:39"
           },
           {
-            "label": "_profileIdByHandleHash",
+            "label": "_profileContract",
             "offset": 0,
-            "slot": "402",
-            "type": "t_mapping(t_bytes32,t_uint256)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:37"
+            "slot": "352",
+            "type": "t_contract(IProfileNFT)4362",
+            "contract": "LikeNFT",
+            "src": "contracts\\like\\LikeNFT.sol:42"
           },
           {
-            "label": "_defaultProfileIdByAddress",
+            "label": "_publishContract",
             "offset": 0,
-            "slot": "403",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:39"
+            "slot": "353",
+            "type": "t_contract(IPublishNFT)5324",
+            "contract": "LikeNFT",
+            "src": "contracts\\like\\LikeNFT.sol:44"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "354",
+            "type": "t_address",
+            "contract": "LikeNFT",
+            "src": "contracts\\like\\LikeNFT.sol:47"
+          },
+          {
+            "label": "_likeSupportFee",
+            "offset": 0,
+            "slot": "355",
+            "type": "t_uint256",
+            "contract": "LikeNFT",
+            "src": "contracts\\like\\LikeNFT.sol:49"
+          },
+          {
+            "label": "_platformFee",
+            "offset": 0,
+            "slot": "356",
+            "type": "t_uint256",
+            "contract": "LikeNFT",
+            "src": "contracts\\like\\LikeNFT.sol:51"
           },
           {
             "label": "_tokenById",
             "offset": 0,
-            "slot": "404",
-            "type": "t_mapping(t_uint256,t_struct(Token)12969_storage)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:41"
+            "slot": "357",
+            "type": "t_mapping(t_uint256,t_struct(LikeStruct)14532_storage)",
+            "contract": "LikeNFT",
+            "src": "contracts\\like\\LikeNFT.sol:53"
           }
         ],
         "types": {
@@ -943,382 +951,13 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_enum(TokenType)12946": {
-            "label": "enum DataTypes.TokenType",
-            "members": [
-              "Profile",
-              "Publish",
-              "Follow",
-              "Like"
-            ],
-            "numberOfBytes": "1"
-          },
-          "t_enum(Visibility)12950": {
-            "label": "enum DataTypes.Visibility",
-            "members": [
-              "UNSET",
-              "OFF",
-              "ON"
-            ],
-            "numberOfBytes": "1"
-          },
-          "t_mapping(t_address,t_bool)": {
-            "label": "mapping(address => bool)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_mapping(t_address,t_bool))": {
-            "label": "mapping(address => mapping(address => bool))",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_uint256)": {
-            "label": "mapping(address => uint256)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
-            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_uint256)": {
-            "label": "mapping(bytes32 => uint256)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_uint256,t_address)": {
-            "label": "mapping(uint256 => address)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_uint256,t_string_storage)": {
-            "label": "mapping(uint256 => string)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_uint256,t_struct(Token)12969_storage)": {
-            "label": "mapping(uint256 => struct DataTypes.Token)",
-            "numberOfBytes": "32"
-          },
-          "t_string_storage": {
-            "label": "string",
-            "numberOfBytes": "32"
-          },
-          "t_struct(Counter)2627_storage": {
-            "label": "struct CountersUpgradeable.Counter",
-            "members": [
-              {
-                "label": "_value",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              }
-            ],
-            "numberOfBytes": "32"
-          },
-          "t_struct(RoleData)34_storage": {
-            "label": "struct AccessControlUpgradeable.RoleData",
-            "members": [
-              {
-                "label": "members",
-                "type": "t_mapping(t_address,t_bool)",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "adminRole",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "1"
-              }
-            ],
-            "numberOfBytes": "64"
-          },
-          "t_struct(Token)12969_storage": {
-            "label": "struct DataTypes.Token",
-            "members": [
-              {
-                "label": "tokenId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "associatedId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "owner",
-                "type": "t_address",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "tokenType",
-                "type": "t_enum(TokenType)12946",
-                "offset": 20,
-                "slot": "2"
-              },
-              {
-                "label": "visibility",
-                "type": "t_enum(Visibility)12950",
-                "offset": 21,
-                "slot": "2"
-              },
-              {
-                "label": "handle",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "3"
-              },
-              {
-                "label": "imageURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "4"
-              },
-              {
-                "label": "contentURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "5"
-              }
-            ],
-            "numberOfBytes": "192"
-          },
-          "t_uint256": {
-            "label": "uint256",
-            "numberOfBytes": "32"
-          },
-          "t_uint8": {
-            "label": "uint8",
-            "numberOfBytes": "1"
-          }
-        }
-      }
-    },
-    "9f75213c6565f0e51619fb6ff1d18cdeecdacf2092de4a94e0e68e2e739c8e3b": {
-      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-      "txHash": "0x5dd34d6d07291fc8ed1b4b17aa00c47fee90d97917d63607f7d2c50432407f02",
-      "layout": {
-        "storage": [
-          {
-            "label": "_initialized",
-            "offset": 0,
-            "slot": "0",
-            "type": "t_uint8",
-            "contract": "Initializable",
-            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
-            "retypedFrom": "bool"
-          },
-          {
-            "label": "_initializing",
-            "offset": 1,
-            "slot": "0",
-            "type": "t_bool",
-            "contract": "Initializable",
-            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "1",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ContextUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "51",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC165Upgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\utils\\introspection\\ERC165Upgradeable.sol:41"
-          },
-          {
-            "label": "_name",
-            "offset": 0,
-            "slot": "101",
-            "type": "t_string_storage",
-            "contract": "ERC721Upgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:25"
-          },
-          {
-            "label": "_symbol",
-            "offset": 0,
-            "slot": "102",
-            "type": "t_string_storage",
-            "contract": "ERC721Upgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:28"
-          },
-          {
-            "label": "_owners",
-            "offset": 0,
-            "slot": "103",
-            "type": "t_mapping(t_uint256,t_address)",
-            "contract": "ERC721Upgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:31"
-          },
-          {
-            "label": "_balances",
-            "offset": 0,
-            "slot": "104",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "ERC721Upgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:34"
-          },
-          {
-            "label": "_tokenApprovals",
-            "offset": 0,
-            "slot": "105",
-            "type": "t_mapping(t_uint256,t_address)",
-            "contract": "ERC721Upgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:37"
-          },
-          {
-            "label": "_operatorApprovals",
-            "offset": 0,
-            "slot": "106",
-            "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
-            "contract": "ERC721Upgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:40"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "107",
-            "type": "t_array(t_uint256)44_storage",
-            "contract": "ERC721Upgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:465"
-          },
-          {
-            "label": "_tokenURIs",
-            "offset": 0,
-            "slot": "151",
-            "type": "t_mapping(t_uint256,t_string_storage)",
-            "contract": "ERC721URIStorageUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721URIStorageUpgradeable.sol:21"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "152",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "ERC721URIStorageUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721URIStorageUpgradeable.sol:74"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "201",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC721BurnableUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721BurnableUpgradeable.sol:38"
-          },
-          {
-            "label": "_roles",
-            "offset": 0,
-            "slot": "251",
-            "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
-            "contract": "AccessControlUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:61"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "252",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "AccessControlUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:259"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "301",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC1967UpgradeUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:211"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "351",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "UUPSUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
-          },
-          {
-            "label": "_tokenIdCounter",
-            "offset": 0,
-            "slot": "401",
-            "type": "t_struct(Counter)2627_storage",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:34"
-          },
-          {
-            "label": "_profileIdByHandleHash",
-            "offset": 0,
-            "slot": "402",
-            "type": "t_mapping(t_bytes32,t_uint256)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:37"
-          },
-          {
-            "label": "_defaultProfileIdByAddress",
-            "offset": 0,
-            "slot": "403",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:39"
-          },
-          {
-            "label": "_tokenById",
-            "offset": 0,
-            "slot": "404",
-            "type": "t_mapping(t_uint256,t_struct(Token)12975_storage)",
-            "contract": "ContentBase",
-            "src": "contracts\\ContentBaseMain.sol:41"
-          }
-        ],
-        "types": {
-          "t_address": {
-            "label": "address",
+          "t_contract(IProfileNFT)4362": {
+            "label": "contract IProfileNFT",
             "numberOfBytes": "20"
           },
-          "t_array(t_uint256)44_storage": {
-            "label": "uint256[44]",
-            "numberOfBytes": "1408"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]",
-            "numberOfBytes": "1568"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]",
-            "numberOfBytes": "1600"
-          },
-          "t_bool": {
-            "label": "bool",
-            "numberOfBytes": "1"
-          },
-          "t_bytes32": {
-            "label": "bytes32",
-            "numberOfBytes": "32"
-          },
-          "t_enum(TokenType)12952": {
-            "label": "enum DataTypes.TokenType",
-            "members": [
-              "Profile",
-              "Publish",
-              "Follow",
-              "Like"
-            ],
-            "numberOfBytes": "1"
-          },
-          "t_enum(Visibility)12956": {
-            "label": "enum DataTypes.Visibility",
-            "members": [
-              "UNSET",
-              "OFF",
-              "ON"
-            ],
-            "numberOfBytes": "1"
+          "t_contract(IPublishNFT)5324": {
+            "label": "contract IPublishNFT",
+            "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)",
@@ -1336,20 +975,12 @@
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_uint256)": {
-            "label": "mapping(bytes32 => uint256)",
-            "numberOfBytes": "32"
-          },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_string_storage)": {
-            "label": "mapping(uint256 => string)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_uint256,t_struct(Token)12975_storage)": {
-            "label": "mapping(uint256 => struct DataTypes.Token)",
+          "t_mapping(t_uint256,t_struct(LikeStruct)14532_storage)": {
+            "label": "mapping(uint256 => struct DataTypes.LikeStruct)",
             "numberOfBytes": "32"
           },
           "t_string_storage": {
@@ -1367,6 +998,30 @@
               }
             ],
             "numberOfBytes": "32"
+          },
+          "t_struct(LikeStruct)14532_storage": {
+            "label": "struct DataTypes.LikeStruct",
+            "members": [
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "profileId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "publishId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
           },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",
@@ -1386,60 +1041,6 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(Token)12975_storage": {
-            "label": "struct DataTypes.Token",
-            "members": [
-              {
-                "label": "tokenId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "associatedId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "owner",
-                "type": "t_address",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "tokenType",
-                "type": "t_enum(TokenType)12952",
-                "offset": 20,
-                "slot": "2"
-              },
-              {
-                "label": "visibility",
-                "type": "t_enum(Visibility)12956",
-                "offset": 21,
-                "slot": "2"
-              },
-              {
-                "label": "handle",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "3"
-              },
-              {
-                "label": "imageURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "4"
-              },
-              {
-                "label": "contentURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "5"
-              }
-            ],
-            "numberOfBytes": "192"
-          },
           "t_uint256": {
             "label": "uint256",
             "numberOfBytes": "32"
@@ -1451,9 +1052,310 @@
         }
       }
     },
-    "9e5f80ebad65f84f2156981f4165855004e883e628688ec8054b16f90d3eaebd": {
+    "d3606537288ee1ec3a16187194db39c769d0481f0cb2d5fb72c89d6472922fdf": {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x3168a032f428768bae58920f0f6c9e8f08e11db9a9dda3d5a40fc97616158222",
+      "txHash": "0x9be956c06f8618f845a3dd460f2a45ba48956d15cc0f3f2506ea93c38a6be673",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC165Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\introspection\\ERC165Upgradeable.sol:41"
+          },
+          {
+            "label": "_name",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_string_storage",
+            "contract": "ERC721Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:25"
+          },
+          {
+            "label": "_symbol",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_string_storage",
+            "contract": "ERC721Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:28"
+          },
+          {
+            "label": "_owners",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "ERC721Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:31"
+          },
+          {
+            "label": "_balances",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC721Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:34"
+          },
+          {
+            "label": "_tokenApprovals",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "ERC721Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:37"
+          },
+          {
+            "label": "_operatorApprovals",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
+            "contract": "ERC721Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:40"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_array(t_uint256)44_storage",
+            "contract": "ERC721Upgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol:465"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC721BurnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721BurnableUpgradeable.sol:38"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:61"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:259"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:211"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "301",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "_tokenIdCounter",
+            "offset": 0,
+            "slot": "351",
+            "type": "t_struct(Counter)2627_storage",
+            "contract": "FollowNFT",
+            "src": "contracts\\follow\\FollowNFT.sol:38"
+          },
+          {
+            "label": "_profileContract",
+            "offset": 0,
+            "slot": "352",
+            "type": "t_contract(IProfileNFT)4362",
+            "contract": "FollowNFT",
+            "src": "contracts\\follow\\FollowNFT.sol:41"
+          },
+          {
+            "label": "_tokenById",
+            "offset": 0,
+            "slot": "353",
+            "type": "t_mapping(t_uint256,t_struct(FollowStruct)14520_storage)",
+            "contract": "FollowNFT",
+            "src": "contracts\\follow\\FollowNFT.sol:44"
+          },
+          {
+            "label": "_followingCountByProfileId",
+            "offset": 0,
+            "slot": "354",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "FollowNFT",
+            "src": "contracts\\follow\\FollowNFT.sol:46"
+          },
+          {
+            "label": "_followersCountByProfileId",
+            "offset": 0,
+            "slot": "355",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "FollowNFT",
+            "src": "contracts\\follow\\FollowNFT.sol:48"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)44_storage": {
+            "label": "uint256[44]",
+            "numberOfBytes": "1408"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IProfileNFT)4362": {
+            "label": "contract IProfileNFT",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bool))": {
+            "label": "mapping(address => mapping(address => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(FollowStruct)14520_storage)": {
+            "label": "mapping(uint256 => struct DataTypes.FollowStruct)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Counter)2627_storage": {
+            "label": "struct CountersUpgradeable.Counter",
+            "members": [
+              {
+                "label": "_value",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(FollowStruct)14520_storage": {
+            "label": "struct DataTypes.FollowStruct",
+            "members": [
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "followerId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "followeeId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(RoleData)34_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "c32b109705a5b1b43736f966b3661340bb2a3bd05ba5ca53fbb96af1f2244d8b": {
+      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      "txHash": "0xf4b7effb677989bceff4fd716b548fb9138d7eb7181fe25b54d0d873980dcf9b",
       "layout": {
         "storage": [
           {
@@ -1607,23 +1509,31 @@
             "slot": "401",
             "type": "t_struct(Counter)2627_storage",
             "contract": "PublishNFT",
-            "src": "contracts\\publish\\PublishNFT.sol:38"
+            "src": "contracts\\publish\\PublishNFT.sol:39"
           },
           {
             "label": "_profileContract",
             "offset": 0,
             "slot": "402",
-            "type": "t_contract(IProfileNFT)3117",
+            "type": "t_contract(IProfileNFT)4362",
             "contract": "PublishNFT",
-            "src": "contracts\\publish\\PublishNFT.sol:41"
+            "src": "contracts\\publish\\PublishNFT.sol:42"
+          },
+          {
+            "label": "_likeContractAddress",
+            "offset": 0,
+            "slot": "403",
+            "type": "t_address",
+            "contract": "PublishNFT",
+            "src": "contracts\\publish\\PublishNFT.sol:44"
           },
           {
             "label": "_tokenById",
             "offset": 0,
-            "slot": "403",
-            "type": "t_mapping(t_uint256,t_struct(PublishStruct)13204_storage)",
+            "slot": "404",
+            "type": "t_mapping(t_uint256,t_struct(PublishStruct)14493_storage)",
             "contract": "PublishNFT",
-            "src": "contracts\\publish\\PublishNFT.sol:44"
+            "src": "contracts\\publish\\PublishNFT.sol:47"
           }
         ],
         "types": {
@@ -1651,7 +1561,7 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IProfileNFT)3117": {
+          "t_contract(IProfileNFT)4362": {
             "label": "contract IProfileNFT",
             "numberOfBytes": "20"
           },
@@ -1679,7 +1589,7 @@
             "label": "mapping(uint256 => string)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(PublishStruct)13204_storage)": {
+          "t_mapping(t_uint256,t_struct(PublishStruct)14493_storage)": {
             "label": "mapping(uint256 => struct DataTypes.PublishStruct)",
             "numberOfBytes": "32"
           },
@@ -1699,12 +1609,12 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(PublishStruct)13204_storage": {
+          "t_struct(PublishStruct)14493_storage": {
             "label": "struct DataTypes.PublishStruct",
             "members": [
               {
-                "label": "tokenId",
-                "type": "t_uint256",
+                "label": "owner",
+                "type": "t_address",
                 "offset": 0,
                 "slot": "0"
               },
@@ -1715,8 +1625,8 @@
                 "slot": "1"
               },
               {
-                "label": "owner",
-                "type": "t_address",
+                "label": "likes",
+                "type": "t_uint256",
                 "offset": 0,
                 "slot": "2"
               },
@@ -1764,9 +1674,9 @@
         }
       }
     },
-    "079bbd937963777e51d7e90b2492e45b88710f83e9c4db9a851bc9ae521bd646": {
-      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0xea2606932833ec86806d9b7662ccbfd492903e66befa5add860ea0175244ce76",
+    "c3529ee203b98ca20ccf5261e338419a702e32d0dce3188fb5ef4ee0f33f4b37": {
+      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "txHash": "0x243b730b25512057fb3fa3ecb097c2c2b071602eb8245994c4d4f77b9bc37e19",
       "layout": {
         "storage": [
           {
@@ -1875,17 +1785,9 @@
             "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721URIStorageUpgradeable.sol:74"
           },
           {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "201",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC721BurnableUpgradeable",
-            "src": "@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721BurnableUpgradeable.sol:38"
-          },
-          {
             "label": "_roles",
             "offset": 0,
-            "slot": "251",
+            "slot": "201",
             "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
             "contract": "AccessControlUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:61"
@@ -1893,7 +1795,7 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "252",
+            "slot": "202",
             "type": "t_array(t_uint256)49_storage",
             "contract": "AccessControlUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:259"
@@ -1901,7 +1803,7 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "301",
+            "slot": "251",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ERC1967UpgradeUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol:211"
@@ -1909,7 +1811,7 @@
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "351",
+            "slot": "301",
             "type": "t_array(t_uint256)50_storage",
             "contract": "UUPSUpgradeable",
             "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:107"
@@ -1917,42 +1819,34 @@
           {
             "label": "_tokenIdCounter",
             "offset": 0,
-            "slot": "401",
+            "slot": "351",
             "type": "t_struct(Counter)2627_storage",
-            "contract": "FollowNFT",
-            "src": "contracts\\follow\\FollowNFT.sol:38"
+            "contract": "ProfileNFT",
+            "src": "contracts\\profile\\ProfileNFT.sol:36"
           },
           {
-            "label": "_profileContract",
+            "label": "_tokenIdByHandleHash",
             "offset": 0,
-            "slot": "402",
-            "type": "t_contract(IProfileNFT)3692",
-            "contract": "FollowNFT",
-            "src": "contracts\\follow\\FollowNFT.sol:41"
+            "slot": "352",
+            "type": "t_mapping(t_bytes32,t_uint256)",
+            "contract": "ProfileNFT",
+            "src": "contracts\\profile\\ProfileNFT.sol:39"
+          },
+          {
+            "label": "_defaultTokenIdByAddress",
+            "offset": 0,
+            "slot": "353",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ProfileNFT",
+            "src": "contracts\\profile\\ProfileNFT.sol:41"
           },
           {
             "label": "_tokenById",
             "offset": 0,
-            "slot": "403",
-            "type": "t_mapping(t_uint256,t_struct(FollowStruct)13817_storage)",
-            "contract": "FollowNFT",
-            "src": "contracts\\follow\\FollowNFT.sol:44"
-          },
-          {
-            "label": "_followerCountByProfileId",
-            "offset": 0,
-            "slot": "404",
-            "type": "t_mapping(t_uint256,t_uint256)",
-            "contract": "FollowNFT",
-            "src": "contracts\\follow\\FollowNFT.sol:46"
-          },
-          {
-            "label": "_followingCountByProfileId",
-            "offset": 0,
-            "slot": "405",
-            "type": "t_mapping(t_uint256,t_uint256)",
-            "contract": "FollowNFT",
-            "src": "contracts\\follow\\FollowNFT.sol:48"
+            "slot": "354",
+            "type": "t_mapping(t_uint256,t_struct(ProfileStruct)14468_storage)",
+            "contract": "ProfileNFT",
+            "src": "contracts\\profile\\ProfileNFT.sol:43"
           }
         ],
         "types": {
@@ -1980,10 +1874,6 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IProfileNFT)3692": {
-            "label": "contract IProfileNFT",
-            "numberOfBytes": "20"
-          },
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
@@ -2000,6 +1890,10 @@
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
             "numberOfBytes": "32"
           },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
@@ -2008,12 +1902,8 @@
             "label": "mapping(uint256 => string)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(FollowStruct)13817_storage)": {
-            "label": "mapping(uint256 => struct DataTypes.FollowStruct)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_uint256,t_uint256)": {
-            "label": "mapping(uint256 => uint256)",
+          "t_mapping(t_uint256,t_struct(ProfileStruct)14468_storage)": {
+            "label": "mapping(uint256 => struct DataTypes.ProfileStruct)",
             "numberOfBytes": "32"
           },
           "t_string_storage": {
@@ -2032,35 +1922,29 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(FollowStruct)13817_storage": {
-            "label": "struct DataTypes.FollowStruct",
+          "t_struct(ProfileStruct)14468_storage": {
+            "label": "struct DataTypes.ProfileStruct",
             "members": [
-              {
-                "label": "tokenId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "followerId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "followingId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "2"
-              },
               {
                 "label": "owner",
                 "type": "t_address",
                 "offset": 0,
-                "slot": "3"
+                "slot": "0"
+              },
+              {
+                "label": "handle",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "imageURI",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "2"
               }
             ],
-            "numberOfBytes": "128"
+            "numberOfBytes": "96"
           },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",

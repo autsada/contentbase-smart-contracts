@@ -132,4 +132,26 @@ library DataTypes {
         uint256 followerId;
         uint256 followeeId;
     }
+
+    /**
+     * A struct containing data of Like NFT.
+     * @param owner {address} - an address that owns the token.
+     * @param profileId {uint256} - a Profile NFT id that performs a like.
+     * @param publishId {uint256} - a Publish NFT id that is being liked.
+     */
+    struct LikeStruct {
+        address owner;
+        uint256 profileId;
+        uint256 publishId;
+    }
+
+    /**
+     * A struct containing data required to create Like NFT.
+     * @param profileId {uint256} - see LikeStruct
+     * @param publishId {uint256} - see LikeStruct
+     */
+    struct CreateLikeData {
+        uint256 profileId;
+        uint256 publishId;
+    }
 }
