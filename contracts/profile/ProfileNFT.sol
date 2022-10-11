@@ -15,6 +15,7 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
  * @title ProfileNFT
+ * @notice To reduce complexity, this contract is not burnable as profiles own other NFTs so burning a profile will lead to a need to also burn other NFTs that the profile owns.
  * @dev frontend needs to track token ids own by each address and handle so it can query tokens for each address/handle.
  */
 
