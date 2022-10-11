@@ -40,12 +40,12 @@ contract ProfileNFT is
     // Mapping to track user's default profile
     mapping(address => uint256) private _defaultTokenIdByAddress;
     // Mapping of profile struct by token id.
-    mapping(uint256 => DataTypes.ProfileStruct) private _tokenById;
+    mapping(uint256 => DataTypes.Profile) private _tokenById;
 
     // Events
-    event ProfileCreated(DataTypes.ProfileStruct token, address owner);
-    event ProfileImageUpdated(DataTypes.ProfileStruct token, address owner);
-    event DefaultProfileUpdated(DataTypes.ProfileStruct token, address owner);
+    event ProfileCreated(DataTypes.Profile token, address owner);
+    event ProfileImageUpdated(DataTypes.Profile token, address owner);
+    event DefaultProfileUpdated(DataTypes.Profile token, address owner);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -126,7 +126,7 @@ contract ProfileNFT is
         ] = tokenId;
 
         // Update _tokenById mapping.
-        DataTypes.ProfileStruct memory newToken = DataTypes.ProfileStruct({
+        DataTypes.Profile memory newToken = DataTypes.Profile({
             owner: owner,
             handle: createProfileData.handle,
             imageURI: createProfileData.imageURI
@@ -257,7 +257,7 @@ contract ProfileNFT is
         external
         view
         override
-        returns (DataTypes.ProfileStruct[] memory)
+        returns (DataTypes.Profile[] memory)
     {
         // Validate the param.
         require(
@@ -283,8 +283,9 @@ contract ProfileNFT is
         if (profilesArrayLen == 0) revert("Not found");
 
         // Create a fix size empty array.
-        DataTypes.ProfileStruct[]
-            memory profiles = new DataTypes.ProfileStruct[](profilesArrayLen);
+        DataTypes.Profile[] memory profiles = new DataTypes.Profile[](
+            profilesArrayLen
+        );
         // Track the array index
         uint256 index;
 
@@ -309,7 +310,7 @@ contract ProfileNFT is
         external
         view
         override
-        returns (DataTypes.ProfileStruct memory)
+        returns (DataTypes.Profile memory)
     {
         uint256 tokenId = _defaultTokenIdByAddress[msg.sender];
         require(tokenId != 0, "Not found");
@@ -324,7 +325,7 @@ contract ProfileNFT is
         external
         view
         override
-        returns (DataTypes.ProfileStruct memory)
+        returns (DataTypes.Profile memory)
     {
         // Token id must exist
         require(_exists(tokenId), "Not found");

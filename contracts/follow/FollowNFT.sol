@@ -41,18 +41,14 @@ contract FollowNFT is
     IProfileNFT private _profileContract;
 
     // Mapping of Follow struct by token id.
-    mapping(uint256 => DataTypes.FollowStruct) private _tokenById;
+    mapping(uint256 => DataTypes.Follow) private _tokenById;
     // Mapping that shows following count of a specific profile id.
     mapping(uint256 => uint256) private _followingCountByProfileId;
     // Mapping that shows followers count of a specific profile id.
     mapping(uint256 => uint256) private _followersCountByProfileId;
 
     // Events
-    event Follow(
-        DataTypes.FollowStruct token,
-        address follower,
-        address followee
-    );
+    event Follow(DataTypes.Follow token, address follower, address followee);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -140,7 +136,7 @@ contract FollowNFT is
         _safeMint(owner, tokenId);
 
         // Update _tokenById mapping.
-        DataTypes.FollowStruct memory newToken = DataTypes.FollowStruct({
+        DataTypes.Follow memory newToken = DataTypes.Follow({
             owner: owner,
             followerId: createFollowData.followerId,
             followeeId: createFollowData.followeeId
@@ -188,7 +184,7 @@ contract FollowNFT is
     function getFollows(uint256[] calldata tokenIds)
         external
         view
-        returns (DataTypes.FollowStruct[] memory)
+        returns (DataTypes.Follow[] memory)
     {
         // Validate the ids array.
         require(
@@ -214,7 +210,7 @@ contract FollowNFT is
         if (followsArrayLen == 0) revert("Not found");
 
         // Create a fix size empty array.
-        DataTypes.FollowStruct[] memory follows = new DataTypes.FollowStruct[](
+        DataTypes.Follow[] memory follows = new DataTypes.Follow[](
             followsArrayLen
         );
         // Track the array index
@@ -247,7 +243,7 @@ contract FollowNFT is
         require(msg.sender == ownerOf(tokenId), "Forbidden");
 
         // Get token struct.
-        DataTypes.FollowStruct memory token = _tokenById[tokenId];
+        DataTypes.Follow memory token = _tokenById[tokenId];
 
         // Update following count of the follower.
         _followingCountByProfileId[token.followerId]--;

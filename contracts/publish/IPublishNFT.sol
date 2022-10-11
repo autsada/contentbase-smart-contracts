@@ -51,32 +51,32 @@ interface IPublishNFT {
     /**
      * An external function to get user's Publish NFTs.
      * @param tokenIds {uint256[]} - an array of token ids
-     * @return tokens {PublishStruct[]} - an array of Publish structs
+     * @return tokens {Publish[]} - an array of Publish structs
      */
     function ownerPublishes(uint256[] calldata tokenIds)
         external
         view
-        returns (DataTypes.PublishStruct[] memory);
+        returns (DataTypes.Publish[] memory);
 
     /**
      * An external function to get Publish NFTs by ids.
      * @param tokenIds {uint256[]} - an array of token ids
-     * @return tokens {PublishStruct[]} - an array of Publish structs
+     * @return tokens {Publish[]} - an array of Publish structs
      */
     function getPublishes(uint256[] calldata tokenIds)
         external
         view
-        returns (DataTypes.PublishStruct[] memory);
+        returns (DataTypes.Publish[] memory);
 
     /**
      * An external function to get a Publish NFT.
      * @param tokenId {uint256}
-     * @return token {PublishStruct}
+     * @return token {Publish}
      */
     function publishById(uint256 tokenId)
         external
         view
-        returns (DataTypes.PublishStruct memory);
+        returns (DataTypes.Publish memory);
 
     /**
      * An external function to get total NFTs count.

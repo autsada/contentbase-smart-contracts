@@ -32,31 +32,28 @@ interface IProfileNFT {
     /**
      * An external function to list user's profiles.
      * @param tokenIds {uint256[]} - an array of token ids
-     * @return tokens {ProfileStruct[]}
+     * @return tokens {Profile[]}
      */
     function ownerProfiles(uint256[] calldata tokenIds)
         external
         view
-        returns (DataTypes.ProfileStruct[] memory);
+        returns (DataTypes.Profile[] memory);
 
     /**
      * An external function to get user's default profile.
-     * @return token {ProfileStruct}
+     * @return token {Profile}
      */
-    function defaultProfile()
-        external
-        view
-        returns (DataTypes.ProfileStruct memory);
+    function defaultProfile() external view returns (DataTypes.Profile memory);
 
     /**
      * An external function get profile struct by id.
      * @param tokenId {uint256}
-     * @return token {ProfileStruct}
+     * @return token {Profile}
      */
     function profileById(uint256 tokenId)
         external
         view
-        returns (DataTypes.ProfileStruct memory);
+        returns (DataTypes.Profile memory);
 
     /**
      * An external function to get total profiles count.

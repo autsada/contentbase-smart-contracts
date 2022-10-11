@@ -50,7 +50,7 @@ contract LikeNFT is
     // Operational fee for the platform, this is a percentage to deduct from the like fee before transfering the fee to the publish's owner, need to store it as a whole number and do division when using it.
     uint private _platformFee;
     // Mapping of Like struct by token id.
-    mapping(uint256 => DataTypes.LikeStruct) private _tokenById;
+    mapping(uint256 => DataTypes.Like) private _tokenById;
 
     // Events
     event Received(address sender, uint value);
@@ -210,7 +210,7 @@ contract LikeNFT is
         _safeMint(msg.sender, tokenId);
 
         // Create Like NFT.
-        DataTypes.LikeStruct memory token = DataTypes.LikeStruct({
+        DataTypes.Like memory token = DataTypes.Like({
             owner: msg.sender,
             profileId: createLikeData.profileId,
             publishId: createLikeData.publishId
@@ -241,7 +241,7 @@ contract LikeNFT is
         require(msg.sender == ownerOf(tokenId), "Forbidden");
 
         // Get the token struct.
-        DataTypes.LikeStruct memory token = _tokenById[tokenId];
+        DataTypes.Like memory token = _tokenById[tokenId];
 
         // Clear the token from _tokenById mapping.
         delete _tokenById[tokenId];

@@ -44,11 +44,11 @@ contract PublishNFT is
     address private _likeContractAddress;
 
     // Mapping of publish struct by token id.
-    mapping(uint256 => DataTypes.PublishStruct) private _tokenById;
+    mapping(uint256 => DataTypes.Publish) private _tokenById;
 
     // Events
-    event PublishCreated(DataTypes.PublishStruct token, address owner);
-    event PublishUpdated(DataTypes.PublishStruct token, address owner);
+    event PublishCreated(DataTypes.Publish token, address owner);
+    event PublishUpdated(DataTypes.Publish token, address owner);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -147,7 +147,7 @@ contract PublishNFT is
         _setTokenURI(tokenId, createPublishData.tokenURI);
 
         // Update _tokenById mapping.
-        DataTypes.PublishStruct memory newToken = DataTypes.PublishStruct({
+        DataTypes.Publish memory newToken = DataTypes.Publish({
             owner: owner,
             creatorId: createPublishData.creatorId,
             likes: 0,
@@ -290,7 +290,7 @@ contract PublishNFT is
         external
         view
         override
-        returns (DataTypes.PublishStruct[] memory)
+        returns (DataTypes.Publish[] memory)
     {
         // Validate param
         require(
@@ -316,8 +316,9 @@ contract PublishNFT is
         if (publishesArrayLen == 0) revert("Not found");
 
         // Create a fix size empty array.
-        DataTypes.PublishStruct[]
-            memory publishes = new DataTypes.PublishStruct[](publishesArrayLen);
+        DataTypes.Publish[] memory publishes = new DataTypes.Publish[](
+            publishesArrayLen
+        );
         // Track the array index
         uint256 index;
 
@@ -342,7 +343,7 @@ contract PublishNFT is
         external
         view
         override
-        returns (DataTypes.PublishStruct[] memory)
+        returns (DataTypes.Publish[] memory)
     {
         // Validate param
         require(
@@ -368,8 +369,9 @@ contract PublishNFT is
         if (publishesArrayLen == 0) revert("Not found");
 
         // Create a fix size empty array.
-        DataTypes.PublishStruct[]
-            memory publishes = new DataTypes.PublishStruct[](publishesArrayLen);
+        DataTypes.Publish[] memory publishes = new DataTypes.Publish[](
+            publishesArrayLen
+        );
         // Track the array index
         uint256 index;
 
@@ -394,7 +396,7 @@ contract PublishNFT is
         external
         view
         override
-        returns (DataTypes.PublishStruct memory)
+        returns (DataTypes.Publish memory)
     {
         // Token id must exist
         require(_exists(tokenId), "Not found");

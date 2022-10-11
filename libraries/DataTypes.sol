@@ -12,7 +12,7 @@ library DataTypes {
      * @param handle {string} - a handle that associate with the owner address
      * @param imageURI {string} - a uri of the profile image
      */
-    struct ProfileStruct {
+    struct Profile {
         address owner;
         string handle;
         string imageURI;
@@ -73,7 +73,7 @@ library DataTypes {
      * @param imageURI {string} - a publish's thumbnail image uri
      * @param contentURI {string} - a publish's content uri
      */
-    struct PublishStruct {
+    struct Publish {
         address owner;
         uint256 creatorId;
         uint256 likes;
@@ -117,7 +117,7 @@ library DataTypes {
      * @param followerId {uint256} - a Profile NFT id that follows followeeId.
      * @param followeeId {uint256} - a Profile NFT id that is being followed by followerId.
      */
-    struct FollowStruct {
+    struct Follow {
         address owner;
         uint256 followerId;
         uint256 followeeId;
@@ -139,7 +139,7 @@ library DataTypes {
      * @param profileId {uint256} - a Profile NFT id that performs a like.
      * @param publishId {uint256} - a Publish NFT id that is being liked.
      */
-    struct LikeStruct {
+    struct Like {
         address owner;
         uint256 profileId;
         uint256 publishId;

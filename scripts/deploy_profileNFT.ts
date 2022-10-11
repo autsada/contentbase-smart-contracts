@@ -16,7 +16,7 @@ async function main() {
   }
 
   await fs.writeFile(
-    path.join(__dirname, '..', '/abi/ProfileNFTContract.json'),
+    path.join(__dirname, '..', '/abi/ProfileContract.json'),
     JSON.stringify(data)
   )
 }

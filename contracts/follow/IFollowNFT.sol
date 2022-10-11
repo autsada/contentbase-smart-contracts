@@ -38,10 +38,10 @@ interface IFollowNFT {
     /**
      * An external function to get Follow structs from a given ids array.
      * @param tokenIds {uint256[]}
-     * @return tokens {FollowStruct[]}
+     * @return tokens {Follow[]}
      */
     function getFollows(uint256[] calldata tokenIds)
         external
         view
-        returns (DataTypes.FollowStruct[] memory);
+        returns (DataTypes.Follow[] memory);
 }
