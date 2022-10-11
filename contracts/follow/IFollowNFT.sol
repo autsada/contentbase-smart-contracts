@@ -32,18 +32,12 @@ interface IFollowNFT {
      * @param profileId {uint256} - a token id of the Profile NFT
      * @return count {uint256}
      */
-    function followerByProfile(uint256 profileId)
-        external
-        view
-        returns (uint256);
+    function getFollower(uint256 profileId) external view returns (uint256);
 
     /**
      * An external function to get following count of a specific profile id.
      * @param profileId {uint256} - a token id of the Profile NFT
      * @return count {uint256}
      */
-    function followingByProfile(uint256 profileId)
-        external
-        view
-        returns (uint256);
+    function getFollowing(uint256 profileId) external view returns (uint256);
 }

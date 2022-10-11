@@ -188,9 +188,9 @@ contract FollowNFT is
     }
 
     /**
-     * @dev see IFollowNFT - followerByProfile
+     * @dev see IFollowNFT - getFollower
      */
-    function followerByProfile(uint256 profileId)
+    function getFollower(uint256 profileId)
         external
         view
         override
@@ -203,9 +203,9 @@ contract FollowNFT is
     }
 
     /**
-     * @dev see IFollowNFT - followingByProfile
+     * @dev see IFollowNFT - getFollowing
      */
-    function followingByProfile(uint256 profileId)
+    function getFollowing(uint256 profileId)
         external
         view
         override
