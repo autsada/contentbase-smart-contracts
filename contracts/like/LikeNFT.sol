@@ -54,6 +54,8 @@ contract LikeNFT is
 
     // Events
     event Received(address sender, uint value);
+    event Like(DataTypes.Like token, address owner, uint256 publishId);
+    event UnLike(DataTypes.Like token, address owner, uint256 publishId);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -226,6 +228,9 @@ contract LikeNFT is
 
         // Update the Publish NFT's likes.
         _publishContract.like(createLikeData.publishId);
+
+        // Emit Like event.
+        emit Like(token, msg.sender, createLikeData.publishId);
     }
 
     /**
@@ -251,6 +256,9 @@ contract LikeNFT is
 
         // Update the Publish NFT's likes.
         _publishContract.unLike(token.publishId);
+
+        // Emit UnLike event
+        emit UnLike(token, msg.sender, token.publishId);
     }
 
     function _authorizeUpgrade(address newImplementation)
