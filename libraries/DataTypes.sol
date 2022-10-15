@@ -8,11 +8,13 @@ pragma solidity ^0.8.9;
 library DataTypes {
     /**
      * A struct containing data of Profile NFT.
+     * @param tokenId {uint256} - a token id
      * @param owner {address} - an address that owns the token
      * @param handle {string} - a handle that associate with the owner address
      * @param imageURI {string} - a uri of the profile image
      */
     struct Profile {
+        uint256 tokenId;
         address owner;
         string handle;
         string imageURI;
@@ -68,6 +70,7 @@ library DataTypes {
     /**
      * A struct containing data of Publish NFT.
      * @param owner {address} - an address that owns the token
+     * @param tokenId {uint256} - a token id
      * @param creatorId {uint256} - a profile token id of the creator
      * @param likes {uint256} - number of likes a publish has
      * @param imageURI {string} - a publish's thumbnail image uri
@@ -75,6 +78,7 @@ library DataTypes {
      */
     struct Publish {
         address owner;
+        uint256 tokenId;
         uint256 creatorId;
         uint256 likes;
         string imageURI;
@@ -114,11 +118,13 @@ library DataTypes {
     /**
      * A struct containing data of Follow NFT.
      * @param owner {address} - an address that owns the token.
+     * @param tokenId {uint256} - a token id
      * @param followerId {uint256} - a Profile NFT id that follows followeeId.
      * @param followeeId {uint256} - a Profile NFT id that is being followed by followerId.
      */
     struct Follow {
         address owner;
+        uint256 tokenId;
         uint256 followerId;
         uint256 followeeId;
     }
@@ -136,11 +142,13 @@ library DataTypes {
     /**
      * A struct containing data of Like NFT.
      * @param owner {address} - an address that owns the token.
+     * @param tokenId {uint256} - a token id
      * @param profileId {uint256} - a Profile NFT id that performs a like.
      * @param publishId {uint256} - a Publish NFT id that is being liked.
      */
     struct Like {
         address owner;
+        uint256 tokenId;
         uint256 profileId;
         uint256 publishId;
     }

@@ -138,6 +138,7 @@ contract FollowNFT is
         // Update _tokenById mapping.
         DataTypes.Follow memory newToken = DataTypes.Follow({
             owner: owner,
+            tokenId: tokenId,
             followerId: createFollowData.followerId,
             followeeId: createFollowData.followeeId
         });

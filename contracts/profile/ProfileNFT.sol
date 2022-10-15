@@ -127,6 +127,7 @@ contract ProfileNFT is
 
         // Update _tokenById mapping.
         DataTypes.Profile memory newToken = DataTypes.Profile({
+            tokenId: tokenId,
             owner: owner,
             handle: createProfileData.handle,
             imageURI: createProfileData.imageURI

@@ -214,6 +214,7 @@ contract LikeNFT is
         // Create Like NFT.
         DataTypes.Like memory token = DataTypes.Like({
             owner: msg.sender,
+            tokenId: tokenId,
             profileId: createLikeData.profileId,
             publishId: createLikeData.publishId
         });
