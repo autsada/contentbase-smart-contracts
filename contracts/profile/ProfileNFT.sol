@@ -252,59 +252,6 @@ contract ProfileNFT is
     }
 
     /**
-     * @dev see IProfileNFT - ownerProfiles
-     */
-    function ownerProfiles(uint256[] calldata tokenIds)
-        external
-        view
-        override
-        returns (DataTypes.Profile[] memory)
-    {
-        // Validate the param.
-        require(
-            tokenIds.length > 0 &&
-                tokenIds.length <= Constants.TOKEN_QUERY_LIMIT,
-            "Bad input"
-        );
-
-        // Get to be created array length first.
-        uint256 profilesArrayLen;
-
-        // Loop through the given tokenIds array to check each id if it exists and the caller is the owner.
-        for (uint256 i = 0; i < tokenIds.length; ) {
-            if (_exists(tokenIds[i]) && ownerOf(tokenIds[i]) == msg.sender) {
-                profilesArrayLen++;
-            }
-            unchecked {
-                i++;
-            }
-        }
-
-        // Revert if no profile found.
-        if (profilesArrayLen == 0) revert("Not found");
-
-        // Create a fix size empty array.
-        DataTypes.Profile[] memory profiles = new DataTypes.Profile[](
-            profilesArrayLen
-        );
-        // Track the array index
-        uint256 index;
-
-        // Loop through the given token ids again to find a token for each id and put it in the array.
-        for (uint256 i = 0; i < tokenIds.length; ) {
-            if (_exists(tokenIds[i]) && (ownerOf(tokenIds[i]) == msg.sender)) {
-                profiles[index] = _tokenById[tokenIds[i]];
-                index++;
-            }
-            unchecked {
-                i++;
-            }
-        }
-
-        return profiles;
-    }
-
-    /**
      * @dev see IProfileNFT - defaultProfile
      */
     function defaultProfile()
@@ -315,21 +262,6 @@ contract ProfileNFT is
     {
         uint256 tokenId = _defaultTokenIdByAddress[msg.sender];
         require(tokenId != 0, "Not found");
-
-        return _tokenById[tokenId];
-    }
-
-    /**
-     * @dev see IProfileNFT - profileById
-     */
-    function profileById(uint256 tokenId)
-        external
-        view
-        override
-        returns (DataTypes.Profile memory)
-    {
-        // Token id must exist
-        require(_exists(tokenId), "Not found");
 
         return _tokenById[tokenId];
     }
