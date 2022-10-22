@@ -54,7 +54,12 @@ contract LikeNFT is
 
     // Events
     event Received(address sender, uint value);
-    event Like(DataTypes.Like token, address owner, uint256 publishId);
+    event Like(
+        DataTypes.Like token,
+        address owner,
+        uint fee,
+        uint256 publishId
+    );
     event UnLike(DataTypes.Like token, address owner, uint256 publishId);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -75,7 +80,7 @@ contract LikeNFT is
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
 
-        _likeSupportFee = 0.001 ether;
+        _likeSupportFee = 1000 ether;
         _platformFee = 2;
     }
 
@@ -223,15 +228,14 @@ contract LikeNFT is
         _tokenById[tokenId] = token;
 
         // Transfer like support fee after deducting operational fee for the platform to the publish owner.
-        payable(publishOwner).transfer(
-            msg.value - (msg.value * (_platformFee / 100))
-        );
+        uint netFee = msg.value - (msg.value * (_platformFee / 100));
+        payable(publishOwner).transfer(netFee);
 
         // Update the Publish NFT's likes.
         _publishContract.like(createLikeData.publishId);
 
         // Emit Like event.
-        emit Like(token, msg.sender, createLikeData.publishId);
+        emit Like(token, msg.sender, netFee, createLikeData.publishId);
     }
 
     /**

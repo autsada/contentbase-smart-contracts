@@ -2,7 +2,6 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -19,12 +18,13 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 /**
  * @title PublishNFT
  * @dev frontend needs to track token ids own by each address so it can query tokens for each address.
+ * @dev metadataURI must resolve to the metadata json object file of the publish, the json object must have required fields as specified in Metadata Guild at Publish struct in DataTypes.sol.
+ * @dev createPublish / updatePublish require some information that will not be stored on the blockchain, but for event emitting only. This is to inform frontends the information of the publish so they can update their UI / database accordingly.
  */
 
 contract PublishNFT is
     Initializable,
     ERC721Upgradeable,
-    ERC721URIStorageUpgradeable,
     ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
@@ -47,8 +47,24 @@ contract PublishNFT is
     mapping(uint256 => DataTypes.Publish) private _tokenById;
 
     // Events
-    event PublishCreated(DataTypes.Publish token, address owner);
-    event PublishUpdated(DataTypes.Publish token, address owner);
+    event PublishCreated(
+        DataTypes.Publish token,
+        string title,
+        string description,
+        DataTypes.Category primaryCategory,
+        DataTypes.Category secondaryCategory,
+        DataTypes.Category tertiaryCategory,
+        address owner
+    );
+    event PublishUpdated(
+        DataTypes.Publish token,
+        string title,
+        string description,
+        DataTypes.Category primaryCategory,
+        DataTypes.Category secondaryCategory,
+        DataTypes.Category tertiaryCategory,
+        address owner
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -57,7 +73,6 @@ contract PublishNFT is
 
     function initialize() public initializer {
         __ERC721_init("Content Base Publish", "CBPu");
-        __ERC721URIStorage_init();
         __ERC721Burnable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -105,17 +120,31 @@ contract PublishNFT is
             "Forbidden"
         );
 
-        // Validate tokenURI.
-        require(Helpers.notTooShortURI(createPublishData.tokenURI));
-        require(Helpers.notTooLongURI(createPublishData.tokenURI));
-
         // Validate imageURI.
         require(Helpers.notTooShortURI(createPublishData.imageURI));
         require(Helpers.notTooLongURI(createPublishData.imageURI));
 
-        // Validate contentlURI.
+        // Validate contentURI.
         require(Helpers.notTooShortURI(createPublishData.contentURI));
         require(Helpers.notTooLongURI(createPublishData.contentURI));
+
+        // Validate metadataURI.
+        require(Helpers.notTooShortURI(createPublishData.metadataURI));
+        require(Helpers.notTooLongURI(createPublishData.metadataURI));
+
+        // Validate title.
+        require(Helpers.notTooShortTitle(createPublishData.title));
+        require(Helpers.notTooLongTitle(createPublishData.title));
+
+        // Validate description.
+        require(Helpers.notTooLongDescription(createPublishData.description));
+
+        // Validate categories.
+        require(
+            Helpers.validPrimaryCategory(createPublishData.primaryCategory)
+        );
+        require(Helpers.validCategory(createPublishData.secondaryCategory));
+        require(Helpers.validCategory(createPublishData.tertiaryCategory));
 
         return
             _createPublish({
@@ -143,9 +172,6 @@ contract PublishNFT is
         // Mint an NFT to the owner.
         _safeMint(owner, tokenId);
 
-        // Update tokenURI.
-        _setTokenURI(tokenId, createPublishData.tokenURI);
-
         // Update _tokenById mapping.
         DataTypes.Publish memory newToken = DataTypes.Publish({
             owner: owner,
@@ -153,12 +179,21 @@ contract PublishNFT is
             creatorId: createPublishData.creatorId,
             likes: 0,
             imageURI: createPublishData.imageURI,
-            contentURI: createPublishData.contentURI
+            contentURI: createPublishData.contentURI,
+            metadataURI: createPublishData.metadataURI
         });
         _tokenById[tokenId] = newToken;
 
         // Emit publish created event.
-        emit PublishCreated(_tokenById[tokenId], owner);
+        emit PublishCreated(
+            _tokenById[tokenId],
+            createPublishData.title,
+            createPublishData.description,
+            createPublishData.primaryCategory,
+            createPublishData.secondaryCategory,
+            createPublishData.tertiaryCategory,
+            owner
+        );
 
         return tokenId;
     }
@@ -189,34 +224,31 @@ contract PublishNFT is
             "Not allow"
         );
 
-        // Validate tokenURI.
-        require(Helpers.notTooShortURI(updatePublishData.tokenURI));
-        require(Helpers.notTooLongURI(updatePublishData.tokenURI));
-
         // Validate imageURI
-        // The image uri (which is a publish's thumbnail image) might not change, in this case updatePublishData.imageURI is empty, so only validate if it's not empty.
-        if (bytes(updatePublishData.imageURI).length != 0) {
-            require(Helpers.notTooShortURI(updatePublishData.imageURI));
-            require(Helpers.notTooLongURI(updatePublishData.imageURI));
-        }
+        require(Helpers.notTooShortURI(updatePublishData.imageURI));
+        require(Helpers.notTooLongURI(updatePublishData.imageURI));
 
-        // Validate contentlURI.
-        // The content uri might not change, in this case updatePublishData.contentURI is empty, so only validate if it's not empty.
-        if (bytes(updatePublishData.contentURI).length != 0) {
-            require(Helpers.notTooShortURI(updatePublishData.contentURI));
-            require(Helpers.notTooLongURI(updatePublishData.contentURI));
-        }
+        // Validate contentURI.
+        require(Helpers.notTooShortURI(updatePublishData.contentURI));
+        require(Helpers.notTooLongURI(updatePublishData.contentURI));
 
-        // Check if the tokenURI changed.
-        // Don't have to check the imageURI and contentURI as it might not be changed even the image/content changed.
+        // Validate metadataURI.
+        require(Helpers.notTooShortURI(updatePublishData.metadataURI));
+        require(Helpers.notTooLongURI(updatePublishData.metadataURI));
+
+        // Validate title.
+        require(Helpers.notTooShortTitle(updatePublishData.title));
+        require(Helpers.notTooLongTitle(updatePublishData.title));
+
+        // Validate description.
+        require(Helpers.notTooLongDescription(updatePublishData.description));
+
+        // Validate categories.
         require(
-            keccak256(abi.encodePacked(tokenURI(updatePublishData.tokenId))) !=
-                keccak256(abi.encodePacked(updatePublishData.tokenURI)),
-            "Nothing change"
+            Helpers.validPrimaryCategory(updatePublishData.primaryCategory)
         );
-
-        // Update the token uri.
-        _setTokenURI(updatePublishData.tokenId, updatePublishData.tokenURI);
+        require(Helpers.validCategory(updatePublishData.secondaryCategory));
+        require(Helpers.validCategory(updatePublishData.tertiaryCategory));
 
         return
             _updatePublish({
@@ -230,34 +262,55 @@ contract PublishNFT is
      * @dev validations will be done by caller function.
      * @param updatePublishData {struct} - see DataTypes.UpdatePublishData struct
      * @return tokenId {uint256}
-     *
      */
     function _updatePublish(
         address owner,
         DataTypes.UpdatePublishData calldata updatePublishData
     ) private returns (uint256) {
-        // If imageURI is empty, use the existing data otherwise use the updated data
-        string memory oldImageURI = _tokenById[updatePublishData.tokenId]
-            .imageURI;
-        string memory newImageURI = bytes(updatePublishData.imageURI).length ==
-            0
-            ? oldImageURI
-            : updatePublishData.imageURI;
+        // Only update imageURI if it's changed.
+        if (
+            keccak256(
+                abi.encodePacked(_tokenById[updatePublishData.tokenId].imageURI)
+            ) != keccak256(abi.encodePacked(updatePublishData.imageURI))
+        ) {
+            _tokenById[updatePublishData.tokenId].imageURI = updatePublishData
+                .imageURI;
+        }
 
-        // If contentURI is empty, use the existing data otherwise use the updated data
-        string memory oldContentURI = _tokenById[updatePublishData.tokenId]
-            .contentURI;
-        string memory newContentURI = bytes(updatePublishData.contentURI)
-            .length == 0
-            ? oldContentURI
-            : updatePublishData.contentURI;
+        // Only update contentURI if it's changed.
+        if (
+            keccak256(
+                abi.encodePacked(
+                    _tokenById[updatePublishData.tokenId].contentURI
+                )
+            ) != keccak256(abi.encodePacked(updatePublishData.contentURI))
+        ) {
+            _tokenById[updatePublishData.tokenId].contentURI = updatePublishData
+                .contentURI;
+        }
 
-        // Update the data in storage
-        _tokenById[updatePublishData.tokenId].imageURI = newImageURI;
-        _tokenById[updatePublishData.tokenId].contentURI = newContentURI;
+        // Only update metadataURI if it's changed.
+        if (
+            keccak256(
+                abi.encodePacked(
+                    _tokenById[updatePublishData.tokenId].metadataURI
+                )
+            ) != keccak256(abi.encodePacked(updatePublishData.metadataURI))
+        ) {
+            _tokenById[updatePublishData.tokenId]
+                .metadataURI = updatePublishData.metadataURI;
+        }
 
         // Emit publish created event
-        emit PublishUpdated(_tokenById[updatePublishData.tokenId], owner);
+        emit PublishUpdated(
+            _tokenById[updatePublishData.tokenId],
+            updatePublishData.title,
+            updatePublishData.description,
+            updatePublishData.primaryCategory,
+            updatePublishData.secondaryCategory,
+            updatePublishData.tertiaryCategory,
+            owner
+        );
 
         return updatePublishData.tokenId;
     }
@@ -470,22 +523,6 @@ contract PublishNFT is
         }
 
         super._beforeTokenTransfer(from, to, tokenId);
-    }
-
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-    {
-        super._burn(tokenId);
-    }
-
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-        returns (string memory)
-    {
-        return super.tokenURI(tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)

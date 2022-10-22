@@ -2,7 +2,6 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -15,14 +14,13 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
  * @title ProfileNFT
- * @notice To reduce complexity, this contract is not burnable as profiles own other NFTs so burning a profile will lead to a need to also burn other NFTs that the profile owns.
+ * @notice To reduce complexity, this contract is not burnable as profiles own other NFTs so burning a profile will lead to a need to also burn other NFTs that the profile owns which is complex.
  * @dev frontend needs to track token ids own by each address and handle so it can query tokens for each address/handle.
  */
 
 contract ProfileNFT is
     Initializable,
     ERC721Upgradeable,
-    ERC721URIStorageUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
     IProfileNFT
@@ -54,7 +52,6 @@ contract ProfileNFT is
 
     function initialize() public initializer {
         __ERC721_init("Content Base Profile", "CBPr");
-        __ERC721URIStorage_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
         _setRoleAdmin(DEFAULT_ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
@@ -84,10 +81,6 @@ contract ProfileNFT is
             "Handle taken"
         );
 
-        // Validate tokenURI, the helper function will revert with error message if the check is false so we don't have to set the error message here.
-        require(Helpers.notTooShortURI(createProfileData.tokenURI));
-        require(Helpers.notTooLongURI(createProfileData.tokenURI));
-
         // The imageURI can be empty so we don't have to validate min length.
         require(Helpers.notTooLongURI(createProfileData.imageURI));
 
@@ -116,9 +109,6 @@ contract ProfileNFT is
 
         // Mint an NFT to owner
         _safeMint(owner, tokenId);
-
-        // Update tokenURI
-        _setTokenURI(tokenId, createProfileData.tokenURI);
 
         // Update _tokenIdByHandleHash mapping.
         _tokenIdByHandleHash[
@@ -161,25 +151,8 @@ contract ProfileNFT is
         );
 
         // Validate the image uri.
-        // The image uri might not change, in this case imageURI is empty, only validate if it's not empty.
-        if (bytes(updateProfileImageData.imageURI).length != 0) {
-            require(Helpers.notTooShortURI(updateProfileImageData.imageURI));
-            require(Helpers.notTooLongURI(updateProfileImageData.imageURI));
-        }
-
-        // Validate the token uri.
-        require(Helpers.notTooShortURI(updateProfileImageData.tokenURI));
-        require(Helpers.notTooLongURI(updateProfileImageData.tokenURI));
-
-        // Check if the tokenURI changed.
-        // Don't have to check the imageURI as it might not be changed even the image changed.
-        // If the tokenURI which stored on ipfs does not change, it means the image hasn't changed.
-        require(
-            keccak256(
-                abi.encodePacked(tokenURI(updateProfileImageData.tokenId))
-            ) != keccak256(abi.encodePacked(updateProfileImageData.tokenURI)),
-            "Nothing change"
-        );
+        require(Helpers.notTooShortURI(updateProfileImageData.imageURI));
+        require(Helpers.notTooLongURI(updateProfileImageData.imageURI));
 
         return
             _updateProfileImage({
@@ -202,17 +175,8 @@ contract ProfileNFT is
     ) internal returns (uint256) {
         uint256 tokenId = updateProfileImageData.tokenId;
 
-        // Update tokenURI.
-        _setTokenURI(tokenId, updateProfileImageData.tokenURI);
-
         // Update the profile struct.
-        // If imageURI not provided, use the existing data otherwise use the new data.
-        string memory oldImageURI = _tokenById[tokenId].imageURI;
-        string memory newImageURI = bytes(updateProfileImageData.imageURI)
-            .length == 0
-            ? oldImageURI
-            : updateProfileImageData.imageURI;
-        _tokenById[tokenId].imageURI = newImageURI;
+        _tokenById[tokenId].imageURI = updateProfileImageData.imageURI;
 
         // Emit update profile event.
         emit ProfileImageUpdated(_tokenById[tokenId], owner);
@@ -338,20 +302,8 @@ contract ProfileNFT is
 
     // The following functions are overrides required by Solidity.
 
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-    {
+    function _burn(uint256 tokenId) internal override(ERC721Upgradeable) {
         super._burn(tokenId);
-    }
-
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-        returns (string memory)
-    {
-        return super.tokenURI(tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)

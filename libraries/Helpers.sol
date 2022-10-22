@@ -77,7 +77,7 @@ library Helpers {
     }
 
     /**
-     * A helper function to validate the uri is not too long.
+     * A helper function to validate a uri is not too long.
      * @param uri {string} - a uri to be validated
      * @return boolean
      */
@@ -86,6 +86,99 @@ library Helpers {
 
         if (Constants.MAX_URI_LENGTH < bytesURI.length)
             revert("URI is too long.");
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate a publish's title is not too short.
+     * @param title {string} - a publish title.
+     * @return boolean
+     */
+    function notTooShortTitle(string calldata title)
+        internal
+        pure
+        returns (bool)
+    {
+        bytes memory bytesTitle = bytes(title);
+
+        if (Constants.MIN_PUBLISH_TITLE > bytesTitle.length)
+            revert("Title is too short.");
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate a publish's title is not too long.
+     * @param title {string} - a publish title.
+     * @return boolean
+     */
+    function notTooLongTitle(string calldata title)
+        internal
+        pure
+        returns (bool)
+    {
+        bytes memory bytesTitle = bytes(title);
+
+        if (Constants.MAX_PUBLISH_TITLE < bytesTitle.length)
+            revert("Title is too long.");
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate a publish's description is not too long.
+     * @param description {string} - a publish description.
+     * @return boolean
+     */
+    function notTooLongDescription(string calldata description)
+        internal
+        pure
+        returns (bool)
+    {
+        bytes memory bytesDescription = bytes(description);
+
+        if (Constants.MAX_PUBLISH_DESCRIPTION < bytesDescription.length)
+            revert("Description is too long.");
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate a publish's primary category.
+     * @param category {enum} - a publish primary category.
+     * @return boolean
+     */
+    function validPrimaryCategory(DataTypes.Category category)
+        internal
+        pure
+        returns (bool)
+    {
+        require(
+            category > DataTypes.Category.Empty &&
+                category < DataTypes.Category.NotExist,
+            "Invalid primary category"
+        );
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate a publish's secondary/tertiary category.
+     * @dev secondary and tertiary can be of Empty enum.
+     * @param category {enum} - a publish secondary/tertiary category.
+     * @return boolean
+     */
+    function validCategory(DataTypes.Category category)
+        internal
+        pure
+        returns (bool)
+    {
+        require(
+            category >= DataTypes.Category.Empty &&
+                category < DataTypes.Category.NotExist,
+            "Invalid category"
+        );
 
         return true;
     }
