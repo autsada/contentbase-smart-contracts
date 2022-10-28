@@ -43,24 +43,25 @@ contract LikeNFT is
     // Publish contract.
     IPublishNFT private _publishContract;
 
-    // Owner address.
+    // Contract owner address.
     address private _owner;
-    // Like support amount. When a profile likes other profile's publishes they will have to send this amount as a support to the creator.
-    uint private _likeSupportFee;
-    // Operational fee for the platform, this is a percentage to deduct from the like fee before transfering the fee to the publish's owner, need to store it as a whole number and do division when using it.
+    // The amount that a profile will send to the owner address of the publish they like.
+    uint private _likeFee;
+    // The percentage to be deducted from the like fee (as the platform commission) before transfering the like fee to the publish creator, need to store it as a whole number and do division when using it.
     uint private _platformFee;
     // Mapping of Like struct by token id.
     mapping(uint256 => DataTypes.Like) private _tokenById;
+    // Mapping of (publishId => (profileId => bool)) to track if a specific profile id has liked a specific publish, (1 => (1 => true)) means publish id 1 has been liked by profile id 1.
+    mapping(uint256 => mapping(uint256 => bool)) private _publishLikesList;
 
     // Events
-    event Received(address sender, uint value);
     event Like(
         DataTypes.Like token,
         address owner,
-        uint fee,
-        uint256 publishId
+        address publishOwner,
+        uint fee
     );
-    event UnLike(DataTypes.Like token, address owner, uint256 publishId);
+    event UnLike(DataTypes.Like token, address owner);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -80,15 +81,9 @@ contract LikeNFT is
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
 
-        _likeSupportFee = 1000 ether;
-        _platformFee = 2;
-    }
-
-    /**
-     * To receive ether when "like" function is called.
-     */
-    receive() external payable {
-        emit Received(msg.sender, msg.value);
+        _likeFee = 1000 ether;
+        _platformFee = 50;
+        _owner = msg.sender;
     }
 
     /**
@@ -127,13 +122,7 @@ contract LikeNFT is
     /**
      * @dev see ILikeNFT - getOwnerAddress
      */
-    function getOwnerAddress()
-        external
-        view
-        override
-        onlyRole(ADMIN_ROLE)
-        returns (address)
-    {
+    function getContractOwnerAddress() external view returns (address) {
         return _owner;
     }
 
@@ -148,21 +137,17 @@ contract LikeNFT is
     }
 
     /**
-     * @dev see ILikeNFT - setLikeSupportFee
+     * @dev see ILikeNFT - setLikeFee
      */
-    function setLikeSupportFee(uint amount)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
-        _likeSupportFee = amount;
+    function setLikeFee(uint amount) external override onlyRole(ADMIN_ROLE) {
+        _likeFee = amount;
     }
 
     /**
-     * @dev see ILikeNFT - getLikeSupportFee
+     * @dev see ILikeNFT - getLikeFee
      */
-    function getLikeSupportFee() external view returns (uint) {
-        return _likeSupportFee;
+    function getLikeFee() external view returns (uint) {
+        return _likeFee;
     }
 
     /**
@@ -179,18 +164,18 @@ contract LikeNFT is
         return _platformFee;
     }
 
-    /**
-     * @dev see ILikeNFT - getContractBalance
-     */
-    function getContractBalance()
-        external
-        view
-        override
-        onlyRole(ADMIN_ROLE)
-        returns (uint)
-    {
-        return address(this).balance;
-    }
+    // /**
+    //  * @dev see ILikeNFT - getContractBalance
+    //  */
+    // function getContractBalance()
+    //     external
+    //     view
+    //     override
+    //     onlyRole(ADMIN_ROLE)
+    //     returns (uint)
+    // {
+    //     return address(this).balance;
+    // }
 
     /**
      * @dev see ILikeNFT - like
@@ -200,8 +185,22 @@ contract LikeNFT is
         payable
         override
     {
+        // The caller must own the profile id.
+        require(
+            msg.sender ==
+                _profileContract.ownerOfProfile(createLikeData.profileId),
+            "Forbidden"
+        );
+
         // Validate ether sent.
-        require(msg.value == _likeSupportFee, "Bad input");
+        require(msg.value == _likeFee, "Bad input");
+
+        // Revert if the caller's profile already liked the publish.
+        if (
+            _publishLikesList[createLikeData.publishId][
+                createLikeData.profileId
+            ]
+        ) revert("You already like this publish");
 
         // Get the Publish's owner.
         // The ownerOfPublish will also check if the publish id exist.
@@ -216,6 +215,10 @@ contract LikeNFT is
         // Mint an NFT to the owner.
         _safeMint(msg.sender, tokenId);
 
+        // Transfer like support fee (after deducting operational fee for the platform) to the publish owner.
+        uint netFee = msg.value - ((msg.value * _platformFee) / 100);
+        payable(publishOwner).transfer(netFee);
+
         // Create Like NFT.
         DataTypes.Like memory token = DataTypes.Like({
             owner: msg.sender,
@@ -224,18 +227,24 @@ contract LikeNFT is
             publishId: createLikeData.publishId
         });
 
-        // Update mapping.
+        // Update mappings.
         _tokenById[tokenId] = token;
+        _publishLikesList[createLikeData.publishId][
+            createLikeData.profileId
+        ] = true;
 
-        // Transfer like support fee after deducting operational fee for the platform to the publish owner.
-        uint netFee = msg.value - (msg.value * (_platformFee / 100));
-        payable(publishOwner).transfer(netFee);
-
-        // Update the Publish NFT's likes.
-        _publishContract.like(createLikeData.publishId);
+        // Increase the Publish NFT's likes.
+        // Make sure to call this function at the very last before emiting an event so we can revert if it failed.
+        bool statusOk = _publishContract.like(createLikeData.publishId);
+        if (!statusOk) revert("Like Failed");
 
         // Emit Like event.
-        emit Like(token, msg.sender, netFee, createLikeData.publishId);
+        emit Like(
+            token,
+            msg.sender,
+            _publishContract.ownerOfPublish(createLikeData.publishId),
+            netFee
+        );
     }
 
     /**
@@ -253,17 +262,24 @@ contract LikeNFT is
         // Get the token struct.
         DataTypes.Like memory token = _tokenById[tokenId];
 
-        // Clear the token from _tokenById mapping.
+        // Remove the profile id from publish's likes by profile id mapping list.
+        delete _publishLikesList[_tokenById[tokenId].publishId][
+            _tokenById[tokenId].profileId
+        ];
+
+        // Delete the token from the token mapping.
         delete _tokenById[tokenId];
 
         // Call the parent burn function.
         super.burn(tokenId);
 
-        // Update the Publish NFT's likes.
-        _publishContract.unLike(token.publishId);
+        // Decrease the Publish NFT's likes.
+        // Make sure to call this function at the very last before emiting an event so we can revert if it failed.
+        bool statusOk = _publishContract.unLike(token.publishId);
+        if (!statusOk) revert("UnLike Failed");
 
         // Emit UnLike event
-        emit UnLike(token, msg.sender, token.publishId);
+        emit UnLike(token, msg.sender);
     }
 
     function _authorizeUpgrade(address newImplementation)

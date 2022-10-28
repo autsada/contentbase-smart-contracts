@@ -49,22 +49,23 @@ contract PublishNFT is
     // Events
     event PublishCreated(
         DataTypes.Publish token,
+        address owner,
         string title,
         string description,
         DataTypes.Category primaryCategory,
         DataTypes.Category secondaryCategory,
-        DataTypes.Category tertiaryCategory,
-        address owner
+        DataTypes.Category tertiaryCategory
     );
     event PublishUpdated(
         DataTypes.Publish token,
+        address owner,
         string title,
         string description,
         DataTypes.Category primaryCategory,
         DataTypes.Category secondaryCategory,
-        DataTypes.Category tertiaryCategory,
-        address owner
+        DataTypes.Category tertiaryCategory
     );
+    event PublishDeleted(uint256 tokenId, address owner);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -187,12 +188,12 @@ contract PublishNFT is
         // Emit publish created event.
         emit PublishCreated(
             _tokenById[tokenId],
+            owner,
             createPublishData.title,
             createPublishData.description,
             createPublishData.primaryCategory,
             createPublishData.secondaryCategory,
-            createPublishData.tertiaryCategory,
-            owner
+            createPublishData.tertiaryCategory
         );
 
         return tokenId;
@@ -200,6 +201,8 @@ contract PublishNFT is
 
     /**
      * @dev see IPublishNFT - updatePublish
+     * @dev If none of imageURI, contentURI, or metadataURI is changed the function will revert although title, description, or thoes 3 categories might be changed, this is to prevent callers from paying gas if the data that stored on-chain (imageURI, contentURI, metadatURI) isn't changed.
+     * @dev If the value of any key in the struct isn't changed, the existing value must be provided.
      */
     function updatePublish(
         DataTypes.UpdatePublishData calldata updatePublishData
@@ -235,6 +238,26 @@ contract PublishNFT is
         // Validate metadataURI.
         require(Helpers.notTooShortURI(updatePublishData.metadataURI));
         require(Helpers.notTooLongURI(updatePublishData.metadataURI));
+
+        // Revert if on-chain data NOT changed.
+        if (
+            keccak256(
+                abi.encodePacked(_tokenById[updatePublishData.tokenId].imageURI)
+            ) ==
+            keccak256(abi.encodePacked(updatePublishData.imageURI)) &&
+            keccak256(
+                abi.encodePacked(
+                    _tokenById[updatePublishData.tokenId].contentURI
+                )
+            ) ==
+            keccak256(abi.encodePacked(updatePublishData.contentURI)) &&
+            keccak256(
+                abi.encodePacked(
+                    _tokenById[updatePublishData.tokenId].metadataURI
+                )
+            ) ==
+            keccak256(abi.encodePacked(updatePublishData.metadataURI))
+        ) revert("Nothing changed");
 
         // Validate title.
         require(Helpers.notTooShortTitle(updatePublishData.title));
@@ -304,12 +327,12 @@ contract PublishNFT is
         // Emit publish created event
         emit PublishUpdated(
             _tokenById[updatePublishData.tokenId],
+            owner,
             updatePublishData.title,
             updatePublishData.description,
             updatePublishData.primaryCategory,
             updatePublishData.secondaryCategory,
-            updatePublishData.tertiaryCategory,
-            owner
+            updatePublishData.tertiaryCategory
         );
 
         return updatePublishData.tokenId;
@@ -318,23 +341,30 @@ contract PublishNFT is
     /**
      * @dev see IPublishNFT - like
      */
-    function like(uint256 tokenId) external override {
+    function like(uint256 tokenId) external override returns (bool) {
         // Validate the caller, it must be the Like contract.
         require(msg.sender == _likeContractAddress, "Forbidden");
 
         // Update the publish's likes.
         _tokenById[tokenId].likes++;
+
+        return true;
     }
 
     /**
      * @dev see IPublishNFT - unLike
      */
-    function unLike(uint256 tokenId) external override {
+    function unLike(uint256 tokenId) external override returns (bool) {
         // Validate the caller, it must be the Like contract.
         require(msg.sender == _likeContractAddress, "Forbidden");
 
         // Update the publish's likes.
-        _tokenById[tokenId].likes--;
+        // Make sure the likes is greater than 0.
+        if (_tokenById[tokenId].likes > 0) {
+            _tokenById[tokenId].likes--;
+        }
+
+        return true;
     }
 
     /**
@@ -491,6 +521,8 @@ contract PublishNFT is
 
         // Call the parent burn function.
         super.burn(tokenId);
+
+        emit PublishDeleted(tokenId, msg.sender);
     }
 
     function _authorizeUpgrade(address newImplementation)

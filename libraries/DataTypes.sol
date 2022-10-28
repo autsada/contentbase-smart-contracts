@@ -8,14 +8,18 @@ pragma solidity ^0.8.9;
 library DataTypes {
     /**
      * A struct containing data of Profile NFT.
-     * @param tokenId {uint256} - a token id
      * @param owner {address} - an address that owns the token
+     * @param tokenId {uint256} - a token id
+     * @param following {uint256} - profile's following count
+     * @param followers {uint256} - profile's followers count
      * @param handle {string} - a handle that associate with the owner address
      * @param imageURI {string} - a uri of the profile image
      */
     struct Profile {
-        uint256 tokenId;
         address owner;
+        uint256 tokenId;
+        uint256 following;
+        uint256 followers;
         string handle;
         string imageURI;
     }
@@ -42,7 +46,7 @@ library DataTypes {
 
     /**
      * Publish's Category
-     * @dev The category information must be included in the contentURI.
+     * @dev The category information should be included in metadataURI.
      * @dev when a publish is created, it must be classified to at least one category and at most 3 categories.
      */
     enum Category {
@@ -81,11 +85,15 @@ library DataTypes {
      *
      * @dev Metadata Guild: the metadata json object must have these below fields, additional fields can be added.
      * {
-     *      title {string}: "A title of the publish",
+     *      name {string}: "A title of the publish",
      *      description {string}: "A description of the publish",
-     *      primaryCategory {enum}: "See Category enum above - must NOT Empty",
-     *      secondaryCategory {enum}: "See Category enum above - can be Empty",
-     *      tertiaryCategory {enum}: "See Category enum above - can be Empty",
+     *      image {string}: "A publish's thumbnail image, prefer ipfs storage"
+     *      properties: {
+     *          content: "A publish's content uri, prefer ipfs storage",
+     *          primaryCategory {enum}: "See Category enum above - must NOT Empty",
+     *          secondaryCategory {enum}: "See Category enum above - can be Empty",
+     *          tertiaryCategory {enum}: "See Category enum above - can be Empty",
+     *      }
      * }
      */
     struct Publish {
@@ -135,6 +143,7 @@ library DataTypes {
      * @param primaryCategory {enum} - see contentURI Guild
      * @param secondaryCategory {enum} - see contentURI Guild
      * @param tertiaryCategory {enum} - see contentURI Guild
+     * @dev title, description, primaryCategory, secondaryCategory, and tertiaryCategory are not stored on the blockchain, they are required for event emitting to inform frontend the information of the updated publish only.
      */
     struct UpdatePublishData {
         uint256 tokenId;
@@ -171,6 +180,14 @@ library DataTypes {
     struct CreateFollowData {
         uint256 followerId;
         uint256 followeeId;
+    }
+
+    /**
+     * Follow type
+     */
+    enum FollowType {
+        Following,
+        Follower
     }
 
     /**

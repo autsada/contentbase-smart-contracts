@@ -33,6 +33,8 @@ contract ProfileNFT is
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
 
+    // Follow contract address.
+    address private _followContractAddress;
     // Mapping of token id by handle hash.
     mapping(bytes32 => uint256) private _tokenIdByHandleHash;
     // Mapping to track user's default profile
@@ -61,6 +63,17 @@ contract ProfileNFT is
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
+    }
+
+    /**
+     * @dev see IProfileNFT - setFollowContractAddress
+     */
+    function setFollowContractAddress(address followContractAddress)
+        external
+        override
+        onlyRole(ADMIN_ROLE)
+    {
+        _followContractAddress = followContractAddress;
     }
 
     /**
@@ -117,8 +130,10 @@ contract ProfileNFT is
 
         // Update _tokenById mapping.
         DataTypes.Profile memory newToken = DataTypes.Profile({
-            tokenId: tokenId,
             owner: owner,
+            tokenId: tokenId,
+            following: 0,
+            followers: 0,
             handle: createProfileData.handle,
             imageURI: createProfileData.imageURI
         });
@@ -213,6 +228,52 @@ contract ProfileNFT is
 
         // Emit an event
         emit DefaultProfileUpdated(_tokenById[tokenId], owner);
+    }
+
+    /**
+     * @dev see IProfileNFT - follow
+     */
+    function follow(uint256 followerId, uint256 followeeId)
+        external
+        override
+        returns (bool)
+    {
+        // Validate the caller, it must be the Follow contract.
+        require(msg.sender == _followContractAddress, "Forbidden");
+
+        // Increase the following count of the follower.
+        _tokenById[followerId].following++;
+
+        // Increase the followers count of the followee.
+        _tokenById[followeeId].followers++;
+
+        return true;
+    }
+
+    /**
+     * @dev see IProfileNFT - follow
+     */
+    function unFollow(uint256 followerId, uint256 followeeId)
+        external
+        override
+        returns (bool)
+    {
+        // Validate the caller, it must be the Follow contract.
+        require(msg.sender == _followContractAddress, "Forbidden");
+
+        // Decrease the following count of the follower.
+        // Make sure the count is greater than 0.
+        if (_tokenById[followerId].following > 0) {
+            _tokenById[followerId].following--;
+        }
+
+        // Decrease the followers count of the followee.
+        // Make sure the count is greater than 0.
+        if (_tokenById[followeeId].followers > 0) {
+            _tokenById[followeeId].followers--;
+        }
+
+        return true;
     }
 
     /**
