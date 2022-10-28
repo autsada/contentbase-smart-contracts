@@ -6,14 +6,8 @@ import {Constants} from "../../libraries/Constants.sol";
 
 interface IProfileNFT {
     /**
-     * An external function to set Follow contract address.
-     * @dev make sure to add modifier to only ADMIN_ROLE.
-     */
-    function setFollowContractAddress(address followContractAddress) external;
-
-    /**
      * An external function to create Profile NFT.
-     * @param createProfileData {struct} - refer to DataTypes.CreateProfileData struct
+     * @param createProfileData {struct} - see DataTypes.CreateProfileData struct
      * @return tokenId {uint256}
      */
     function createProfile(
@@ -21,8 +15,8 @@ interface IProfileNFT {
     ) external returns (uint256);
 
     /**
-     * An external to update profile image.
-     * @param updateProfileImageData {struct} - refer to DataTypes.UpdateProfileImageData struct
+     * An external to update profile image uri.
+     * @param updateProfileImageData {struct} - see DataTypes.UpdateProfileImageData struct
      * @return tokenId {uint256}
      */
     function updateProfileImage(
@@ -30,36 +24,38 @@ interface IProfileNFT {
     ) external returns (uint256);
 
     /**
-     * An external function to set default profile.
+     * An external function to set default profile for a specific address.
      * @param tokenId - a token id
      */
     function setDefaultProfile(uint256 tokenId) external;
 
     /**
-     * An external function to get user's default profile.
+     * An external function to be called when some profile follows other profile.
+     * @param followData - see DataTypes.FollowData
+     * @return success {bool}
+     */
+    function follow(DataTypes.FollowData calldata followData)
+        external
+        returns (bool);
+
+    /**
+     * An external function to get address's default profile.
      * @return token {Profile}
      */
-    function defaultProfile() external view returns (DataTypes.Profile memory);
+    function getDefaultProfile()
+        external
+        view
+        returns (DataTypes.Profile memory);
 
     /**
-     * An external function to update following and followers of the follower and followee when a profile follows another profile.
-     * @dev must be only called from the Follow Contract.
-     * @param followerId {uint256} - a profile token id that follows another profile (followeeId)
-     * @param followeeId {uint256} - a profile token id that has been followed by another profile (followerId)
+     * An external function to get a profile from a given id.
+     * @param tokenId {uint256}
+     * @return profile {Profile}
      */
-    function follow(uint256 followerId, uint256 followeeId)
+    function getProfile(uint256 tokenId)
         external
-        returns (bool);
-
-    /**
-     * An external function to update following and followers of the follower and followee when a profile unfollows one of their following.
-     * @dev must be only called from the Follow Contract.
-     * @param followerId {uint256} - a profile token id that unfollows another profile (followeeId)
-     * @param followeeId {uint256} - a profile token id that has been unfollowed by another profile (followerId)
-     */
-    function unFollow(uint256 followerId, uint256 followeeId)
-        external
-        returns (bool);
+        view
+        returns (DataTypes.Profile memory);
 
     /**
      * An external function to get total profiles count.

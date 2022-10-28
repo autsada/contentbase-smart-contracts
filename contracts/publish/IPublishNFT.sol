@@ -12,10 +12,49 @@ interface IPublishNFT {
     function setProfileContract(address profileContractAddress) external;
 
     /**
-     * An external function to set Like contract address.
+     * An external function to set contract owner address.
+     * @dev make sure to add modifier to only ADMIN_ROLE.
+     * @param owner - an address of the owner
+     */
+    function setContractOwner(address owner) external;
+
+    /**
+     * An external function to get contract owner address.
+     * @return owner {address}
+     */
+    function getContractOwner() external view returns (address);
+
+    /**
+     * An external function to withdraw the contract's balance.
      * @dev make sure to add modifier to only ADMIN_ROLE.
      */
-    function setLikeContractAddress(address likeContractAddress) external;
+    function withdraw() external;
+
+    /**
+     * An external function to set like fee.
+     * @dev make sure to add modifier to only ADMIN_ROLE.
+     * @param amount {uint} - an amount to be sent when some profile likes a Publish
+     */
+    function setLikeFee(uint amount) external;
+
+    /**
+     * An external function to get like fee.
+     * @return amount {uint}
+     */
+    function getLikeFee() external view returns (uint);
+
+    /**
+     * An external function to set operational fee for the platform.
+     * @dev  make sure to add modifier to only ADMIN_ROLE.
+     * @param fee - operational fee
+     */
+    function setPlatformFee(uint fee) external;
+
+    /**
+     * An external function to get operational fee for the platform.
+     * @return fee {uint}
+     */
+    function getPlatformFee() external view returns (uint);
 
     /**
      * An external function to crate Publish NFT.
@@ -35,45 +74,30 @@ interface IPublishNFT {
     ) external returns (uint256);
 
     /**
-     * An external function to update likes of a publish.
-     * @dev must be only called from the Like Contract.
-     * @param tokenId {uint256} - a publish token id
+     * An external function to like a publish.
+     * @param likeData - see DataTypes.LikeData
+     * @return success {bool}
      */
-    function like(uint256 tokenId) external returns (bool);
-
-    /**
-     * An external function to update likes of a publish.
-     * @dev must be only called from the Like Contract.
-     * @param tokenId {uint256} - a publish token id
-     */
-    function unLike(uint256 tokenId) external returns (bool);
-
-    /**
-     * An external function to get user's Publish NFTs.
-     * @param tokenIds {uint256[]} - an array of token ids
-     * @return tokens {Publish[]} - an array of Publish structs
-     */
-    function ownerPublishes(uint256[] calldata tokenIds)
+    function like(DataTypes.LikeData calldata likeData)
         external
-        view
-        returns (DataTypes.Publish[] memory);
+        payable
+        returns (bool);
 
     /**
-     * An external function to get Publish NFTs by ids.
-     * @param tokenIds {uint256[]} - an array of token ids
-     * @return tokens {Publish[]} - an array of Publish structs
+     * An external function to unlike a publish.
+     * @param likeData - see DataTypes.LikeData
+     * @return success {bool}
      */
-    function getPublishes(uint256[] calldata tokenIds)
+    function unLike(DataTypes.LikeData calldata likeData)
         external
-        view
-        returns (DataTypes.Publish[] memory);
+        returns (bool);
 
     /**
-     * An external function to get a Publish NFT.
+     * An external function to get a publish struct from a given id.
      * @param tokenId {uint256}
      * @return token {Publish}
      */
-    function publishById(uint256 tokenId)
+    function getPublishById(uint256 tokenId)
         external
         view
         returns (DataTypes.Publish memory);
@@ -83,11 +107,4 @@ interface IPublishNFT {
      * @return total {uint256} - total number of NFTs already minted
      */
     function publishesCount() external view returns (uint256);
-
-    /**
-     * An external function to get a Publish's owner.
-     * @param publishId {uint256}
-     * @return owner {address}
-     */
-    function ownerOfPublish(uint256 publishId) external view returns (address);
 }

@@ -14,8 +14,8 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
  * @title ProfileNFT
- * @notice To reduce complexity, this contract is not burnable as profiles own other NFTs so burning a profile will lead to a need to also burn other NFTs that the profile owns which is complex.
- * @dev frontend needs to track token ids own by each address and handle so it can query tokens for each address/handle.
+ * @notice This is non-burnable NFT.
+ * @notice An address can create as many profile as they want.
  */
 
 contract ProfileNFT is
@@ -33,19 +33,36 @@ contract ProfileNFT is
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
 
-    // Follow contract address.
-    address private _followContractAddress;
     // Mapping of token id by handle hash.
     mapping(bytes32 => uint256) private _tokenIdByHandleHash;
-    // Mapping to track user's default profile
-    mapping(address => uint256) private _defaultTokenIdByAddress;
+    // Mapping to track user's default profile.
+    mapping(address => uint256) private _defaultProfileByAddress;
     // Mapping of profile struct by token id.
     mapping(uint256 => DataTypes.Profile) private _tokenById;
+    // Mapping (profileId => (profileId => boolean)) to track if a specific profile is following another profile, (1 => (2 => true)) means profile id 1 has been following profile id 2.
+    mapping(uint256 => mapping(uint256 => bool)) private _followsList;
 
     // Events
-    event ProfileCreated(DataTypes.Profile token, address owner);
-    event ProfileImageUpdated(DataTypes.Profile token, address owner);
-    event DefaultProfileUpdated(DataTypes.Profile token, address owner);
+    event ProfileCreated(
+        uint256 indexed tokenId,
+        address indexed owner,
+        string handle,
+        string imageURI,
+        bool isDefault
+    );
+    event ProfileImageUpdated(
+        uint256 tokenId,
+        address owner,
+        string handle,
+        string imageURI
+    );
+    event DefaultProfileUpdated(uint256 tokenId, address owner);
+    event Follow(
+        uint256 indexed followerId,
+        uint256 indexed followeeId,
+        address indexed followeeAddress
+    );
+    event UnFollow(uint256 followerId, uint256 followeeId);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -66,71 +83,37 @@ contract ProfileNFT is
     }
 
     /**
-     * @dev see IProfileNFT - setFollowContractAddress
-     */
-    function setFollowContractAddress(address followContractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
-        _followContractAddress = followContractAddress;
-    }
-
-    /**
      * @dev see IProfileNFT - createProfile
      */
     function createProfile(
         DataTypes.CreateProfileData calldata createProfileData
     ) external override returns (uint256) {
-        // Validate handle length and special characters, the helper function will revert with error message if the check is false so we don't have to set the error message here.
+        // Validate handle length and special characters, the helper function will revert with an error message if the check failed so we don't have to set the error message here.
         require(Helpers.validateHandle(createProfileData.handle));
 
-        // Check if handle is already taken.
+        // Require handle to be unique, the helper function will revert with an error message if the check failed.
         require(
-            Helpers.handleUnique(
-                createProfileData.handle,
-                _tokenIdByHandleHash
-            ),
-            "Handle taken"
+            Helpers.handleUnique(createProfileData.handle, _tokenIdByHandleHash)
         );
 
         // The imageURI can be empty so we don't have to validate min length.
         require(Helpers.notTooLongURI(createProfileData.imageURI));
 
-        return
-            _createProfile({
-                owner: msg.sender,
-                createProfileData: createProfileData
-            });
-    }
-
-    /**
-     * A private function that contains the logic to create Profile NFT.
-     * @dev validations will be done by caller function.
-     * @param owner {address} - an address to be set as an owner of the NFT
-     * @param createProfileData {struct} - see DataTypes.CreateProfileData struct
-     * @return tokenId {uint256}
-     *
-     */
-    function _createProfile(
-        address owner,
-        DataTypes.CreateProfileData calldata createProfileData
-    ) private returns (uint256) {
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
         uint256 tokenId = _tokenIdCounter.current();
 
-        // Mint an NFT to owner
-        _safeMint(owner, tokenId);
+        // Mint an NFT to the caller.
+        _safeMint(msg.sender, tokenId);
 
-        // Update _tokenIdByHandleHash mapping.
+        // Update the handle hash mapping.
         _tokenIdByHandleHash[
             Helpers.hashHandle(createProfileData.handle)
         ] = tokenId;
 
-        // Update _tokenById mapping.
+        // Update the profile struct mapping.
         DataTypes.Profile memory newToken = DataTypes.Profile({
-            owner: owner,
+            owner: msg.sender,
             tokenId: tokenId,
             following: 0,
             followers: 0,
@@ -140,12 +123,18 @@ contract ProfileNFT is
         _tokenById[tokenId] = newToken;
 
         // If user doesn't have a default profile yet, set this new token as their default profile.
-        if (_defaultTokenIdByAddress[owner] == 0) {
-            _defaultTokenIdByAddress[owner] = tokenId;
+        if (_defaultProfileByAddress[msg.sender] == 0) {
+            _setDefaultProfile(msg.sender, tokenId);
         }
 
         // Emit create profile event.
-        emit ProfileCreated(newToken, owner);
+        emit ProfileCreated(
+            tokenId,
+            msg.sender,
+            createProfileData.handle,
+            createProfileData.imageURI,
+            _defaultProfileByAddress[msg.sender] == tokenId
+        );
 
         return tokenId;
     }
@@ -159,7 +148,7 @@ contract ProfileNFT is
         // The token id must exist.
         require(_exists(updateProfileImageData.tokenId), "Not found");
 
-        // The caller must own the token.
+        // Only a profile owner can update their profile image.
         require(
             ownerOf(updateProfileImageData.tokenId) == msg.sender,
             "Forbidden"
@@ -169,32 +158,30 @@ contract ProfileNFT is
         require(Helpers.notTooShortURI(updateProfileImageData.imageURI));
         require(Helpers.notTooLongURI(updateProfileImageData.imageURI));
 
-        return
-            _updateProfileImage({
-                owner: msg.sender,
-                updateProfileImageData: updateProfileImageData
-            });
-    }
+        // Get the profile struct.
+        DataTypes.Profile memory profile = _tokenById[
+            updateProfileImageData.tokenId
+        ];
 
-    /**
-     * A private function that contain the logic to update profile image.
-     * @dev validations will be done by caller function.
-     * @param owner {address}
-     * @param updateProfileImageData - see DataTypes.UpdateProfileImageData
-     * @return tokenId
-     *
-     */
-    function _updateProfileImage(
-        address owner,
-        DataTypes.UpdateProfileImageData calldata updateProfileImageData
-    ) internal returns (uint256) {
+        // Image uri must changed.
+        require(
+            keccak256(abi.encodePacked(updateProfileImageData.imageURI)) !=
+                keccak256(abi.encodePacked(profile.imageURI)),
+            "No change"
+        );
+
         uint256 tokenId = updateProfileImageData.tokenId;
 
         // Update the profile struct.
         _tokenById[tokenId].imageURI = updateProfileImageData.imageURI;
 
         // Emit update profile event.
-        emit ProfileImageUpdated(_tokenById[tokenId], owner);
+        emit ProfileImageUpdated(
+            tokenId,
+            msg.sender,
+            profile.handle,
+            updateProfileImageData.imageURI
+        );
 
         return tokenId;
     }
@@ -203,17 +190,19 @@ contract ProfileNFT is
      * @dev see IProfileNFT - setDefaultProfile
      */
     function setDefaultProfile(uint256 tokenId) external override {
-        // The id must exist
+        // The profile id must exist.
         require(_exists(tokenId), "Profile not found");
 
-        // The Caller must own the token
+        // The Caller must own the profile.
         require(ownerOf(tokenId) == msg.sender, "Forbidden");
 
         // If the id is already a default, revert
-        if (_defaultTokenIdByAddress[msg.sender] == tokenId)
+        if (_defaultProfileByAddress[msg.sender] == tokenId)
             revert("Already a default");
 
         _setDefaultProfile({owner: msg.sender, tokenId: tokenId});
+
+        emit DefaultProfileUpdated(tokenId, msg.sender);
     }
 
     /**
@@ -224,69 +213,93 @@ contract ProfileNFT is
      */
     function _setDefaultProfile(address owner, uint256 tokenId) private {
         // Update the mapping
-        _defaultTokenIdByAddress[owner] = tokenId;
-
-        // Emit an event
-        emit DefaultProfileUpdated(_tokenById[tokenId], owner);
+        _defaultProfileByAddress[owner] = tokenId;
     }
 
     /**
      * @dev see IProfileNFT - follow
+     * @dev use this function for both follow and unFollow.
      */
-    function follow(uint256 followerId, uint256 followeeId)
+    function follow(DataTypes.FollowData calldata followData)
         external
         override
         returns (bool)
     {
-        // Validate the caller, it must be the Follow contract.
-        require(msg.sender == _followContractAddress, "Forbidden");
+        // The follower must exist.
+        require(_exists(followData.followerId), "Follower not found");
 
-        // Increase the following count of the follower.
-        _tokenById[followerId].following++;
+        // The caller must own the follower profile.
+        require(msg.sender == ownerOf(followData.followerId), "Forbidden");
 
-        // Increase the followers count of the followee.
-        _tokenById[followeeId].followers++;
+        // The followee must exist.
+        require(_exists(followData.followeeId), "Followee not found");
+
+        // The profile cannot follow themselve.
+        require(followData.followerId != followData.followeeId, "Not allow");
+
+        // Update follower and followee.
+        if (_followsList[followData.followerId][followData.followeeId]) {
+            // UNFOLLOW: The follower already followed the followee.
+            // 1. Update the follows list mapping.
+            _followsList[followData.followerId][followData.followeeId] = false;
+
+            // 2. Decrease the follower's following count.
+            _tokenById[followData.followerId].following--;
+
+            // 3. Decrease the followee's followers count.
+            _tokenById[followData.followeeId].followers--;
+
+            emit UnFollow(followData.followerId, followData.followeeId);
+        } else {
+            // FOLLOW
+            // 1. Update the follows list mapping.
+            _followsList[followData.followerId][followData.followeeId] = true;
+
+            // 2. Increase the follower's following count.
+            _tokenById[followData.followerId].following++;
+
+            // 3. Increase the followee's followers count.
+            _tokenById[followData.followeeId].followers++;
+
+            emit Follow(
+                followData.followerId,
+                followData.followeeId,
+                ownerOf(followData.followeeId)
+            );
+        }
 
         return true;
     }
 
     /**
-     * @dev see IProfileNFT - follow
+     * @dev see IProfileNFT - getDefaultProfile
      */
-    function unFollow(uint256 followerId, uint256 followeeId)
-        external
-        override
-        returns (bool)
-    {
-        // Validate the caller, it must be the Follow contract.
-        require(msg.sender == _followContractAddress, "Forbidden");
-
-        // Decrease the following count of the follower.
-        // Make sure the count is greater than 0.
-        if (_tokenById[followerId].following > 0) {
-            _tokenById[followerId].following--;
-        }
-
-        // Decrease the followers count of the followee.
-        // Make sure the count is greater than 0.
-        if (_tokenById[followeeId].followers > 0) {
-            _tokenById[followeeId].followers--;
-        }
-
-        return true;
-    }
-
-    /**
-     * @dev see IProfileNFT - defaultProfile
-     */
-    function defaultProfile()
+    function getDefaultProfile()
         external
         view
         override
         returns (DataTypes.Profile memory)
     {
-        uint256 tokenId = _defaultTokenIdByAddress[msg.sender];
-        require(tokenId != 0, "Not found");
+        uint256 tokenId = _defaultProfileByAddress[msg.sender];
+
+        require(tokenId != 0, "Default profile not set");
+
+        // Profile must exist.
+        require(_exists(tokenId), "Profile invalid");
+
+        return _tokenById[tokenId];
+    }
+
+    /**
+     * @dev see IProfileNFT - getProfile
+     */
+    function getProfile(uint256 tokenId)
+        external
+        view
+        override
+        returns (DataTypes.Profile memory)
+    {
+        require(_exists(tokenId), "Profile not found");
 
         return _tokenById[tokenId];
     }
@@ -307,6 +320,9 @@ contract ProfileNFT is
         override
         returns (address)
     {
+        // Profile must exist.
+        require(_exists(tokenId), "Profile not found");
+
         return ownerOf(tokenId);
     }
 
@@ -332,7 +348,7 @@ contract ProfileNFT is
     }
 
     /**
-     * @notice If it's not the first creation or burn token, the token is non-transferable.
+     * @notice If it's not the first creation, the token is non-transferable.
      * @param from {address}
      * @param to {address}
      * @param tokenId {uint256}
@@ -362,10 +378,6 @@ contract ProfileNFT is
     {}
 
     // The following functions are overrides required by Solidity.
-
-    function _burn(uint256 tokenId) internal override(ERC721Upgradeable) {
-        super._burn(tokenId);
-    }
 
     function supportsInterface(bytes4 interfaceId)
         public

@@ -25,7 +25,12 @@ library Helpers {
         string calldata handle,
         mapping(bytes32 => uint256) storage _tokenIdByHandleHash
     ) internal view returns (bool) {
-        return _tokenIdByHandleHash[Helpers.hashHandle(handle)] == 0;
+        require(
+            _tokenIdByHandleHash[Helpers.hashHandle(handle)] == 0,
+            "Handle taken"
+        );
+
+        return true;
     }
 
     /**
@@ -43,7 +48,7 @@ library Helpers {
         if (
             bytesHandle.length < Constants.MIN_HANDLE_LENGTH ||
             bytesHandle.length > Constants.MAX_HANDLE_LENGTH
-        ) revert("Handle is too short or too long.");
+        ) revert("Handle length invalid.");
 
         // Check if the handle contains invalid characters (Capital letters, spcecial characters).
         for (uint256 i = 0; i < bytesHandle.length; ) {
@@ -103,7 +108,7 @@ library Helpers {
         bytes memory bytesTitle = bytes(title);
 
         if (Constants.MIN_PUBLISH_TITLE > bytesTitle.length)
-            revert("Title is too short.");
+            revert("Title too short.");
 
         return true;
     }
@@ -121,7 +126,7 @@ library Helpers {
         bytes memory bytesTitle = bytes(title);
 
         if (Constants.MAX_PUBLISH_TITLE < bytesTitle.length)
-            revert("Title is too long.");
+            revert("Title too long.");
 
         return true;
     }
@@ -139,13 +144,14 @@ library Helpers {
         bytes memory bytesDescription = bytes(description);
 
         if (Constants.MAX_PUBLISH_DESCRIPTION < bytesDescription.length)
-            revert("Description is too long.");
+            revert("Description too long.");
 
         return true;
     }
 
     /**
      * A helper function to validate a publish's primary category.
+     * @notice primary category must not Empty
      * @param category {enum} - a publish primary category.
      * @return boolean
      */

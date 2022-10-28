@@ -26,7 +26,7 @@ library DataTypes {
 
     /**
      * A struct containing data required to create Profile NFT.
-     * @param handle {string}
+     * @param handle {string} - a unique name of the profile
      * @param imageURI {string} - can be empty at the time of creation as the owner can set it later.
      */
     struct CreateProfileData {
@@ -45,8 +45,18 @@ library DataTypes {
     }
 
     /**
+     * A struct containing required data to follow a profile.
+     * @param followerId {uint256} - a Profile id that follows followeeId.
+     * @param followeeId {uint256} - a Profile id that is being followed by followerId.
+     */
+    struct FollowData {
+        uint256 followerId;
+        uint256 followeeId;
+    }
+
+    /**
      * Publish's Category
-     * @dev The category information should be included in metadataURI.
+     * @dev The category information should be included in the metadataURI.
      * @dev when a publish is created, it must be classified to at least one category and at most 3 categories.
      */
     enum Category {
@@ -112,11 +122,11 @@ library DataTypes {
      * @param imageURI {string} - see PublishStruct
      * @param contentURI {string} - see PublishStruct
      * @param metadataURI {string} - see PublishStruct
-     * @param title {string} - see contentURI Guild
-     * @param description {string} - see contentURI Guild
-     * @param primaryCategory {enum} - see contentURI Guild
-     * @param secondaryCategory {enum} - see contentURI Guild
-     * @param tertiaryCategory {enum} - see contentURI Guild
+     * @param title {string} - the publish's title
+     * @param description {string} - the publish's description
+     * @param primaryCategory {enum} - the publish's primary category
+     * @param secondaryCategory {enum} - the publish's primary category
+     * @param tertiaryCategory {enum} - the publish's primary category
      * @dev title, description, primaryCategory, secondaryCategory, and tertiaryCategory are not stored on the blockchain, they are required for event emitting to inform frontend the information of the created publish only.
      */
     struct CreatePublishData {
@@ -138,12 +148,12 @@ library DataTypes {
      * @param imageURI {string} - see PublishStruct
      * @param contentURI {string} - see PublishStruct
      * @param metadataURI {string} - see PublishStruct
-     * @param title {string} - see contentURI Guild
-     * @param description {string} - see contentURI Guild
-     * @param primaryCategory {enum} - see contentURI Guild
-     * @param secondaryCategory {enum} - see contentURI Guild
-     * @param tertiaryCategory {enum} - see contentURI Guild
-     * @dev title, description, primaryCategory, secondaryCategory, and tertiaryCategory are not stored on the blockchain, they are required for event emitting to inform frontend the information of the updated publish only.
+     * @param title {string} - the publish's title
+     * @param description {string} - the publish's description
+     * @param primaryCategory {enum} - the publish's primary category
+     * @param secondaryCategory {enum} - the publish's primary category
+     * @param tertiaryCategory {enum} - the publish's primary category
+     * @dev title, description, primaryCategory, secondaryCategory, and tertiaryCategory are not stored on-chain, they are required for event emitting to inform frontend the information of the updated publish only.
      */
     struct UpdatePublishData {
         uint256 tokenId;
@@ -159,57 +169,11 @@ library DataTypes {
     }
 
     /**
-     * A struct containing data of Follow NFT.
-     * @param owner {address} - an address that owns the token.
-     * @param tokenId {uint256} - a token id
-     * @param followerId {uint256} - a Profile NFT id that follows followeeId.
-     * @param followeeId {uint256} - a Profile NFT id that is being followed by followerId.
+     * A struct containing data required to like a publish.
+     * @param profileId {uint256} - an id of the profile that likes the publish
+     * @param publishId {uint256} - an id of the publish
      */
-    struct Follow {
-        address owner;
-        uint256 tokenId;
-        uint256 followerId;
-        uint256 followeeId;
-    }
-
-    /**
-     * A struct containing data required to create Follow NFT.
-     * @param followerId {uint256} - see FollowStruct
-     * @param followeeId {uint256} - see FollowStruct
-     */
-    struct CreateFollowData {
-        uint256 followerId;
-        uint256 followeeId;
-    }
-
-    /**
-     * Follow type
-     */
-    enum FollowType {
-        Following,
-        Follower
-    }
-
-    /**
-     * A struct containing data of Like NFT.
-     * @param owner {address} - an address that owns the token.
-     * @param tokenId {uint256} - a token id
-     * @param profileId {uint256} - a Profile NFT id that performs a like.
-     * @param publishId {uint256} - a Publish NFT id that is being liked.
-     */
-    struct Like {
-        address owner;
-        uint256 tokenId;
-        uint256 profileId;
-        uint256 publishId;
-    }
-
-    /**
-     * A struct containing data required to create Like NFT.
-     * @param profileId {uint256} - see LikeStruct
-     * @param publishId {uint256} - see LikeStruct
-     */
-    struct CreateLikeData {
+    struct LikeData {
         uint256 profileId;
         uint256 publishId;
     }
