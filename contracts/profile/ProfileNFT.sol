@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
+import "./IFollowNFT.sol";
 import "./IProfileNFT.sol";
 import {Constants} from "../../libraries/Constants.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
@@ -33,14 +34,15 @@ contract ProfileNFT is
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
 
+    // Follow contract address.
+    address public followContractAddress;
+
     // Mapping of token id by handle hash.
     mapping(bytes32 => uint256) private _tokenIdByHandleHash;
     // Mapping to track user's default profile.
     mapping(address => uint256) private _defaultProfileByAddress;
     // Mapping of profile struct by token id.
     mapping(uint256 => DataTypes.Profile) private _tokenById;
-    // Mapping (profileId => (profileId => boolean)) to track if a specific profile is following another profile, (1 => (2 => true)) means profile id 1 has been following profile id 2.
-    mapping(uint256 => mapping(uint256 => bool)) private _followsList;
 
     // Events
     event ProfileCreated(
@@ -60,7 +62,8 @@ contract ProfileNFT is
     event Follow(
         uint256 indexed followerId,
         uint256 indexed followeeId,
-        address indexed followeeAddress
+        address ownerAddress,
+        address followeeAddress
     );
     event UnFollow(uint256 followerId, uint256 followeeId);
 
@@ -80,6 +83,17 @@ contract ProfileNFT is
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
+    }
+
+    /**
+     * @dev see IProfileNFT - setFollowContractAddress
+     */
+    function setFollowContractAddress(address followAddress)
+        external
+        override
+        onlyRole(ADMIN_ROLE)
+    {
+        followContractAddress = followAddress;
     }
 
     /**
@@ -114,7 +128,6 @@ contract ProfileNFT is
         // Update the profile struct mapping.
         DataTypes.Profile memory newToken = DataTypes.Profile({
             owner: msg.sender,
-            tokenId: tokenId,
             following: 0,
             followers: 0,
             handle: createProfileData.handle,
@@ -218,12 +231,11 @@ contract ProfileNFT is
 
     /**
      * @dev see IProfileNFT - follow
-     * @dev use this function for both follow and unFollow.
      */
     function follow(DataTypes.FollowData calldata followData)
         external
         override
-        returns (bool)
+        returns (bool, uint256)
     {
         // The follower must exist.
         require(_exists(followData.followerId), "Follower not found");
@@ -237,36 +249,62 @@ contract ProfileNFT is
         // The profile cannot follow themselve.
         require(followData.followerId != followData.followeeId, "Not allow");
 
-        // Update follower and followee.
-        if (_followsList[followData.followerId][followData.followeeId]) {
-            // UNFOLLOW: The follower already followed the followee.
-            // 1. Update the follows list mapping.
-            _followsList[followData.followerId][followData.followeeId] = false;
+        // Call the follow contract to create a follow NFT.
+        (bool success, uint256 tokenId) = IFollowNFT(followContractAddress)
+            .follow(msg.sender, followData);
 
-            // 2. Decrease the follower's following count.
-            _tokenById[followData.followerId].following--;
+        require(success, "Follow failed");
 
-            // 3. Decrease the followee's followers count.
-            _tokenById[followData.followeeId].followers--;
+        // Increase the follower's following count.
+        _tokenById[followData.followerId].following++;
 
-            emit UnFollow(followData.followerId, followData.followeeId);
-        } else {
-            // FOLLOW
-            // 1. Update the follows list mapping.
-            _followsList[followData.followerId][followData.followeeId] = true;
+        // Increase the followee's followers count.
+        _tokenById[followData.followeeId].followers++;
 
-            // 2. Increase the follower's following count.
-            _tokenById[followData.followerId].following++;
+        emit Follow(
+            followData.followerId,
+            followData.followeeId,
+            msg.sender,
+            ownerOf(followData.followeeId)
+        );
 
-            // 3. Increase the followee's followers count.
-            _tokenById[followData.followeeId].followers++;
+        return (true, tokenId);
+    }
 
-            emit Follow(
-                followData.followerId,
-                followData.followeeId,
-                ownerOf(followData.followeeId)
-            );
+    /**
+     * @dev see IProfileNFT - unFollow
+     */
+    function unFollow(uint256 tokenId, uint256 followerId)
+        external
+        override
+        returns (bool)
+    {
+        // The follower must exist.
+        require(_exists(followerId), "Follower not found");
+
+        // The caller must own the follower profile.
+        require(msg.sender == ownerOf(followerId), "Forbidden");
+
+        // Call the follow contract to unfollow.
+        // The follow's burn returns 2 values, the second one is the followee id.
+        (bool success, uint256 followeeId) = IFollowNFT(followContractAddress)
+            .burn(tokenId, msg.sender, followerId);
+
+        require(success, "Unfollow failed");
+
+        // Decrease the follower's following count.
+        // Before updating, make sure the count is greater than 0.
+        if (_tokenById[followerId].following > 0) {
+            _tokenById[followerId].following--;
         }
+
+        // Decrease the followee's followers count.
+        // Before updating, make sure the count is greater than 0.
+        if (_tokenById[followeeId].followers > 0) {
+            _tokenById[followeeId].followers--;
+        }
+
+        emit UnFollow(followerId, followeeId);
 
         return true;
     }

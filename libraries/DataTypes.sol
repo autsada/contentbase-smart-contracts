@@ -9,7 +9,6 @@ library DataTypes {
     /**
      * A struct containing data of Profile NFT.
      * @param owner {address} - an address that owns the token
-     * @param tokenId {uint256} - a token id
      * @param following {uint256} - profile's following count
      * @param followers {uint256} - profile's followers count
      * @param handle {string} - a handle that associate with the owner address
@@ -17,7 +16,6 @@ library DataTypes {
      */
     struct Profile {
         address owner;
-        uint256 tokenId;
         uint256 following;
         uint256 followers;
         string handle;
@@ -42,6 +40,17 @@ library DataTypes {
     struct UpdateProfileImageData {
         uint256 tokenId;
         string imageURI;
+    }
+
+    /**
+     * A strunct containing the data of Follow NFT.
+     * @param followerId {uint256} - a Profile id that follows followeeId.
+     * @param followeeId {uint256} - a Profile id that is being followed by followerId.
+     */
+    struct Follow {
+        address owner;
+        uint256 followerId;
+        uint256 followeeId;
     }
 
     /**

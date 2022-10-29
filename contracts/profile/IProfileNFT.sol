@@ -6,6 +6,12 @@ import {Constants} from "../../libraries/Constants.sol";
 
 interface IProfileNFT {
     /**
+     * An external function to set Follow Contract address.
+     * @dev make sure to add modifier to only ADMIN_ROLE.
+     */
+    function setFollowContractAddress(address followAddress) external;
+
+    /**
      * An external function to create Profile NFT.
      * @param createProfileData {struct} - see DataTypes.CreateProfileData struct
      * @return tokenId {uint256}
@@ -35,6 +41,16 @@ interface IProfileNFT {
      * @return success {bool}
      */
     function follow(DataTypes.FollowData calldata followData)
+        external
+        returns (bool, uint256);
+
+    /**
+     * An external function to unfollow a profile.
+     * @param tokenId {uint256} - a follow id
+     * @param followerId {uint256} - a profile id that the follow belongs to
+     * @return success {bool}
+     */
+    function unFollow(uint256 tokenId, uint256 followerId)
         external
         returns (bool);
 
