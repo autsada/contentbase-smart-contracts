@@ -9,14 +9,14 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
 import "./ICommentNFT.sol";
-import "../profile/IProfileNFT.sol";
 import {Constants} from "../../libraries/Constants.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
  * @title Comment NFT
- * This NFT will be minted when a profile comment on a publish, the content of the NFT will not be stored in this contract, rather it will be handled by the publish contract.
+ * This NFT will be minted when a profile comment on a publish.
+ * The "createComment", "updateComment", and "burn" only accept calls from the Publish contract.
  */
 
 contract CommentNFT is
@@ -78,6 +78,9 @@ contract CommentNFT is
         address owner,
         DataTypes.CreateCommentData calldata createCommentData
     ) external override returns (bool, uint256) {
+        // Publish contract address must be set.
+        require(publishContractAddress != address(0), "Not ready");
+
         // Only accept a call from the publish contract.
         require(msg.sender == publishContractAddress, "Forbidden");
 
@@ -107,6 +110,9 @@ contract CommentNFT is
         address owner,
         DataTypes.UpdateCommentData calldata updateCommentData
     ) external override returns (bool) {
+        // Publish contract address must be set.
+        require(publishContractAddress != address(0), "Not ready");
+
         // Only accept a call from the publish contract.
         require(msg.sender == publishContractAddress, "Forbidden");
 
@@ -152,6 +158,9 @@ contract CommentNFT is
         address owner,
         uint256 profileId
     ) external override returns (bool) {
+        // Publish contract address must be set.
+        require(publishContractAddress != address(0), "Not ready");
+
         // Only accept a call from the publish contract.
         require(msg.sender == publishContractAddress, "Forbidden");
 

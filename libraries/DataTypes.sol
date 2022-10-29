@@ -176,11 +176,35 @@ library DataTypes {
     }
 
     /**
+     * A struct containing the data of Like NFT.
+     * @param owner {address} - an owner of the like token
+     * @param profileId {uint256} - a profile id that the like belongs to
+     * @param publishId {uint256} - a publish id to be liked
+     */
+    struct Like {
+        address owner;
+        uint256 profileId;
+        uint256 publishId;
+    }
+
+    /**
      * A struct containing data required to like a publish.
      * @param profileId {uint256} - an id of the profile that likes the publish
      * @param publishId {uint256} - an id of the publish
      */
     struct LikeData {
+        uint256 profileId;
+        uint256 publishId;
+    }
+
+    /**
+     * A struct containing data required to unlike a publish.
+     * @param tokenId {uint256} - a like id
+     * @param profileId {uint256} - an id of the profile that likes the publish
+     * @param publishId {uint256} - an id of the publish
+     */
+    struct UnLikeData {
+        uint256 tokenId;
         uint256 profileId;
         uint256 publishId;
     }

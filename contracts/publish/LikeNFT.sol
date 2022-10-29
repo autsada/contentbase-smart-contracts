@@ -8,24 +8,24 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
-import "./IFollowNFT.sol";
+import "./ILikeNFT.sol";
 import {Constants} from "../../libraries/Constants.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
- * @title Follow NFT
- * This NFT will be minted when a profile follow other profile.
- * "follow" and "burn" (unFollow) only accept calls from the Profile contract.
+ * @title Like NFT
+ * This NFT will be minted when a profile likes a publish.
+ *
  */
 
-contract FollowNFT is
+contract LikeNFT is
     Initializable,
     ERC721Upgradeable,
     ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    IFollowNFT
+    ILikeNFT
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
@@ -35,13 +35,13 @@ contract FollowNFT is
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
 
-    // Profile contract address.
-    address public profileContractAddress;
+    // Publish contract address.
+    address public publishContractAddress;
 
-    // Mapping of follow struct by token id.
-    mapping(uint256 => DataTypes.Follow) private _tokenById;
-    // Mapping (profileId => (profileId => boolean)) to track if a specific profile is following another profile, (1 => (2 => true)) means profile id 1 has been following profile id 2.
-    mapping(uint256 => mapping(uint256 => bool)) private _followsList;
+    // Mapping of like struct by token id.
+    mapping(uint256 => DataTypes.Like) private _tokenById;
+    // Mapping of (publishId => (profileId => bool)) to track if a specific profile id has liked the publish, (1 => (1 => true)) means publish id 1 has been liked by profile id 1.
+    mapping(uint256 => mapping(uint256 => bool)) private _likesList;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -63,35 +63,35 @@ contract FollowNFT is
     }
 
     /**
-     * @dev see IFollowNFT - setProfileContractAddress
+     * @dev see ILikeNFT - setPublishContractAddress
      */
-    function setProfileContractAddress(address profileAddress)
+    function setPublishContractAddress(address publishAddress)
         external
         override
         onlyRole(ADMIN_ROLE)
     {
-        profileContractAddress = profileAddress;
+        publishContractAddress = publishAddress;
     }
 
     /**
-     * @dev see IFollowNFT - follow
+     * @dev see ILikeNFT - createLike
      */
-    function follow(address owner, DataTypes.FollowData calldata followData)
+    function createLike(address owner, DataTypes.LikeData calldata likeData)
         external
         override
         returns (bool, uint256)
     {
-        // Profile contract address must be set.
-        require(profileContractAddress != address(0), "Not ready");
+        // Publish contract address must be set.
+        require(publishContractAddress != address(0), "Not ready");
 
-        // Only accept a call from the profile contract.
-        require(msg.sender == profileContractAddress, "Forbidden");
+        // Only accept a call from the publish contract.
+        require(msg.sender == publishContractAddress, "Forbidden");
 
-        // Require the follower not already followed the followee.
-        require(
-            !_followsList[followData.followerId][followData.followeeId],
-            "Already follow"
-        );
+        uint256 publishId = likeData.publishId;
+        uint256 profileId = likeData.profileId;
+
+        // Revert if the profile already liked the publish.
+        if (_likesList[publishId][profileId]) revert("Already liked");
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
@@ -100,55 +100,70 @@ contract FollowNFT is
         // Mint an NFT to the caller.
         _safeMint(owner, tokenId);
 
-        // Create and store a follow struct in the mapping.
-        _tokenById[tokenId] = DataTypes.Follow({
+        // Store the new like in the mapping.
+        _tokenById[tokenId] = DataTypes.Like({
             owner: owner,
-            followerId: followData.followerId,
-            followeeId: followData.followeeId
+            profileId: profileId,
+            publishId: publishId
         });
 
-        // Update the follows list mapping.
-        _followsList[followData.followerId][followData.followeeId] = true;
+        // Update the likes list mapping.
+        _likesList[publishId][profileId] = true;
 
         return (true, tokenId);
     }
 
     /**
-     * @dev see IFollowNFT - burn
+     * @dev see ILikeNFT - burn
      */
     function burn(
         uint256 tokenId,
         address owner,
-        uint256 followerId
-    ) external override returns (bool, uint256) {
-        // Profile contract address must be set.
-        require(profileContractAddress != address(0), "Not ready");
+        uint256 profileId
+    ) external override returns (bool) {
+        // Publish contract address must be set.
+        require(publishContractAddress != address(0), "Not ready");
 
-        // Only accept a call from the profile contract.
-        require(msg.sender == profileContractAddress, "Forbidden");
+        // Only accept a call from the publish contract.
+        require(msg.sender == publishContractAddress, "Forbidden");
 
-        // Follow must exist.
-        require(_exists(tokenId), "Follow not found");
+        // Like must exist.
+        require(_exists(tokenId), "Like not found");
 
-        // The caller must be the owner of the follow.
+        // The caller must be the owner of the like.
         require(owner == ownerOf(tokenId), "Forbidden");
 
         // Get the token.
-        DataTypes.Follow memory token = _tokenById[tokenId];
+        DataTypes.Like memory token = _tokenById[tokenId];
 
-        // The follow must belong to the follower.
-        require(token.followerId == followerId, "Not allow");
+        // The like must belong to the profile.
+        require(token.profileId == profileId, "Not allow");
+
+        // The profile must have been liked the publish.
+        require(_likesList[token.publishId][profileId], "Bad request");
 
         // Call the parent burn function.
         super.burn(tokenId);
 
-        // Update the follows list mapping.
-        _followsList[followerId][token.followeeId] = false;
+        // Remove the profile from the likes list mapping.
+        delete _likesList[token.publishId][profileId];
 
         // Remove the struct from the mapping.
         delete _tokenById[tokenId];
 
-        return (true, token.followeeId);
+        return true;
+    }
+
+    /**
+     * @dev see ILikeNFT - getLike
+     */
+    function getLike(uint256 tokenId)
+        external
+        view
+        override
+        returns (DataTypes.Like memory)
+    {
+        return _tokenById[tokenId];
     }
 
     function _authorizeUpgrade(address newImplementation)

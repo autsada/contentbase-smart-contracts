@@ -12,6 +12,12 @@ interface IPublishNFT {
     function setProfileContractAddress(address profileContractAddress) external;
 
     /**
+     * An external function to set Like contract address.
+     * @dev make sure to add modifier to only ADMIN_ROLE.
+     */
+    function setLikeContractAddress(address likeContractAddress) external;
+
+    /**
      * An external function to set Comment contract address.
      * @dev make sure to add modifier to only ADMIN_ROLE.
      */
@@ -79,10 +85,10 @@ interface IPublishNFT {
 
     /**
      * An external function to unlike a publish.
-     * @param likeData - see DataTypes.LikeData
+     * @param unLikeData - see DataTypes.UnLikeData
      * @return success {bool}
      */
-    function unLike(DataTypes.LikeData calldata likeData)
+    function unLike(DataTypes.UnLikeData calldata unLikeData)
         external
         returns (bool);
 

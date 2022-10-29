@@ -237,6 +237,9 @@ contract ProfileNFT is
         override
         returns (bool, uint256)
     {
+        // Follow contract address must be set.
+        require(followContractAddress != address(0), "Not ready");
+
         // The follower must exist.
         require(_exists(followData.followerId), "Follower not found");
 
@@ -279,6 +282,9 @@ contract ProfileNFT is
         override
         returns (bool)
     {
+        // Follow contract address must be set.
+        require(followContractAddress != address(0), "Not ready");
+
         // The follower must exist.
         require(_exists(followerId), "Follower not found");
 

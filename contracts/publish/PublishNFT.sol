@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
 import "./IPublishNFT.sol";
 import "./ICommentNFT.sol";
+import "./ILikeNFT.sol";
 import "../profile/IProfileNFT.sol";
 import {Constants} from "../../libraries/Constants.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
@@ -39,6 +40,8 @@ contract PublishNFT is
 
     // Profile contract for use to validate profile.
     address public profileAddress;
+    // Like contract for use to create likes.
+    address public likeAddress;
     // Comment contract for use to create comments.
     address public commentAddress;
 
@@ -50,8 +53,6 @@ contract PublishNFT is
     uint public platformFee;
     // Mapping of publish struct by token id.
     mapping(uint256 => DataTypes.Publish) private _tokenById;
-    // Mapping of (publishId => (profileId => bool)) to track if a specific profile id has liked the publish, (1 => (1 => true)) means publish id 1 has been liked by profile id 1.
-    mapping(uint256 => mapping(uint256 => bool)) private _likesList;
 
     // Events
     event PublishCreated(
@@ -82,11 +83,14 @@ contract PublishNFT is
     );
     event PublishDeleted(uint256 indexed tokenId, address indexed owner);
     event Like(
+        uint256 indexed likeId,
         uint256 indexed publishId,
-        uint256 indexed profileId,
-        address indexed profileOwner,
+        address indexed publishOwner,
+        uint256 profileId,
+        address profileOwner,
         uint fee
     );
+    event UnLike(uint256 indexed likeId, uint256 publishId, uint256 profileId);
     event CommentCreated(
         uint256 indexed tokenId,
         uint256 indexed publishId,
@@ -137,6 +141,17 @@ contract PublishNFT is
         onlyRole(ADMIN_ROLE)
     {
         profileAddress = profileContractAddress;
+    }
+
+    /**
+     * @dev see IPublishNFT - setLikeContractAddress
+     */
+    function setLikeContractAddress(address likeContractAddress)
+        external
+        override
+        onlyRole(ADMIN_ROLE)
+    {
+        likeAddress = likeContractAddress;
     }
 
     /**
@@ -415,6 +430,9 @@ contract PublishNFT is
         // Profile contract address must be set.
         require(profileAddress != address(0), "Not ready");
 
+        // Like contract address must be set.
+        require(likeAddress != address(0), "Not ready");
+
         uint256 publishId = likeData.publishId;
         uint256 profileId = likeData.profileId;
 
@@ -430,8 +448,13 @@ contract PublishNFT is
         // Validate ether sent.
         require(msg.value == likeFee, "Bad input");
 
-        // Revert if the profile already liked the publish.
-        if (_likesList[publishId][profileId]) revert("Already liked");
+        // Call the like contract to create a like NFT.
+        (bool success, uint256 likeId) = ILikeNFT(likeAddress).createLike(
+            msg.sender,
+            likeData
+        );
+
+        require(success, "Like failed");
 
         // Get the Publish's owner address.
         address publishOwner = ownerOf(publishId);
@@ -443,10 +466,14 @@ contract PublishNFT is
         // Increase the publish struct likes.
         _tokenById[publishId].likes++;
 
-        // Update likes list.
-        _likesList[publishId][profileId] = true;
-
-        emit Like(publishId, profileId, msg.sender, netFee);
+        emit Like(
+            likeId,
+            publishId,
+            publishOwner,
+            profileId,
+            msg.sender,
+            netFee
+        );
 
         return true;
     }
@@ -454,7 +481,7 @@ contract PublishNFT is
     /**
      * @dev see IPublishNFT - unLike
      */
-    function unLike(DataTypes.LikeData calldata likeData)
+    function unLike(DataTypes.UnLikeData calldata unLikeData)
         external
         override
         returns (bool)
@@ -462,8 +489,12 @@ contract PublishNFT is
         // Profile contract address must be set.
         require(profileAddress != address(0), "Not ready");
 
-        uint256 publishId = likeData.publishId;
-        uint256 profileId = likeData.profileId;
+        // Like contract address must be set.
+        require(likeAddress != address(0), "Not ready");
+
+        uint256 likeId = unLikeData.tokenId;
+        uint256 publishId = unLikeData.publishId;
+        uint256 profileId = unLikeData.profileId;
 
         // The caller must own the profile id.
         require(
@@ -474,17 +505,22 @@ contract PublishNFT is
         // The publish must exist.
         require(_exists(publishId), "Publish not found");
 
-        // The profile must already liked the publish.
-        require(_likesList[publishId][profileId], "Bad request");
+        // Call the like contract to burn the like token.
+        bool success = ILikeNFT(likeAddress).burn(
+            likeId,
+            msg.sender,
+            profileId
+        );
 
-        // Remove the profile from the likes list mapping.
-        delete _likesList[publishId][profileId];
+        require(success, "UnLike failed");
 
         // Decrease the publish's likes.
         // Make sure the likes is greater than 0.
         if (_tokenById[publishId].likes > 0) {
             _tokenById[publishId].likes--;
         }
+
+        emit UnLike(likeId, publishId, profileId);
 
         return true;
     }
@@ -645,6 +681,9 @@ contract PublishNFT is
      * @return success {bool}
      */
     function burn(uint256 tokenId, uint256 creatorId) public returns (bool) {
+        // Profile contract address must be set.
+        require(profileAddress != address(0), "Not ready");
+
         // Publish must exist.
         require(_exists(tokenId), "Publish not found");
 

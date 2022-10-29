@@ -3,7 +3,7 @@ import path from "path"
 import fs from "fs/promises"
 
 async function main() {
-  const FollowNFTContract = await ethers.getContractFactory("CommentNFT")
+  const FollowNFTContract = await ethers.getContractFactory("FollowNFT")
   const followNFTContract = await upgrades.deployProxy(FollowNFTContract)
 
   await followNFTContract.deployed()
