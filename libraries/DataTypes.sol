@@ -86,7 +86,6 @@ library DataTypes {
     /**
      * A struct containing data of Publish NFT.
      * @param owner {address} - an address that owns the token
-     * @param tokenId {uint256} - a token id
      * @param creatorId {uint256} - a profile token id of the creator
      * @param likes {uint256} - number of likes a publish has
      * @param imageURI {string} - a publish's thumbnail image uri
@@ -95,9 +94,9 @@ library DataTypes {
      *
      * @dev Metadata Guild: the metadata json object must have these below fields, additional fields can be added.
      * {
-     *      name {string}: "A title of the publish",
-     *      description {string}: "A description of the publish",
-     *      image {string}: "A publish's thumbnail image, prefer ipfs storage"
+     *      name: "A title of the publish",
+     *      description: "A description of the publish",
+     *      image: "A publish's thumbnail image, prefer ipfs storage"
      *      properties: {
      *          content: "A publish's content uri, prefer ipfs storage",
      *          primaryCategory {enum}: "See Category enum above - must NOT Empty",
@@ -108,7 +107,6 @@ library DataTypes {
      */
     struct Publish {
         address owner;
-        uint256 tokenId;
         uint256 creatorId;
         uint256 likes;
         string imageURI;
@@ -176,5 +174,62 @@ library DataTypes {
     struct LikeData {
         uint256 profileId;
         uint256 publishId;
+    }
+
+    /**
+     * A struct containing data of Comment NFT.
+     * @param publishId {uint256} - the publish id to be commented
+     * @param profileId {uint256} - the profile id that comments a publish
+     * @param owner {address} - an owner of the token
+     * @param text {string} - text input in the comment, can be empty
+     * @param contentURI {string} - a uri point to the comment metadata json object, can be empty
+     * @dev The contentURI should be in the following format.
+     * {
+     *      name: "for example 'The comment of the publish id 1'",
+     *      description: "the text input of the comment",
+     *      image: "If the comment as a media file, this is the uri point to that file",
+     *      properties: {
+     *          // Other info if any
+     *      }
+     * }
+     */
+    struct Comment {
+        address owner;
+        uint256 profileId;
+        uint256 publishId;
+        string text;
+        string contentURI;
+    }
+
+    /**
+     * A struct containing data required to comment on a publish.
+     * @param publishId {uint256} - see Comment struct
+     * @param profileId {uint256} - see Comment struct
+     * @param text {string} - see Comment struct, can be empty
+     * @param contentURI {string} - see Comment struct, can be empty
+     * @dev at least one of text and medaiURI must not empty.
+     */
+    struct CreateCommentData {
+        uint256 publishId;
+        uint256 profileId;
+        string text;
+        string contentURI;
+    }
+
+    /**
+     * A struct containing data required to update a comment on a publish.
+     * @param tokenId {uint256} - an id of the comment to be updated
+     * @param publishId {uint256} - see Comment struct
+     * @param profileId {uint256} - see Comment struct
+     * @param text {string} - see Comment struct, can be empty
+     * @param contentURI {string} - see Comment struct, can be empty
+     * @dev if no change, the existing data of the text and mediaURI must be provided.
+     */
+    struct UpdateCommentData {
+        uint256 tokenId;
+        uint256 publishId;
+        uint256 profileId;
+        string text;
+        string contentURI;
     }
 }

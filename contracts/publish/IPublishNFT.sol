@@ -6,10 +6,16 @@ import {Constants} from "../../libraries/Constants.sol";
 
 interface IPublishNFT {
     /**
-     * An external function to set Profile contract.
+     * An external function to set Profile contract address.
      * @dev make sure to add modifier to only ADMIN_ROLE.
      */
-    function setProfileContract(address profileContractAddress) external;
+    function setProfileContractAddress(address profileContractAddress) external;
+
+    /**
+     * An external function to set Comment contract address.
+     * @dev make sure to add modifier to only ADMIN_ROLE.
+     */
+    function setCommentContractAddress(address commentContractAddress) external;
 
     /**
      * An external function to set contract owner address.
@@ -33,15 +39,9 @@ interface IPublishNFT {
     /**
      * An external function to set like fee.
      * @dev make sure to add modifier to only ADMIN_ROLE.
-     * @param amount {uint} - an amount to be sent when some profile likes a Publish
+     * @param fee {uint} - a fee to be sent when some profile likes a Publish
      */
-    function setLikeFee(uint amount) external;
-
-    /**
-     * An external function to get like fee.
-     * @return amount {uint}
-     */
-    function getLikeFee() external view returns (uint);
+    function setLikeFee(uint fee) external;
 
     /**
      * An external function to set operational fee for the platform.
@@ -49,12 +49,6 @@ interface IPublishNFT {
      * @param fee - operational fee
      */
     function setPlatformFee(uint fee) external;
-
-    /**
-     * An external function to get operational fee for the platform.
-     * @return fee {uint}
-     */
-    function getPlatformFee() external view returns (uint);
 
     /**
      * An external function to crate Publish NFT.
@@ -89,6 +83,34 @@ interface IPublishNFT {
      * @return success {bool}
      */
     function unLike(DataTypes.LikeData calldata likeData)
+        external
+        returns (bool);
+
+    /**
+     * An external function to comment on a publish.
+     * @param createCommentData - see DataTypes.CreateCommentData
+     * @return commentId {uint256}
+     */
+    function comment(DataTypes.CreateCommentData calldata createCommentData)
+        external
+        returns (uint256);
+
+    /**
+     * An external function to update a comment.
+     * @param updateCommentData - see DataTypes.UpdateCommentData
+     * @return success {bool}
+     */
+    function updateComment(
+        DataTypes.UpdateCommentData calldata updateCommentData
+    ) external returns (bool);
+
+    /**
+     * An external function to delete a comment.
+     * @param tokenId {uint256} - a comment id
+     * @param profileId {uint256} - a profile that the comment belongs to
+     * @return success {bool}
+     */
+    function deleteComment(uint256 tokenId, uint256 profileId)
         external
         returns (bool);
 
