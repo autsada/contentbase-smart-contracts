@@ -1,15 +1,14 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 import {DataTypes} from "../../libraries/DataTypes.sol";
-import {Constants} from "../../libraries/Constants.sol";
 
-interface ICommentNFT {
+interface IContentBaseComment {
     /**
-     * An external function to set Publish Contract address.
+     * An external function to update Publish Contract address.
      * @dev make sure to add modifier to only ADMIN_ROLE.
      */
-    function setPublishContractAddress(address publishAddress) external;
+    function updatePublishContract(address publishAddress) external;
 
     /**
      * An external function to create a comment NFT.
@@ -37,14 +36,16 @@ interface ICommentNFT {
     /**
      * An external function to delete a comment.
      * @param tokenId {uint256} - a comment id
-     * @param owner {address} - an owner of the comment
-     * @param profileId {uint256} - a profile that the comment belongs to
+     * @param publishId {uint256} - the publish id that the comment is on
+     * @param owner {address} - an EOA that owns the comment
+     * @param profileAddress {address} - a profile address that created the comment
      * @return success {bool}
      */
     function burn(
         uint256 tokenId,
+        uint256 publishId,
         address owner,
-        uint256 profileId
+        address profileAddress
     ) external returns (bool);
 
     /**

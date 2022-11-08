@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 /**
@@ -9,17 +9,17 @@ library DataTypes {
     /**
      * A struct containing data of Profile NFT.
      * @param owner {address} - an address that owns the token
-     * @param following {uint256} - profile's following count
-     * @param followers {uint256} - profile's followers count
      * @param handle {string} - a handle that associate with the owner address
      * @param imageURI {string} - a uri of the profile image
+     * @param followers {uint256} - number of followers
+     * @param following {uint256} - number of following
      */
     struct Profile {
         address owner;
-        uint256 following;
-        uint256 followers;
         string handle;
         string imageURI;
+        uint256 followers;
+        uint256 following;
     }
 
     /**
@@ -44,23 +44,22 @@ library DataTypes {
 
     /**
      * A strunct containing the data of Follow NFT.
-     * @param followerId {uint256} - a Profile id that follows followeeId.
-     * @param followeeId {uint256} - a Profile id that is being followed by followerId.
+     * @param owner {address} - an EOA that owns the follower address
+     * @param follower {address} - a profile address of the follower.
+     * @param issuer {address} - a profie address that issues the token (followee).
      */
     struct Follow {
         address owner;
-        uint256 followerId;
-        uint256 followeeId;
+        address follower;
+        address issuer;
     }
 
     /**
-     * A struct containing required data to follow a profile.
-     * @param followerId {uint256} - a Profile id that follows followeeId.
-     * @param followeeId {uint256} - a Profile id that is being followed by followerId.
+     * An enum to identify the type of the call in the `follow` function.
      */
-    struct FollowData {
-        uint256 followerId;
-        uint256 followeeId;
+    enum FollowType {
+        FOLLOW,
+        UNFOLLOW
     }
 
     /**
@@ -95,7 +94,7 @@ library DataTypes {
     /**
      * A struct containing data of Publish NFT.
      * @param owner {address} - an address that owns the token
-     * @param creatorId {uint256} - a profile token id of the creator
+     * @param creatorId {adress} - a profile address that creates the publish
      * @param likes {uint256} - number of likes a publish has
      * @param imageURI {string} - a publish's thumbnail image uri
      * @param contentURI {string} - a publish's content uri, tipically it's a uri point to a video content
@@ -116,7 +115,7 @@ library DataTypes {
      */
     struct Publish {
         address owner;
-        uint256 creatorId;
+        address creatorId;
         uint256 likes;
         string imageURI;
         string contentURI;
@@ -125,7 +124,7 @@ library DataTypes {
 
     /**
      * A struct containing data required to create Publish NFT.
-     * @param creatorId {uint256} - see PublishStruct
+     * @param creatorId {address} - see PublishStruct
      * @param imageURI {string} - see PublishStruct
      * @param contentURI {string} - see PublishStruct
      * @param metadataURI {string} - see PublishStruct
@@ -137,7 +136,7 @@ library DataTypes {
      * @dev title, description, primaryCategory, secondaryCategory, and tertiaryCategory are not stored on the blockchain, they are required for event emitting to inform frontend the information of the created publish only.
      */
     struct CreatePublishData {
-        uint256 creatorId;
+        address creatorId;
         string imageURI;
         string contentURI;
         string metadataURI;
@@ -151,7 +150,7 @@ library DataTypes {
     /**
      * A struct containing data required to update Publish NFT.
      * @param tokenId {uint256} - an id of the token to be updated
-     * @param creatorId {uint256} - see PublishStruct
+     * @param creatorId {address} - see PublishStruct
      * @param imageURI {string} - see PublishStruct
      * @param contentURI {string} - see PublishStruct
      * @param metadataURI {string} - see PublishStruct
@@ -164,7 +163,7 @@ library DataTypes {
      */
     struct UpdatePublishData {
         uint256 tokenId;
-        uint256 creatorId;
+        address creatorId;
         string imageURI;
         string contentURI;
         string metadataURI;
@@ -178,42 +177,38 @@ library DataTypes {
     /**
      * A struct containing the data of Like NFT.
      * @param owner {address} - an owner of the like token
-     * @param profileId {uint256} - a profile id that the like belongs to
+     * @param profileAddress {address} - a profile address that performs like
      * @param publishId {uint256} - a publish id to be liked
      */
     struct Like {
         address owner;
-        uint256 profileId;
+        address profileAddress;
         uint256 publishId;
     }
 
     /**
      * A struct containing data required to like a publish.
-     * @param profileId {uint256} - an id of the profile that likes the publish
+     * @param profileAddress {address} - an address of the profile that performs like
      * @param publishId {uint256} - an id of the publish
      */
     struct LikeData {
-        uint256 profileId;
+        address profileAddress;
         uint256 publishId;
     }
 
     /**
-     * A struct containing data required to unlike a publish.
-     * @param tokenId {uint256} - a like id
-     * @param profileId {uint256} - an id of the profile that likes the publish
-     * @param publishId {uint256} - an id of the publish
+     * An enum to identify the type of the like action - either `like` or `unlike`.
      */
-    struct UnLikeData {
-        uint256 tokenId;
-        uint256 profileId;
-        uint256 publishId;
+    enum LikeActionType {
+        LIKE,
+        UNLIKE
     }
 
     /**
      * A struct containing data of Comment NFT.
      * @param publishId {uint256} - the publish id to be commented
-     * @param profileId {uint256} - the profile id that comments a publish
-     * @param owner {address} - an owner of the token
+     * @param profileAddress {address} - the profile address that comments a publish
+     * @param owner {address} - an owner of the profile address that owns the token
      * @param text {string} - text input in the comment, can be empty
      * @param contentURI {string} - a uri point to the comment metadata json object, can be empty
      * @dev The contentURI should be in the following format.
@@ -228,7 +223,7 @@ library DataTypes {
      */
     struct Comment {
         address owner;
-        uint256 profileId;
+        address profileAddress;
         uint256 publishId;
         string text;
         string contentURI;
@@ -237,14 +232,14 @@ library DataTypes {
     /**
      * A struct containing data required to comment on a publish.
      * @param publishId {uint256} - see Comment struct
-     * @param profileId {uint256} - see Comment struct
+     * @param profileAddress {address} - see Comment struct
      * @param text {string} - see Comment struct, can be empty
      * @param contentURI {string} - see Comment struct, can be empty
      * @dev at least one of text and medaiURI must not empty.
      */
     struct CreateCommentData {
         uint256 publishId;
-        uint256 profileId;
+        address profileAddress;
         string text;
         string contentURI;
     }
@@ -253,7 +248,7 @@ library DataTypes {
      * A struct containing data required to update a comment on a publish.
      * @param tokenId {uint256} - an id of the comment to be updated
      * @param publishId {uint256} - see Comment struct
-     * @param profileId {uint256} - see Comment struct
+     * @param profileAddress {address} - see Comment struct
      * @param text {string} - see Comment struct, can be empty
      * @param contentURI {string} - see Comment struct, can be empty
      * @dev if no change, the existing data of the text and mediaURI must be provided.
@@ -261,7 +256,7 @@ library DataTypes {
     struct UpdateCommentData {
         uint256 tokenId;
         uint256 publishId;
-        uint256 profileId;
+        address profileAddress;
         string text;
         string contentURI;
     }

@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
-import "./IPublishNFT.sol";
-import "./ICommentNFT.sol";
-import "./ILikeNFT.sol";
-import "../profile/IProfileNFT.sol";
-import {Constants} from "../../libraries/Constants.sol";
+
+import "../IProfileFactory.sol";
+import "./IPublish.sol";
+import "../like/ILike.sol";
+import "../comment/IComment.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
- * @title PublishNFT
- * @notice some data required to create a Publish NFT will not be stored on-chain, it will be used as an event arguments so the client listening to the event can update their UI/database accordingly.
+ * @title ContentBase Publish
+ * @notice Some data required to create a Publish NFT will not be stored on-chain, it will be used as an event arguments so the client listening to the event can update their UI/database accordingly.
+ * @notice This contract will need to communicate to ContentBase Like Contract for like operation, and ContentBase Comment for commenting operation. It will also need to communicate to the Profile Factory Contract to validate the callers to ensure they are ContentBase Profiles.
  * @dev metadataURI must resolve to the metadata json object file of the publish, the json object must have required fields as specified in Metadata Guild at Publish struct in DataTypes.sol.
  */
 
-contract PublishNFT is
+contract ContentBasePublish is
     Initializable,
     ERC721Upgradeable,
     ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    IPublishNFT
+    IContentBasePublish
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
@@ -38,26 +39,26 @@ contract PublishNFT is
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
 
-    // Profile contract for use to validate profile.
-    address public profileAddress;
-    // Like contract for use to create likes.
-    address public likeAddress;
-    // Comment contract for use to create comments.
-    address public commentAddress;
-
     // Contract owner address.
-    address private _owner;
+    address public platform;
+    // Profile factory address for use to validate profiles.
+    address public factoryContract;
+    // Like contract for use to create comments.
+    address public likeContract;
+    // Comment contract for use to create comments.
+    address public commentContract;
+
     // The amount that a profile will send to the owner of the publish they like.
-    uint public likeFee;
+    uint256 public likeFee;
     // The percentage to be deducted from the like fee (as the platform commission) before transfering the like fee to the publish's owner, need to store it as a whole number and do division when using it.
-    uint public platformFee;
+    uint256 public platformFee;
     // Mapping of publish struct by token id.
     mapping(uint256 => DataTypes.Publish) private _tokenById;
 
-    // Events
+    // Publish Events.
     event PublishCreated(
         uint256 indexed tokenId,
-        uint256 indexed creatorId,
+        address indexed creatorId,
         address indexed owner,
         string imageURI,
         string contentURI,
@@ -70,7 +71,7 @@ contract PublishNFT is
     );
     event PublishUpdated(
         uint256 tokenId,
-        uint256 creatorId,
+        address creatorId,
         address owner,
         string imageURI,
         string contentURI,
@@ -81,29 +82,40 @@ contract PublishNFT is
         DataTypes.Category secondaryCategory,
         DataTypes.Category tertiaryCategory
     );
-    event PublishDeleted(uint256 indexed tokenId, address indexed owner);
-    event Like(
+    event PublishDeleted(
+        uint256 indexed tokenId,
+        address indexed owner,
+        address profileAddress
+    );
+
+    // Like Events.
+    event PublishLiked(
         uint256 indexed likeId,
         uint256 indexed publishId,
         address indexed publishOwner,
-        uint256 profileId,
-        address profileOwner,
-        uint fee
+        address profileAddress,
+        address profileOwner
     );
-    event UnLike(uint256 indexed likeId, uint256 publishId, uint256 profileId);
+    event PublishUnLiked(
+        uint256 indexed likeId,
+        uint256 publishId,
+        address profileAddress,
+        address profileOwner
+    );
+
     event CommentCreated(
         uint256 indexed tokenId,
         uint256 indexed publishId,
-        address indexed owner,
-        uint256 profileId,
+        address indexed profileAddress,
+        address owner,
         string text,
         string contentURI
     );
     event CommentUpdated(
         uint256 indexed tokenId,
         uint256 indexed publishId,
-        address indexed owner,
-        uint256 profileId,
+        address indexed profileAddress,
+        address owner,
         string text,
         string contentURI
     );
@@ -115,10 +127,11 @@ contract PublishNFT is
     }
 
     function initialize() public initializer {
-        __ERC721_init("Content Base Publish", "CBPu");
+        __ERC721_init("ContentBase Publish Module", "CPM");
         __ERC721Burnable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
+
         _setRoleAdmin(DEFAULT_ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(UPGRADER_ROLE, ADMIN_ROLE);
@@ -127,104 +140,120 @@ contract PublishNFT is
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
 
+        platform = msg.sender;
         likeFee = 1000 ether;
         platformFee = 50;
-        _owner = msg.sender;
     }
 
     /**
-     * @dev see IPublishNFT - setProfileContractAddress
+     * The modifer to check the publish contract is properly initialized.
      */
-    function setProfileContractAddress(address profileContractAddress)
+    modifier onlyReady() {
+        require(platform != address(0), "Not ready");
+        require(factoryContract != address(0), "Not ready");
+        require(likeContract != address(0), "Not ready");
+        require(commentContract != address(0), "Not ready");
+        require(likeFee != 0, "Not ready");
+        require(platformFee != 0, "Not ready");
+
+        _;
+    }
+
+    /**
+     * The modifier to check if the caller owns the profile, and it will also check if the given profile address is a ContentBase profile.
+     */
+    modifier onlyProfileOwner(address profileAddress) {
+        address profileOwner = IContentBaseProfileFactory(factoryContract)
+            .getProfileOwner(profileAddress);
+
+        require(msg.sender == profileOwner, "Forbidden");
+
+        _;
+    }
+
+    /**
+     * @inheritdoc IContentBasePublish
+     */
+    function updateContractOwner(address owner)
         external
         override
         onlyRole(ADMIN_ROLE)
     {
-        profileAddress = profileContractAddress;
+        platform = owner;
     }
 
     /**
-     * @dev see IPublishNFT - setLikeContractAddress
+     * @inheritdoc IContentBasePublish
      */
-    function setLikeContractAddress(address likeContractAddress)
+    function updateFactoryContract(address factoryAddress)
         external
         override
         onlyRole(ADMIN_ROLE)
     {
-        likeAddress = likeContractAddress;
+        factoryContract = factoryAddress;
     }
 
     /**
-     * @dev see IPublishNFT - setCommentContractAddress
+     * @inheritdoc IContentBasePublish
      */
-    function setCommentContractAddress(address commentContractAddress)
+    function updateLikeContract(address contractAddress)
         external
         override
         onlyRole(ADMIN_ROLE)
     {
-        commentAddress = commentContractAddress;
+        likeContract = contractAddress;
     }
 
     /**
-     * @dev see IPublishNFT - setContractOwner
+     * @inheritdoc IContentBasePublish
      */
-    function setContractOwner(address owner)
+    function updateCommentContract(address contractAddress)
         external
         override
         onlyRole(ADMIN_ROLE)
     {
-        _owner = owner;
+        commentContract = contractAddress;
     }
 
     /**
-     * @dev see IPublishNFT - getContractOwner
-     */
-    function getContractOwner() external view returns (address) {
-        return _owner;
-    }
-
-    /**
-     * @dev see IPublishNFT - withdraw
+     * @inheritdoc IContentBasePublish
      */
     function withdraw() external override onlyRole(ADMIN_ROLE) {
         // Make sure the owner address is set.
-        require(_owner != address(0), "Owner not set");
+        require(platform != address(0), "Owner not set");
 
-        payable(_owner).transfer(address(this).balance);
+        payable(platform).transfer(address(this).balance);
     }
 
     /**
-     * @dev see IPublishNFT - setLikeFee
+     * @inheritdoc IContentBasePublish
      */
-    function setLikeFee(uint fee) external override onlyRole(ADMIN_ROLE) {
+    function updateLikeFee(uint256 fee) external override onlyRole(ADMIN_ROLE) {
         likeFee = fee;
     }
 
     /**
-     * @dev see IPublishNFT - setOperationalFee
+     * @inheritdoc IContentBasePublish
      */
-    function setPlatformFee(uint fee) external override onlyRole(ADMIN_ROLE) {
+    function updatePlatformFee(uint256 fee)
+        external
+        override
+        onlyRole(ADMIN_ROLE)
+    {
         platformFee = fee;
     }
 
     /**
-     * @dev see IPublishNFT - createPublish
+     * @inheritdoc IContentBasePublish
      */
     function createPublish(
         DataTypes.CreatePublishData calldata createPublishData
-    ) external override returns (uint256) {
-        // Profile contract address must be set.
-        require(profileAddress != address(0), "Not ready");
-
-        // Caller must own the creator id.
-        require(
-            msg.sender ==
-                IProfileNFT(profileAddress).ownerOfProfile(
-                    createPublishData.creatorId
-                ),
-            "Forbidden"
-        );
-
+    )
+        external
+        override
+        onlyReady
+        onlyProfileOwner(createPublishData.creatorId)
+    {
         // Validate imageURI.
         require(Helpers.notTooShortURI(createPublishData.imageURI));
         require(Helpers.notTooLongURI(createPublishData.imageURI));
@@ -277,11 +306,14 @@ contract PublishNFT is
 
         // Emit publish created event.
         _emitPublishCreated(tokenId, msg.sender, createPublishData);
-
-        return tokenId;
     }
 
-    // A helper function to emit a create publish event that accepts a create publish data struct in memory to avoid a stack too deep error.
+    /**
+     * A helper function to emit a create publish event that accepts a create publish data struct in memory to avoid a stack too deep error.
+     * @param tokenId {uint256}
+     * @param owner {address}
+     * @param createPublishData {struct}
+     */
     function _emitPublishCreated(
         uint256 tokenId,
         address owner,
@@ -303,16 +335,19 @@ contract PublishNFT is
     }
 
     /**
-     * @dev see IPublishNFT - updatePublish
-     * @dev If none of imageURI, contentURI, or metadataURI is changed the function will revert although title, description, or thoes 3 categories might be changed, this is to prevent callers from paying gas if the data that stored on-chain (imageURI, contentURI, metadatURI) isn't changed.
+     * @inheritdoc IContentBasePublish
+     */
+    /**
      * @dev If the value of any key in the struct isn't changed, the existing value must be provided.
      */
     function updatePublish(
         DataTypes.UpdatePublishData calldata updatePublishData
-    ) external override returns (uint256) {
-        // Profile contract address must be set.
-        require(profileAddress != address(0), "Not ready");
-
+    )
+        external
+        override
+        onlyReady
+        onlyProfileOwner(updatePublishData.creatorId)
+    {
         uint256 tokenId = updatePublishData.tokenId;
 
         // The token id must exist.
@@ -320,21 +355,6 @@ contract PublishNFT is
 
         // The caller must own the token.
         require(ownerOf(tokenId) == msg.sender, "Forbidden");
-
-        // Caller must own the creator id.
-        require(
-            msg.sender ==
-                IProfileNFT(profileAddress).ownerOfProfile(
-                    updatePublishData.creatorId
-                ),
-            "Forbidden"
-        );
-
-        // The publish must belong to the creator.
-        require(
-            updatePublishData.creatorId == _tokenById[tokenId].creatorId,
-            "Not allow"
-        );
 
         // Validate imageURI
         require(Helpers.notTooShortURI(updatePublishData.imageURI));
@@ -394,11 +414,13 @@ contract PublishNFT is
 
         // Emit publish updated event
         _emitPublishUpdated(msg.sender, updatePublishData);
-
-        return tokenId;
     }
 
-    // A helper function to emit an update publish event that accepts an update publish data struct in memory to avoid a stack too deep error.
+    /**
+     * A helper function to emit a update publish event that accepts a update publish data struct in memory to avoid a stack too deep error.
+     * @param owner {address}
+     * @param updatePublishData {struct}
+     */
     function _emitPublishUpdated(
         address owner,
         DataTypes.UpdatePublishData memory updatePublishData
@@ -419,28 +441,17 @@ contract PublishNFT is
     }
 
     /**
-     * @dev see IPublishNFT - like
+     * @inheritdoc IContentBasePublish
      */
     function like(DataTypes.LikeData calldata likeData)
         external
         payable
         override
-        returns (bool)
+        onlyReady
+        onlyProfileOwner(likeData.profileAddress)
     {
-        // Profile contract address must be set.
-        require(profileAddress != address(0), "Not ready");
-
-        // Like contract address must be set.
-        require(likeAddress != address(0), "Not ready");
-
         uint256 publishId = likeData.publishId;
-        uint256 profileId = likeData.profileId;
-
-        // The caller must own the profile id.
-        require(
-            msg.sender == IProfileNFT(profileAddress).ownerOfProfile(profileId),
-            "Forbidden"
-        );
+        address profileAddress = likeData.profileAddress;
 
         // The publish must exist.
         require(_exists(publishId), "Publish not found");
@@ -448,112 +459,63 @@ contract PublishNFT is
         // Validate ether sent.
         require(msg.value == likeFee, "Bad input");
 
-        // Call the like contract to create a like NFT.
-        (bool success, uint256 likeId) = ILikeNFT(likeAddress).createLike(
-            msg.sender,
-            likeData
-        );
-
+        // Call `_like` in the like module to handle like logic.
+        (
+            bool success,
+            uint256 likeId,
+            DataTypes.LikeActionType actionType
+        ) = IContentBaseLike(likeContract).like(msg.sender, likeData);
         require(success, "Like failed");
 
         // Get the Publish's owner address.
         address publishOwner = ownerOf(publishId);
 
-        // Transfer like support fee (after deducting operational fee for the platform) to the publish owner.
-        uint netFee = msg.value - ((msg.value * platformFee) / 100);
-        payable(publishOwner).transfer(netFee);
+        // Handle the logic depending on the actype type.
+        if (actionType == DataTypes.LikeActionType.LIKE) {
+            // LIKE --> transfer like fee to the publish owner.
 
-        // Increase the publish struct likes.
-        _tokenById[publishId].likes++;
+            // Transfer like support fee (after deducting operational fee for the platform) to the publish owner.
+            uint256 netFee = msg.value - ((msg.value * platformFee) / 100);
+            payable(publishOwner).transfer(netFee);
 
-        emit Like(
-            likeId,
-            publishId,
-            publishOwner,
-            profileId,
-            msg.sender,
-            netFee
-        );
+            // Increase the publish struct likes.
+            _tokenById[publishId].likes++;
 
-        return true;
-    }
+            // Emit like event.
+            emit PublishLiked(
+                likeId,
+                publishId,
+                publishOwner,
+                profileAddress,
+                msg.sender
+            );
+        } else {
+            // UNLIKE
 
-    /**
-     * @dev see IPublishNFT - unLike
-     */
-    function unLike(DataTypes.UnLikeData calldata unLikeData)
-        external
-        override
-        returns (bool)
-    {
-        // Profile contract address must be set.
-        require(profileAddress != address(0), "Not ready");
-
-        // Like contract address must be set.
-        require(likeAddress != address(0), "Not ready");
-
-        uint256 likeId = unLikeData.tokenId;
-        uint256 publishId = unLikeData.publishId;
-        uint256 profileId = unLikeData.profileId;
-
-        // The caller must own the profile id.
-        require(
-            msg.sender == IProfileNFT(profileAddress).ownerOfProfile(profileId),
-            "Forbidden"
-        );
-
-        // The publish must exist.
-        require(_exists(publishId), "Publish not found");
-
-        // Call the like contract to burn the like token.
-        bool success = ILikeNFT(likeAddress).burn(
-            likeId,
-            msg.sender,
-            profileId
-        );
-
-        require(success, "UnLike failed");
-
-        // Decrease the publish's likes.
-        // Make sure the likes is greater than 0.
-        if (_tokenById[publishId].likes > 0) {
+            // Decrease the publish struct likes.
             _tokenById[publishId].likes--;
+
+            // emit unlike even.
+            emit PublishUnLiked(likeId, publishId, profileAddress, msg.sender);
         }
-
-        emit UnLike(likeId, publishId, profileId);
-
-        return true;
     }
 
     /**
-     * @dev see IPublishNFT - comment
+     * @inheritdoc IContentBasePublish
      */
     function comment(DataTypes.CreateCommentData calldata createCommentData)
         external
         override
-        returns (uint256)
+        onlyReady
+        onlyProfileOwner(createCommentData.profileAddress)
     {
-        // Profile contract address must be set.
-        require(profileAddress != address(0), "Not ready");
-
-        // Comment contract address must be set.
-        require(commentAddress != address(0), "Not ready");
-
         uint256 publishId = createCommentData.publishId;
-        uint256 profileId = createCommentData.profileId;
 
         // The publish must exist.
         require(_exists(publishId), "Publish not found");
 
-        // Caller must own the profile.
-        // This will also validate if the profile exists.
-        require(
-            msg.sender == IProfileNFT(profileAddress).ownerOfProfile(profileId),
-            "Forbidden"
-        );
-
         // Call the comment contract to create a Comment NFT.
-        (bool success, uint256 commentId) = ICommentNFT(commentAddress)
+        (bool success, uint256 commentId) = IContentBaseComment(commentContract)
             .createComment(msg.sender, createCommentData);
 
         require(success, "Create comment failed");
@@ -562,44 +524,36 @@ contract PublishNFT is
         emit CommentCreated(
             commentId,
             createCommentData.publishId,
+            createCommentData.profileAddress,
             msg.sender,
-            createCommentData.profileId,
             createCommentData.text,
             createCommentData.contentURI
         );
-
-        return commentId;
     }
 
     /**
-     * @dev see IPublishNFT - updateComment
-     * If there is no change, existing data must be provided
+     * @inheritdoc IContentBasePublish
+     */
+    /**
+     * @dev For the field that has no change, existing data must be provided
      */
     function updateComment(
         DataTypes.UpdateCommentData calldata updateCommentData
-    ) external override returns (bool) {
-        // Profile contract address must be set.
-        require(profileAddress != address(0), "Not ready");
-
-        // Comment contract address must be set.
-        require(commentAddress != address(0), "Not ready");
-
-        uint256 commentId = updateCommentData.tokenId;
+    )
+        external
+        override
+        onlyReady
+        onlyProfileOwner(updateCommentData.profileAddress)
+    {
+        // uint256 commentId = updateCommentData.tokenId;
         uint256 publishId = updateCommentData.publishId;
-        uint256 profileId = updateCommentData.profileId;
+        address profileAddress = updateCommentData.profileAddress;
 
         // The publish must exist.
         require(_exists(publishId), "Publish not found");
 
-        // Caller must own the profile.
-        // This will also validate if the profile exists.
-        require(
-            msg.sender == IProfileNFT(profileAddress).ownerOfProfile(profileId),
-            "Forbidden"
-        );
-
         // Call the comment contract to update a comment.
-        bool success = ICommentNFT(commentAddress).updateComment(
+        bool success = IContentBaseComment(commentContract).updateComment(
             msg.sender,
             updateCommentData
         );
@@ -607,43 +561,38 @@ contract PublishNFT is
         require(success, "Update comment failed");
 
         emit CommentUpdated(
-            commentId,
+            updateCommentData.tokenId,
             publishId,
+            profileAddress,
             msg.sender,
-            profileId,
             updateCommentData.text,
             updateCommentData.contentURI
         );
-
-        return true;
     }
 
     /**
-     * @dev see IPublishNFT - deleteComment
+     * @inheritdoc IContentBasePublish
      */
-    function deleteComment(uint256 tokenId, uint256 profileId)
+    function deleteComment(
+        uint256 tokenId,
+        uint256 publishId,
+        address profileAddress
+    )
         external
         override
+        onlyReady
+        onlyProfileOwner(profileAddress)
         returns (bool)
     {
-        // Profile contract address must be set.
-        require(profileAddress != address(0), "Not ready");
-
-        // Comment contract address must be set.
-        require(commentAddress != address(0), "Not ready");
-
-        // Caller must own the profile.
-        // This will also validate if the profile exists.
-        require(
-            msg.sender == IProfileNFT(profileAddress).ownerOfProfile(profileId),
-            "Forbidden"
-        );
+        // The given publish id must exist.
+        require(_exists(publishId), "Publish not found");
 
         // Call the comment contract to delete the comment.
-        bool success = ICommentNFT(commentAddress).burn(
+        bool success = IContentBaseComment(commentContract).burn(
             tokenId,
+            publishId,
             msg.sender,
-            profileId
+            profileAddress
         );
 
         require(success, "Delete comment failed");
@@ -652,7 +601,7 @@ contract PublishNFT is
     }
 
     /**
-     * @dev see IPublishNFT - getPublishById
+     * @inheritdoc IContentBasePublish
      */
     function getPublishById(uint256 tokenId)
         external
@@ -667,34 +616,21 @@ contract PublishNFT is
     }
 
     /**
-     * @dev see IPublishNFT - publishesCount
-     */
-    function publishesCount() external view returns (uint256) {
-        return _tokenIdCounter.current();
-    }
-
-    /**
      * A public function to burn a token.
      * @dev use this fuction to delete a publish.
-     * @param tokenId {number} - a publish token id
-     * @param creatorId {number} - the creator id of the publish
-     * @return success {bool}
+     * @param tokenId {uint256} - a publish token id
+     * @param creatorId {address} - the profile address that created the publish
      */
-    function burn(uint256 tokenId, uint256 creatorId) public returns (bool) {
-        // Profile contract address must be set.
-        require(profileAddress != address(0), "Not ready");
-
+    function burn(uint256 tokenId, address creatorId)
+        public
+        onlyReady
+        onlyProfileOwner(creatorId)
+    {
         // Publish must exist.
         require(_exists(tokenId), "Publish not found");
 
         // The caller must be the owner of the publish.
         require(msg.sender == ownerOf(tokenId), "Forbidden");
-
-        // The caller must be the owner of the creator.
-        require(
-            msg.sender == IProfileNFT(profileAddress).ownerOfProfile(creatorId),
-            "Forbidden"
-        );
 
         // The publish must belong to the creator.
         require(_tokenById[tokenId].creatorId == creatorId, "Not allow");
@@ -705,9 +641,7 @@ contract PublishNFT is
         // Call the parent burn function.
         super.burn(tokenId);
 
-        emit PublishDeleted(tokenId, msg.sender);
-
-        return true;
+        emit PublishDeleted(tokenId, msg.sender, creatorId);
     }
 
     /**
@@ -724,12 +658,6 @@ contract PublishNFT is
 
         return _tokenById[tokenId].metadataURI;
     }
-
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
 
     // The following functions are overrides required by Solidity.
 
@@ -756,6 +684,14 @@ contract PublishNFT is
 
         super._beforeTokenTransfer(from, to, tokenId);
     }
+
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyRole(UPGRADER_ROLE)
+    {}
+
+    // The following functions are overrides required by Solidity.
 
     function supportsInterface(bytes4 interfaceId)
         public

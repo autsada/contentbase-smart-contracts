@@ -3,16 +3,16 @@ import path from "path"
 import fs from "fs/promises"
 
 async function main() {
-  const LikeNFTContract = await ethers.getContractFactory("LikeNFT")
-  const likeNFTContract = await upgrades.deployProxy(LikeNFTContract)
+  const LikeContract = await ethers.getContractFactory("ContentBaseLike")
+  const likeContract = await upgrades.deployProxy(LikeContract)
 
-  await likeNFTContract.deployed()
+  await likeContract.deployed()
 
-  console.log("LikeNFTContract deployed to:", likeNFTContract.address)
+  console.log("Like Contract deployed to:", likeContract.address)
   //Pull the address and ABI out, since that will be key in interacting with the smart contract later
   const data = {
-    address: likeNFTContract.address,
-    abi: JSON.parse(likeNFTContract.interface.format("json") as string),
+    address: likeContract.address,
+    abi: JSON.parse(likeContract.interface.format("json") as string),
   }
 
   await fs.writeFile(

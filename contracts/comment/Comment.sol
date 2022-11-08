@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -8,24 +8,23 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
-import "./ICommentNFT.sol";
-import {Constants} from "../../libraries/Constants.sol";
-import {Helpers} from "../../libraries/Helpers.sol";
+
+import "./IComment.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
- * @title Comment NFT
- * This NFT will be minted when a profile comment on a publish.
- * The "createComment", "updateComment", and "burn" only accept calls from the Publish contract.
+ * @title ContentBase Comment
+ * Comment NFT will be minted when a profile comment on a publish, the minted NFT will be given to the profile that performs the comment.
+ * The "createComment", "updateComment", and "burn" only accept calls from the publish contract.
  */
 
-contract CommentNFT is
+contract ContentBaseComment is
     Initializable,
     ERC721Upgradeable,
     ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
-    ICommentNFT
+    IContentBaseComment
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
@@ -36,7 +35,7 @@ contract CommentNFT is
     CountersUpgradeable.Counter private _tokenIdCounter;
 
     // Publish contract address.
-    address public publishContractAddress;
+    address public publishContract;
 
     // Mapping of comment struct by token id.
     mapping(uint256 => DataTypes.Comment) private _tokenById;
@@ -47,10 +46,11 @@ contract CommentNFT is
     }
 
     function initialize() public initializer {
-        __ERC721_init("Content Base Publish", "CBPu");
+        __ERC721_init("ContentBase Comment Module", "CCM");
         __ERC721Burnable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
+
         _setRoleAdmin(DEFAULT_ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(UPGRADER_ROLE, ADMIN_ROLE);
@@ -61,29 +61,39 @@ contract CommentNFT is
     }
 
     /**
-     * @dev see ICommentNFT - setPublishContractAddress
+     * The modifier to check if the caller is the publish contract.
      */
-    function setPublishContractAddress(address publishAddress)
+    modifier onlyPublishContract() {
+        // Publish contract address must be set.
+        require(publishContract != address(0), "Not ready");
+
+        // Only accept a call from the publish contract.
+        require(msg.sender == publishContract, "Forbidden");
+
+        _;
+    }
+
+    /**
+     * @inheritdoc IContentBaseComment
+     */
+    function updatePublishContract(address publishAddress)
         external
         override
         onlyRole(ADMIN_ROLE)
     {
-        publishContractAddress = publishAddress;
+        publishContract = publishAddress;
     }
 
     /**
-     * @dev see ICommentNFT - createComment
+     * @inheritdoc IContentBaseComment
+     */
+    /**
+     * @dev Since we only allow calls from the publish contract and we check the original caller and a given profile there so we don't need to check the owner and profile here again.
      */
     function createComment(
         address owner,
         DataTypes.CreateCommentData calldata createCommentData
-    ) external override returns (bool, uint256) {
-        // Publish contract address must be set.
-        require(publishContractAddress != address(0), "Not ready");
-
-        // Only accept a call from the publish contract.
-        require(msg.sender == publishContractAddress, "Forbidden");
-
+    ) external override onlyPublishContract returns (bool, uint256) {
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
         uint256 tokenId = _tokenIdCounter.current();
@@ -94,7 +104,7 @@ contract CommentNFT is
         // Store the new comment in the mapping.
         _tokenById[tokenId] = DataTypes.Comment({
             owner: owner,
-            profileId: createCommentData.profileId,
+            profileAddress: createCommentData.profileAddress,
             publishId: createCommentData.publishId,
             text: createCommentData.text,
             contentURI: createCommentData.contentURI
@@ -104,25 +114,26 @@ contract CommentNFT is
     }
 
     /**
-     * @dev see ICommentNFT - updateComment
+     * @inheritdoc IContentBaseComment
+     */
+    /**
+     * @dev Since we only allow calls from the publish contract and we check the original caller and a given profile there so we don't need to check the owner and profile here again.
      */
     function updateComment(
         address owner,
         DataTypes.UpdateCommentData calldata updateCommentData
-    ) external override returns (bool) {
-        // Publish contract address must be set.
-        require(publishContractAddress != address(0), "Not ready");
-
-        // Only accept a call from the publish contract.
-        require(msg.sender == publishContractAddress, "Forbidden");
-
+    ) external override onlyPublishContract returns (bool) {
         uint256 tokenId = updateCommentData.tokenId;
+        uint256 publishId = updateCommentData.publishId;
 
         // The comment must exist.
         require(_exists(tokenId), "Comment not found");
 
         // Owner must own the token.
         require(ownerOf(tokenId) == owner, "Forbidden");
+
+        // The given publish id must match the publish id in the comment struct.
+        require(publishId == _tokenById[tokenId].publishId);
 
         // Revert if no change.
         if (
@@ -151,27 +162,31 @@ contract CommentNFT is
     }
 
     /**
-     * @dev see ICommentNFT - burn
+     * @inheritdoc IContentBaseComment
+     */
+    /**
+     * @dev Since we only allow calls from the publish contract and we check the original caller and a given profile there so we don't need to check the owner and profile here again.
      */
     function burn(
         uint256 tokenId,
+        uint256 publishId,
         address owner,
-        uint256 profileId
-    ) external override returns (bool) {
-        // Publish contract address must be set.
-        require(publishContractAddress != address(0), "Not ready");
-
-        // Only accept a call from the publish contract.
-        require(msg.sender == publishContractAddress, "Forbidden");
-
+        address profileAddress
+    ) external override onlyPublishContract returns (bool) {
         // Comment must exist.
         require(_exists(tokenId), "Comment not found");
 
         // The caller must be the owner of the comment.
         require(owner == ownerOf(tokenId), "Forbidden");
 
-        // The comment must belong to the profile.
-        require(_tokenById[tokenId].profileId == profileId, "Not allow");
+        // the given publish id must match the publish id on the token struct.
+        require(_tokenById[tokenId].publishId == publishId, "Bad input");
+
+        // The given profile address must be the creator of the comment.
+        require(
+            _tokenById[tokenId].profileAddress == profileAddress,
+            "Not allow"
+        );
 
         // Call the parent burn function.
         super.burn(tokenId);
@@ -183,7 +198,7 @@ contract CommentNFT is
     }
 
     /**
-     * @dev see ICommentNFT - getComment
+     * @dev see IContentBaseCommentNFT - getComment
      */
     function getComment(uint256 tokenId)
         external

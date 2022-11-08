@@ -3,16 +3,16 @@ import path from "path"
 import fs from "fs/promises"
 
 async function main() {
-  const CommentNFTContract = await ethers.getContractFactory("CommentNFT")
-  const commentNFTContract = await upgrades.deployProxy(CommentNFTContract)
+  const CommentContract = await ethers.getContractFactory("ContentBaseComment")
+  const commentContract = await upgrades.deployProxy(CommentContract)
 
-  await commentNFTContract.deployed()
+  await commentContract.deployed()
 
-  console.log("CommentNFTContract deployed to:", commentNFTContract.address)
+  console.log("Comment Contract deployed to:", commentContract.address)
   //Pull the address and ABI out, since that will be key in interacting with the smart contract later
   const data = {
-    address: commentNFTContract.address,
-    abi: JSON.parse(commentNFTContract.interface.format("json") as string),
+    address: commentContract.address,
+    abi: JSON.parse(commentContract.interface.format("json") as string),
   }
 
   await fs.writeFile(

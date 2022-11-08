@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 import {Constants} from "./Constants.sol";
@@ -23,10 +23,10 @@ library Helpers {
      */
     function handleUnique(
         string calldata handle,
-        mapping(bytes32 => uint256) storage _tokenIdByHandleHash
+        mapping(bytes32 => address) storage _HandleHashToProfile
     ) internal view returns (bool) {
         require(
-            _tokenIdByHandleHash[Helpers.hashHandle(handle)] == 0,
+            _HandleHashToProfile[Helpers.hashHandle(handle)] == address(0),
             "Handle taken"
         );
 
