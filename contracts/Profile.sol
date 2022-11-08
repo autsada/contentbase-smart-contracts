@@ -54,7 +54,8 @@ contract ContentBaseProfile is
     event ProfileImageUpdated(
         address indexed owner,
         address indexed proxy,
-        string imageURI
+        string imageURI,
+        uint256 timestamp
     );
     /**
      * @dev `follower` and `followee` are proxy profile addresses, `followerOwner` is an EOA that owns the follower proxy contract, `tokenId` is a token id.
@@ -63,13 +64,15 @@ contract ContentBaseProfile is
         address indexed follower,
         address indexed followerOwner,
         address indexed followee,
-        uint256 tokenId
+        uint256 tokenId,
+        uint256 timestamp
     );
     event FollowNFTBurned(
         address indexed follower,
         address indexed followerOwner,
         address indexed followee,
-        uint256 tokenId
+        uint256 tokenId,
+        uint256 timestamp
     );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -166,7 +169,12 @@ contract ContentBaseProfile is
         // Update the profile struct.
         profile.imageURI = imageURI;
 
-        emit ProfileImageUpdated(msg.sender, address(this), imageURI);
+        emit ProfileImageUpdated(
+            msg.sender,
+            address(this),
+            imageURI,
+            block.timestamp
+        );
     }
 
     /**
@@ -259,7 +267,8 @@ contract ContentBaseProfile is
                 msg.sender,
                 profileOwner,
                 address(this),
-                newTokenId
+                newTokenId,
+                block.timestamp
             );
 
             return (
@@ -293,7 +302,8 @@ contract ContentBaseProfile is
                 msg.sender,
                 profileOwner,
                 address(this),
-                followTokenId
+                followTokenId,
+                block.timestamp
             );
 
             return (

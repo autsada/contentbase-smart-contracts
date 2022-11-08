@@ -67,7 +67,8 @@ contract ContentBasePublish is
         string description,
         DataTypes.Category primaryCategory,
         DataTypes.Category secondaryCategory,
-        DataTypes.Category tertiaryCategory
+        DataTypes.Category tertiaryCategory,
+        uint256 timestamp
     );
     event PublishUpdated(
         uint256 tokenId,
@@ -80,12 +81,14 @@ contract ContentBasePublish is
         string description,
         DataTypes.Category primaryCategory,
         DataTypes.Category secondaryCategory,
-        DataTypes.Category tertiaryCategory
+        DataTypes.Category tertiaryCategory,
+        uint256 timestamp
     );
     event PublishDeleted(
         uint256 indexed tokenId,
         address indexed owner,
-        address profileAddress
+        address profileAddress,
+        uint256 timestamp
     );
 
     // Like Events.
@@ -94,13 +97,15 @@ contract ContentBasePublish is
         uint256 indexed publishId,
         address indexed publishOwner,
         address profileAddress,
-        address profileOwner
+        address profileOwner,
+        uint256 timestamp
     );
     event PublishUnLiked(
         uint256 indexed likeId,
         uint256 publishId,
         address profileAddress,
-        address profileOwner
+        address profileOwner,
+        uint256 timestamp
     );
 
     event CommentCreated(
@@ -109,7 +114,8 @@ contract ContentBasePublish is
         address indexed profileAddress,
         address owner,
         string text,
-        string contentURI
+        string contentURI,
+        uint256 timestamp
     );
     event CommentUpdated(
         uint256 indexed tokenId,
@@ -117,9 +123,10 @@ contract ContentBasePublish is
         address indexed profileAddress,
         address owner,
         string text,
-        string contentURI
+        string contentURI,
+        uint256 timestamp
     );
-    event CommentDeleted(uint256 tokenId, uint256 publishId);
+    event CommentDeleted(uint256 tokenId, uint256 publishId, uint256 timestamp);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -330,7 +337,8 @@ contract ContentBasePublish is
             createPublishData.description,
             createPublishData.primaryCategory,
             createPublishData.secondaryCategory,
-            createPublishData.tertiaryCategory
+            createPublishData.tertiaryCategory,
+            block.timestamp
         );
     }
 
@@ -436,7 +444,8 @@ contract ContentBasePublish is
             updatePublishData.description,
             updatePublishData.primaryCategory,
             updatePublishData.secondaryCategory,
-            updatePublishData.tertiaryCategory
+            updatePublishData.tertiaryCategory,
+            block.timestamp
         );
     }
 
@@ -487,7 +496,8 @@ contract ContentBasePublish is
                 publishId,
                 publishOwner,
                 profileAddress,
-                msg.sender
+                msg.sender,
+                block.timestamp
             );
         } else {
             // UNLIKE
@@ -496,7 +506,7 @@ contract ContentBasePublish is
             _tokenById[publishId].likes--;
 
             // emit unlike even.
-            emit PublishUnLiked(likeId, publishId, profileAddress, msg.sender);
+            emit PublishUnLiked(likeId, publishId, profileAddress, msg.sender, block.timestamp);
         }
     }
 
@@ -527,7 +537,8 @@ contract ContentBasePublish is
             createCommentData.profileAddress,
             msg.sender,
             createCommentData.text,
-            createCommentData.contentURI
+            createCommentData.contentURI,
+            block.timestamp
         );
     }
 
@@ -566,7 +577,8 @@ contract ContentBasePublish is
             profileAddress,
             msg.sender,
             updateCommentData.text,
-            updateCommentData.contentURI
+            updateCommentData.contentURI,
+            block.timestamp
         );
     }
 
@@ -641,7 +653,7 @@ contract ContentBasePublish is
         // Call the parent burn function.
         super.burn(tokenId);
 
-        emit PublishDeleted(tokenId, msg.sender, creatorId);
+        emit PublishDeleted(tokenId, msg.sender, creatorId, block.timestamp);
     }
 
     /**

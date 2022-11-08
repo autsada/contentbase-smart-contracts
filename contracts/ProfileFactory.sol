@@ -45,9 +45,15 @@ contract ContentBaseProfileFactory is
         address indexed owner,
         address indexed profileAddress,
         string handle,
-        string imageURI
+        string imageURI,
+        bool isDefault,
+        uint256 timestamp
     );
-    event DefaultProfileUpdated(address indexed proxy, address indexed owner);
+    event DefaultProfileUpdated(
+        address indexed proxy,
+        address indexed owner,
+        uint256 timestamp
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -130,7 +136,9 @@ contract ContentBaseProfileFactory is
             msg.sender,
             profileAddress,
             createProfileData.handle,
-            createProfileData.imageURI
+            createProfileData.imageURI,
+            _ownerToDefaultProfile[msg.sender] == profileAddress,
+            block.timestamp
         );
     }
 
@@ -157,7 +165,7 @@ contract ContentBaseProfileFactory is
 
         _ownerToDefaultProfile[msg.sender] = profileAddress;
 
-        emit DefaultProfileUpdated(profileAddress, msg.sender);
+        emit DefaultProfileUpdated(profileAddress, msg.sender, block.timestamp);
     }
 
     /**
