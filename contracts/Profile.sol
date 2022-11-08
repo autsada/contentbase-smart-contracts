@@ -16,6 +16,7 @@ import {Helpers} from "../libraries/Helpers.sol";
 /**
  * @title ContentBase Profile Contract
  * @notice This is the implementation of ContentBase Profile, this contrat is designed to be deployed as a proxy contract via the factory contract every time an EOA calls the `createProfile` function in the factory. So each time an EOA calls the `createProfile` function they will receive a profile proxy contract, and they can create as many profiles as they want as long as the given handle is unique.
+ * @notice The profile contract will mint (or burn) a Follow NFT when the contract get called on the `follow` function by other profile contract.
  * @notice Almost of the write functions in the contract are guarded with onlyOwner modifier, so only an owner of the contract can call them.
  *
  */
@@ -92,7 +93,7 @@ contract ContentBaseProfile is
         address _owner,
         DataTypes.CreateProfileData calldata createProfileData
     ) public initializer {
-        __ERC721_init("ContentBase Profile", "CBP");
+        __ERC721_init("ContentBase Profile's Follow NFT", "CPF");
         __ERC721Burnable_init();
         __Ownable_init();
         // Transfer an ownership to the owner (EOA) of the proxy profile that initialize the follow contract.
