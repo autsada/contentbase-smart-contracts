@@ -8,14 +8,14 @@ const { DEV_PLATFORM_ADDRESS } = process.env
 
 async function main() {
   // Deploy beacon.
-  const Implementation = await ethers.getContractFactory("ProfileContract")
+  const Implementation = await ethers.getContractFactory("ContentBaseProfile")
   const beacon = await upgrades.upgradeBeacon(
     BeaconContract.address,
     Implementation
   )
   await beacon.deployed()
   console.log("Profile beacon deployed to:", beacon.address)
-  //Pull the address and ABI out, since that will be key in interacting with the smart contract later
+  // Pull the address and ABI out, since that will be key in interacting with the smart contract later.
   const beaconData = {
     address: beacon.address,
     abi: JSON.parse(beacon.interface.format("json") as string),
@@ -27,16 +27,13 @@ async function main() {
 
   // Deploy proxy, this is just to get an interface of the implementation contract for use.
   const proxy = await upgrades.deployBeaconProxy(beacon, Implementation, [
-    DEV_PLATFORM_ADDRESS,
+    DEV_PLATFORM_ADDRESS, // Use this  as a platform owner address
     DEV_PLATFORM_ADDRESS, // Use this  as a factory contract address
     DEV_PLATFORM_ADDRESS, // Use this as an owner of the profile proxy
-    DEV_PLATFORM_ADDRESS, // Use this as a follow proxy
-    DEV_PLATFORM_ADDRESS, // Use this as a publish proxy
-    DEV_PLATFORM_ADDRESS, // Use this as a comment proxy
     { handle: "example", imageURI: "" },
   ])
   console.log("Profile proxy example deployed to:", proxy.address)
-  //Pull the address and ABI out, since that will be key in interacting with the smart contract later
+  // Pull the address and ABI out, since that will be key in interacting with the smart contract later.
   const proxyData = {
     address: proxy.address,
     abi: JSON.parse(proxy.interface.format("json") as string),
@@ -44,6 +41,11 @@ async function main() {
   await fs.writeFile(
     path.join(__dirname, "..", "/abi/ProfileImplementation.json"),
     JSON.stringify(proxyData)
+  )
+  // Write abi to json for use in subgraph.
+  await fs.writeFile(
+    path.join(__dirname, "../..", "/subgraph/abis/ContentBaseProfile.json"),
+    JSON.stringify(proxyData.abi)
   )
 }
 

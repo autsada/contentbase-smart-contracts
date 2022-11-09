@@ -19,6 +19,11 @@ async function main() {
     path.join(__dirname, "..", "/abi/LikeContract.json"),
     JSON.stringify(data)
   )
+  // Write abi to json for use in subgraph.
+  await fs.writeFile(
+    path.join(__dirname, "../..", "/subgraph/abis/ContentBaseLike.json"),
+    JSON.stringify(data.abi)
+  )
 }
 
 main().catch((error) => {

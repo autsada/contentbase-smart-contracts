@@ -4,6 +4,7 @@
   "description": "Smart contracts for Content Base web3 project",
   "main": "index.js",
   "scripts": {
+    "hardhat-local": "hardhat node --hostname 0.0.0.0",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "autsada thummatipagul",
@@ -14,7 +15,8 @@
     "hardhat": "^2.10.1"
   },
   "dependencies": {
-    "@openzeppelin/contracts-upgradeable": "^4.7.0",
+    "@openzeppelin/contracts": "^4.7.3",
+    "@openzeppelin/contracts-upgradeable": "^4.7.3",
     "dotenv": "^16.0.1"
   }
 }
