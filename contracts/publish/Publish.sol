@@ -54,6 +54,8 @@ contract ContentBasePublish is
     uint24 public platformFee;
     // Mapping of publish struct by token id.
     mapping(uint256 => DataTypes.Publish) private _tokenById;
+    // Mapping of (publishId => profileId) to track if a specific profile disliked the publish.
+    mapping(uint256 => address) private _publishToDislikedProfile;
 
     // Publish Events.
     event PublishCreated(
@@ -99,6 +101,7 @@ contract ContentBasePublish is
         address profileAddress,
         address profileOwner,
         uint32 likes,
+        uint32 disLikes,
         uint256 fee,
         uint256 timestamp
     );
@@ -108,6 +111,25 @@ contract ContentBasePublish is
         address profileAddress,
         address profileOwner,
         uint32 likes,
+        uint32 disLikes,
+        uint256 timestamp
+    );
+
+    // DisLike Events.
+    event PublishDisLiked(
+        uint256 indexed publishId,
+        address indexed profileAddress,
+        address profileOwner,
+        uint32 likes,
+        uint32 disLikes,
+        uint256 timestamp
+    );
+    event PublishUndoDisLiked(
+        uint256 indexed publishId,
+        address indexed profileAddress,
+        address profileOwner,
+        uint32 likes,
+        uint32 disLikes,
         uint256 timestamp
     );
 
@@ -317,6 +339,7 @@ contract ContentBasePublish is
             owner: msg.sender,
             creatorId: createPublishData.creatorId,
             likes: 0,
+            disLikes: 0,
             imageURI: createPublishData.imageURI,
             contentURI: createPublishData.contentURI,
             metadataURI: createPublishData.metadataURI
@@ -509,6 +532,7 @@ contract ContentBasePublish is
                 profileAddress,
                 msg.sender,
                 _tokenById[publishId].likes,
+                _tokenById[publishId].disLikes,
                 netFee,
                 block.timestamp
             );
@@ -525,6 +549,77 @@ contract ContentBasePublish is
                 profileAddress,
                 msg.sender,
                 _tokenById[publishId].likes,
+                _tokenById[publishId].disLikes,
+                block.timestamp
+            );
+        }
+    }
+
+    /**
+     * @inheritdoc IContentBasePublish
+     * @dev No NFT minted for this functionality.
+     * @dev use this function for both `dislike` and `undo dislike`
+     */
+    function disLike(DataTypes.LikeData calldata likeData)
+        external
+        override
+        onlyReady
+        onlyProfileOwner(likeData.profileAddress)
+    {
+        uint256 publishId = likeData.publishId;
+        address profileAddress = likeData.profileAddress;
+
+        // The publish must exist.
+        require(_exists(publishId), "Publish not found");
+
+        // Identify if the call is for `dislike` or `undo dislike`.
+        address disLikedAddr = _publishToDislikedProfile[publishId];
+
+        // Handle the logic depending on the actype type.
+        if (disLikedAddr == address(0)) {
+            // DISLIKE --> need to call the Like contract to update like state.
+
+            (bool success, bool isLiked) = IContentBaseLike(likeContract)
+                .handleDislikePublish(profileAddress, publishId);
+
+            require(success, "Dislike failed");
+
+            // Increase the publish struct likes.
+            _tokenById[publishId].disLikes++;
+
+            // If the profile has liked the publish before, we need to reduce the publish's likes count as well.
+            if (isLiked) {
+                _tokenById[publishId].likes--;
+            }
+
+            // Emit like event.
+            emit PublishDisLiked(
+                publishId,
+                profileAddress,
+                msg.sender,
+                _tokenById[publishId].likes,
+                _tokenById[publishId].disLikes,
+                block.timestamp
+            );
+        } else {
+            // UNDO DISLIKE --> NO need to call the Like contract.
+
+            // Make sure the profile has disliked the publish before.
+            require(
+                _publishToDislikedProfile[publishId] != address(0),
+                "Undo failed"
+            );
+
+            // Decrease dislikes count.
+            _tokenById[publishId].disLikes--;
+
+            // emit unlike even.
+            emit PublishUndoDisLiked(
+                publishId,
+                profileAddress,
+                msg.sender,
+                _tokenById[publishId].likes,
+                _tokenById[publishId].disLikes,
                 block.timestamp
             );
         }

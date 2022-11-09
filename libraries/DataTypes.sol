@@ -96,6 +96,7 @@ library DataTypes {
      * @param owner {address} - an address that owns the token
      * @param creatorId {adress} - a profile address that creates the publish
      * @param likes {uint256} - number of likes a publish has
+     * @param disLikes {uint256} - number of dis-likes a publish has
      * @param imageURI {string} - a publish's thumbnail image uri
      * @param contentURI {string} - a publish's content uri, tipically it's a uri point to a video content
      * @param metadataURI {string} - a uri point to the publish's metadata json file that contain all information about a publish.
@@ -117,6 +118,7 @@ library DataTypes {
         address owner;
         address creatorId;
         uint32 likes;
+        uint32 disLikes;
         string imageURI;
         string contentURI;
         string metadataURI;

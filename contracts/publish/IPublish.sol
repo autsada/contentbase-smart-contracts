@@ -67,9 +67,17 @@ interface IContentBasePublish {
 
     /**
      * An external function to like a publish.
+     * @dev use this function for both `like` and `undo like`
      * @param likeData - see DataTypes.LikeData
      */
     function like(DataTypes.LikeData calldata likeData) external payable;
+
+    /**
+     * An external function to dislike a publish.
+     * @dev use this function for both `dislike` and `undo dislike`
+     * @param likeData - see DataTypes.LikeData
+     */
+    function disLike(DataTypes.LikeData calldata likeData) external;
 
     /**
      * An external function to comment on a publish.

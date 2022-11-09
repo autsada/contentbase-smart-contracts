@@ -244,6 +244,25 @@ contract ContentBaseLike is
         }
     }
 
+    /**
+     * @inheritdoc IContentBaseLike
+     */
+    function handleDislikePublish(address profile, uint256 publishId)
+        external
+        override
+        returns (bool, bool)
+    {
+        // Check if the profile already liked the publish.
+        uint256 likeId = _publishToProfileToLike[publishId][profile];
+
+        if (likeId != 0) {
+            // Already liked --> reset the mapping.
+            _publishToProfileToLike[publishId][profile] = 0;
+        }
+
+        return (true, likeId != 0);
+    }
+
     // The following functions are overrides required by Solidity.
 
     /**

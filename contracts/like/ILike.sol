@@ -33,6 +33,17 @@ interface IContentBaseLike {
         );
 
     /**
+     * An external function to handle dislike a publish.
+     * @param profile {address}
+     * @param publishId {uint256}
+     * @return success {bool}
+     * @return isLiked {bool} - a boolean to indicate if the given profile has liked the given publish before.
+     */
+    function handleDislikePublish(address profile, uint256 publishId)
+        external
+        returns (bool, bool);
+
+    /**
      * An external function to handle `like` and `unlike` logic for comment like.
      * @param owner {address} - an EOA address that owns the profile that performs the like (or unlike)
      * @param likeData - see DataTypes.Likedata
