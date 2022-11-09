@@ -45,20 +45,20 @@ contract ContentBaseComment is
 
     // Mapping of comment struct by token id.
     mapping(uint256 => DataTypes.Comment) private _tokenById;
+    // Mapping of (commentId => profileAddress) to track if a specific profile id has liked the comment.
+    mapping(uint256 => address) private _commentToLikedProfile;
 
     // Like Events.
     event CommentLiked(
-        uint256 indexed likeId,
         uint256 indexed commentId,
-        address indexed commentOwner,
+        address commentOwner,
         address profileAddress,
         address profileOwner,
         uint32 likes,
         uint256 timestamp
     );
     event CommentUnLiked(
-        uint256 indexed likeId,
-        uint256 commentId,
+        uint256 indexed commentId,
         address profileAddress,
         address profileOwner,
         uint32 likes,
@@ -286,27 +286,20 @@ contract ContentBaseComment is
         // The comment must exist.
         require(_exists(commentId), "Comment not found");
 
-        // Call `likeComment` function in the Like contract.
-        (
-            bool success,
-            uint256 likeId,
-            DataTypes.LikeActionType actionType
-        ) = IContentBaseLike(likeContract).likeComment(msg.sender, likeData);
-        require(success, "Like failed");
-
         // Get the Comment's owner address.
         address commentOwner = ownerOf(commentId);
 
-        // Handle the logic depending on the actype type.
-        if (actionType == DataTypes.LikeActionType.LIKE) {
-            // LIKE.
+        // Identify if the call is for `like` or `unlike`.
+        address likedAddress = _commentToLikedProfile[commentId];
+
+        if (likedAddress == address(0)) {
+            // LIKE
 
             // Increase the comment struct likes.
             _tokenById[commentId].likes++;
 
             // Emit like event.
             emit CommentLiked(
-                likeId,
                 commentId,
                 commentOwner,
                 profileAddress,
@@ -318,11 +311,13 @@ contract ContentBaseComment is
             // UNLIKE
 
             // Decrease the publish struct likes.
-            _tokenById[commentId].likes--;
+            // Make sure the count is greater than 0.
+            if (_tokenById[commentId].likes > 0) {
+                _tokenById[commentId].likes--;
+            }
 
             // emit unlike even.
             emit CommentUnLiked(
-                likeId,
                 commentId,
                 profileAddress,
                 msg.sender,
