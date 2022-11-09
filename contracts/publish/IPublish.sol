@@ -47,7 +47,7 @@ interface IContentBasePublish {
      * @dev  make sure to add modifier to only ADMIN_ROLE.
      * @param fee - operational fee
      */
-    function updatePlatformFee(uint256 fee) external;
+    function updatePlatformFee(uint24 fee) external;
 
     /**
      * An external function to crate Publish NFT.

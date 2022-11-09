@@ -51,7 +51,7 @@ contract ContentBasePublish is
     // The amount that a profile will send to the owner of the publish they like.
     uint256 public likeFee;
     // The percentage to be deducted from the like fee (as the platform commission) before transfering the like fee to the publish's owner, need to store it as a whole number and do division when using it.
-    uint256 public platformFee;
+    uint24 public platformFee;
     // Mapping of publish struct by token id.
     mapping(uint256 => DataTypes.Publish) private _tokenById;
 
@@ -71,7 +71,7 @@ contract ContentBasePublish is
         uint256 timestamp
     );
     event PublishUpdated(
-        uint256 tokenId,
+        uint256 indexed tokenId,
         address creatorId,
         address owner,
         string imageURI,
@@ -98,6 +98,8 @@ contract ContentBasePublish is
         address indexed publishOwner,
         address profileAddress,
         address profileOwner,
+        uint32 likes,
+        uint256 fee,
         uint256 timestamp
     );
     event PublishUnLiked(
@@ -105,6 +107,7 @@ contract ContentBasePublish is
         uint256 publishId,
         address profileAddress,
         address profileOwner,
+        uint32 likes,
         uint256 timestamp
     );
 
@@ -126,7 +129,11 @@ contract ContentBasePublish is
         string contentURI,
         uint256 timestamp
     );
-    event CommentDeleted(uint256 tokenId, uint256 publishId, uint256 timestamp);
+    event CommentDeleted(
+        uint256 indexed tokenId,
+        uint256 publishId,
+        uint256 timestamp
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -242,7 +249,7 @@ contract ContentBasePublish is
     /**
      * @inheritdoc IContentBasePublish
      */
-    function updatePlatformFee(uint256 fee)
+    function updatePlatformFee(uint24 fee)
         external
         override
         onlyRole(ADMIN_ROLE)
@@ -468,7 +475,7 @@ contract ContentBasePublish is
         // Validate ether sent.
         require(msg.value == likeFee, "Bad input");
 
-        // Call `_like` in the like module to handle like logic.
+        // Call `like` function in the Like contract.
         (
             bool success,
             uint256 likeId,
@@ -497,6 +504,8 @@ contract ContentBasePublish is
                 publishOwner,
                 profileAddress,
                 msg.sender,
+                _tokenById[publishId].likes,
+                netFee,
                 block.timestamp
             );
         } else {
@@ -506,7 +515,14 @@ contract ContentBasePublish is
             _tokenById[publishId].likes--;
 
             // emit unlike even.
-            emit PublishUnLiked(likeId, publishId, profileAddress, msg.sender, block.timestamp);
+            emit PublishUnLiked(
+                likeId,
+                publishId,
+                profileAddress,
+                msg.sender,
+                _tokenById[publishId].likes,
+                block.timestamp
+            );
         }
     }
 
