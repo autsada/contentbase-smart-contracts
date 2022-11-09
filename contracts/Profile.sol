@@ -61,17 +61,17 @@ contract ContentBaseProfile is
      * @dev `follower` and `followee` are proxy profile addresses, `followerOwner` is an EOA that owns the follower proxy contract, `tokenId` is a token id.
      */
     event FollowNFTMinted(
+        uint256 indexed tokenId,
         address indexed follower,
         address indexed followerOwner,
-        address indexed followee,
-        uint256 tokenId,
+        address followee,
         uint256 timestamp
     );
     event FollowNFTBurned(
+        uint256 indexed tokenId,
         address indexed follower,
         address indexed followerOwner,
-        address indexed followee,
-        uint256 tokenId,
+        address followee,
         uint256 timestamp
     );
 
@@ -264,10 +264,10 @@ contract ContentBaseProfile is
             profile.followers++;
 
             emit FollowNFTMinted(
+                newTokenId,
                 msg.sender,
                 profileOwner,
                 address(this),
-                newTokenId,
                 block.timestamp
             );
 
@@ -299,10 +299,10 @@ contract ContentBaseProfile is
             profile.followers--;
 
             emit FollowNFTBurned(
+                followTokenId,
                 msg.sender,
                 profileOwner,
                 address(this),
-                followTokenId,
                 block.timestamp
             );
 

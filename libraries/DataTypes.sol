@@ -11,15 +11,15 @@ library DataTypes {
      * @param owner {address} - an address that owns the token
      * @param handle {string} - a handle that associate with the owner address
      * @param imageURI {string} - a uri of the profile image
-     * @param followers {uint256} - number of followers
-     * @param following {uint256} - number of following
+     * @param followers {uint32} - number of followers
+     * @param following {uint32} - number of following
      */
     struct Profile {
         address owner;
         string handle;
         string imageURI;
-        uint256 followers;
-        uint256 following;
+        uint32 followers;
+        uint32 following;
     }
 
     /**
@@ -116,7 +116,7 @@ library DataTypes {
     struct Publish {
         address owner;
         address creatorId;
-        uint256 likes;
+        uint32 likes;
         string imageURI;
         string contentURI;
         string metadataURI;
