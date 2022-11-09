@@ -111,6 +111,9 @@ contract ContentBasePublish is
         uint256 timestamp
     );
 
+    /**
+     * @dev the `commentId` if not 0, it means the newly created comment was made on that commentId (this is the case where profile comments on other comments).
+     */
     event CommentCreated(
         uint256 indexed tokenId,
         uint256 indexed publishId,
@@ -118,6 +121,7 @@ contract ContentBasePublish is
         address owner,
         string text,
         string contentURI,
+        uint256 commentId,
         uint256 timestamp
     );
     event CommentUpdated(
@@ -554,6 +558,7 @@ contract ContentBasePublish is
             msg.sender,
             createCommentData.text,
             createCommentData.contentURI,
+            createCommentData.commentId,
             block.timestamp
         );
     }

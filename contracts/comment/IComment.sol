@@ -5,10 +5,22 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 
 interface IContentBaseComment {
     /**
+     * An external function to update profile contract factory.
+     * @dev make sure to add modifier to only ADMIN_ROLE.
+     */
+    function updateFactoryContract(address factoryAddress) external;
+
+    /**
      * An external function to update Publish Contract address.
      * @dev make sure to add modifier to only ADMIN_ROLE.
      */
     function updatePublishContract(address publishAddress) external;
+
+    /**
+     * An external function to update Like contract address.
+     * @dev make sure to add modifier to only ADMIN_ROLE.
+     */
+    function updateLikeContract(address contractAddress) external;
 
     /**
      * An external function to create a comment NFT.
@@ -47,6 +59,12 @@ interface IContentBaseComment {
         address owner,
         address profileAddress
     ) external returns (bool);
+
+    /**
+     * An external function to like a comment.
+     * @param likeData - see DataTypes.LikeData
+     */
+    function likeComment(DataTypes.LikeData calldata likeData) external;
 
     /**
      * An external function to get a comment from the provided id.

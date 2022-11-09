@@ -10,6 +10,8 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "hardhat/console.sol";
 
 import "./IComment.sol";
+import "../IProfileFactory.sol";
+import "../like/ILike.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
@@ -34,11 +36,34 @@ contract ContentBaseComment is
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
 
+    // Profile factory address for use to validate profiles.
+    address public factoryContract;
     // Publish contract address.
     address public publishContract;
+    // Like contract for use to create comments.
+    address public likeContract;
 
     // Mapping of comment struct by token id.
     mapping(uint256 => DataTypes.Comment) private _tokenById;
+
+    // Like Events.
+    event CommentLiked(
+        uint256 indexed likeId,
+        uint256 indexed commentId,
+        address indexed commentOwner,
+        address profileAddress,
+        address profileOwner,
+        uint32 likes,
+        uint256 timestamp
+    );
+    event CommentUnLiked(
+        uint256 indexed likeId,
+        uint256 commentId,
+        address profileAddress,
+        address profileOwner,
+        uint32 likes,
+        uint256 timestamp
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -61,16 +86,46 @@ contract ContentBaseComment is
     }
 
     /**
+     * The modifer to check the publish contract is properly initialized.
+     */
+    modifier onlyReady() {
+        require(factoryContract != address(0), "Not ready");
+        require(likeContract != address(0), "Not ready");
+        require(publishContract != address(0), "Not ready");
+        _;
+    }
+
+    /**
      * The modifier to check if the caller is the publish contract.
      */
     modifier onlyPublishContract() {
-        // Publish contract address must be set.
-        require(publishContract != address(0), "Not ready");
-
         // Only accept a call from the publish contract.
         require(msg.sender == publishContract, "Forbidden");
 
         _;
+    }
+
+    /**
+     * The modifier to check if the caller owns the profile, and it will also check if the given profile address is a ContentBase profile.
+     */
+    modifier onlyProfileOwner(address profileAddress) {
+        address profileOwner = IContentBaseProfileFactory(factoryContract)
+            .getProfileOwner(profileAddress);
+
+        require(msg.sender == profileOwner, "Forbidden");
+
+        _;
+    }
+
+    /**
+     * @inheritdoc IContentBaseComment
+     */
+    function updateFactoryContract(address factoryAddress)
+        external
+        override
+        onlyRole(ADMIN_ROLE)
+    {
+        factoryContract = factoryAddress;
     }
 
     /**
@@ -87,13 +142,30 @@ contract ContentBaseComment is
     /**
      * @inheritdoc IContentBaseComment
      */
+    function updateLikeContract(address contractAddress)
+        external
+        override
+        onlyRole(ADMIN_ROLE)
+    {
+        likeContract = contractAddress;
+    }
+
+    /**
+     * @inheritdoc IContentBaseComment
+     */
     /**
      * @dev Since we only allow calls from the publish contract and we check the original caller and a given profile there so we don't need to check the owner and profile here again.
+     * @dev This function is used for both the `main` comment where the comment is made on a publish and the `sub` comment where the comment is made on other comment.
      */
     function createComment(
         address owner,
         DataTypes.CreateCommentData calldata createCommentData
-    ) external override onlyPublishContract returns (bool, uint256) {
+    ) external override onlyReady onlyPublishContract returns (bool, uint256) {
+        // If the call is for `sub` comment, the given comment id must exist.
+        if (createCommentData.commentId != 0) {
+            require(_exists(createCommentData.commentId), "Comment not found");
+        }
+
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
         uint256 tokenId = _tokenIdCounter.current();
@@ -106,6 +178,8 @@ contract ContentBaseComment is
             owner: owner,
             profileAddress: createCommentData.profileAddress,
             publishId: createCommentData.publishId,
+            commentId: createCommentData.commentId,
+            likes: 0,
             text: createCommentData.text,
             contentURI: createCommentData.contentURI
         });
@@ -122,7 +196,7 @@ contract ContentBaseComment is
     function updateComment(
         address owner,
         DataTypes.UpdateCommentData calldata updateCommentData
-    ) external override onlyPublishContract returns (bool) {
+    ) external override onlyReady onlyPublishContract returns (bool) {
         uint256 tokenId = updateCommentData.tokenId;
         uint256 publishId = updateCommentData.publishId;
 
@@ -172,7 +246,7 @@ contract ContentBaseComment is
         uint256 publishId,
         address owner,
         address profileAddress
-    ) external override onlyPublishContract returns (bool) {
+    ) external override onlyReady onlyPublishContract returns (bool) {
         // Comment must exist.
         require(_exists(tokenId), "Comment not found");
 
@@ -195,6 +269,67 @@ contract ContentBaseComment is
         delete _tokenById[tokenId];
 
         return true;
+    }
+
+    /**
+     * @inheritdoc IContentBaseComment
+     */
+    function likeComment(DataTypes.LikeData calldata likeData)
+        external
+        override
+        onlyReady
+        onlyProfileOwner(likeData.profileAddress)
+    {
+        uint256 commentId = likeData.publishId; // This is the comment id
+        address profileAddress = likeData.profileAddress;
+
+        // The comment must exist.
+        require(_exists(commentId), "Comment not found");
+
+        // Call `likeComment` function in the Like contract.
+        (
+            bool success,
+            uint256 likeId,
+            DataTypes.LikeActionType actionType
+        ) = IContentBaseLike(likeContract).likeComment(msg.sender, likeData);
+        require(success, "Like failed");
+
+        // Get the Comment's owner address.
+        address commentOwner = ownerOf(commentId);
+
+        // Handle the logic depending on the actype type.
+        if (actionType == DataTypes.LikeActionType.LIKE) {
+            // LIKE.
+
+            // Increase the comment struct likes.
+            _tokenById[commentId].likes++;
+
+            // Emit like event.
+            emit CommentLiked(
+                likeId,
+                commentId,
+                commentOwner,
+                profileAddress,
+                msg.sender,
+                _tokenById[commentId].likes,
+                block.timestamp
+            );
+        } else {
+            // UNLIKE
+
+            // Decrease the publish struct likes.
+            _tokenById[commentId].likes--;
+
+            // emit unlike even.
+            emit CommentUnLiked(
+                likeId,
+                commentId,
+                profileAddress,
+                msg.sender,
+                _tokenById[commentId].likes,
+                block.timestamp
+            );
+        }
     }
 
     /**

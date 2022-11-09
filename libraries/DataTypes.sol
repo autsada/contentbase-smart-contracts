@@ -178,7 +178,7 @@ library DataTypes {
      * A struct containing the data of Like NFT.
      * @param owner {address} - an owner of the like token
      * @param profileAddress {address} - a profile address that performs like
-     * @param publishId {uint256} - a publish id to be liked
+     * @param publishId {uint256} - a publish id to be liked, for the case of `like comment` the `publishId` refers to a comment id
      */
     struct Like {
         address owner;
@@ -206,9 +206,11 @@ library DataTypes {
 
     /**
      * A struct containing data of Comment NFT.
-     * @param publishId {uint256} - the publish id to be commented
-     * @param profileAddress {address} - the profile address that comments a publish
      * @param owner {address} - an owner of the profile address that owns the token
+     * @param profileAddress {address} - the profile address that comments a publish
+     * @param publishId {uint256} - the publish id to be commented
+     * @param commentId {uint256} - the comment id to be commented, it can be 0 meaning that the comment is made on the publish itself, otherwise it is made on other comment (that is the given commentId).
+     * @param likes - number of likes the comment has
      * @param text {string} - text input in the comment, can be empty
      * @param contentURI {string} - a uri point to the comment metadata json object, can be empty
      * @dev The contentURI should be in the following format.
@@ -225,6 +227,8 @@ library DataTypes {
         address owner;
         address profileAddress;
         uint256 publishId;
+        uint256 commentId;
+        uint32 likes;
         string text;
         string contentURI;
     }
@@ -232,6 +236,7 @@ library DataTypes {
     /**
      * A struct containing data required to comment on a publish.
      * @param publishId {uint256} - see Comment struct
+     * @param commentId {uint256} - see Comment struct
      * @param profileAddress {address} - see Comment struct
      * @param text {string} - see Comment struct, can be empty
      * @param contentURI {string} - see Comment struct, can be empty
@@ -239,6 +244,7 @@ library DataTypes {
      */
     struct CreateCommentData {
         uint256 publishId;
+        uint256 commentId;
         address profileAddress;
         string text;
         string contentURI;
