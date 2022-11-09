@@ -3,7 +3,6 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -21,7 +20,6 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 contract ContentBaseLike is
     Initializable,
     ERC721Upgradeable,
-    ERC721BurnableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
     IContentBaseLike
@@ -57,7 +55,6 @@ contract ContentBaseLike is
      */
     function initialize() public initializer {
         __ERC721_init("ContentBase Like Module", "CLM");
-        __ERC721Burnable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
@@ -149,30 +146,18 @@ contract ContentBaseLike is
             // Mint an NFT to the caller.
             _safeMint(owner, tokenId);
 
-            // // Store the new like struct in the mapping.
-            // _tokenById[tokenId] = DataTypes.Like({
-            //     owner: owner,
-            //     profileAddress: profileAddress,
-            //     publishId: publishId
-            // });
-
             // Update the mapping to track likes of the publish by profile.
             _publishToProfileToLike[publishId][profileAddress] == tokenId;
 
             return (true, tokenId, DataTypes.LikeActionType.LIKE);
         } else {
-            // UNLIKE (like id exists) --> burn the token.
+            // UNLIKE (like id exists).
 
             // Make sure like token exists.
             require(_exists(likeId), "Like not found");
             // Make sure the given owner really owns the token.
             require(ownerOf(likeId) == owner, "Unauthorized");
 
-            // Burn the token.
-            super.burn(likeId);
-
-            // // Delete the like struct from the mapping.
-            // delete _tokenById[likeId];
             // Update the mapping that tracks likes of publish by profile.
             _publishToProfileToLike[publishId][profileAddress] = 0;
 
@@ -213,30 +198,18 @@ contract ContentBaseLike is
             // Mint an NFT to the caller.
             _safeMint(owner, tokenId);
 
-            // // Store the new like struct in the mapping.
-            // _tokenById[tokenId] = DataTypes.Like({
-            //     owner: owner,
-            //     profileAddress: profileAddress,
-            //     publishId: publishId
-            // });
-
             // Update the mapping to track likes of the publish by profile.
             _commentToProfileToLike[commentId][profileAddress] == tokenId;
 
             return (true, tokenId, DataTypes.LikeActionType.LIKE);
         } else {
-            // UNLIKE (like id exists) --> burn the token.
+            // UNLIKE (like id exists).
 
             // Make sure like token exists.
             require(_exists(likeId), "Like not found");
             // Make sure the given owner really owns the token.
             require(ownerOf(likeId) == owner, "Unauthorized");
 
-            // Burn the token.
-            super.burn(likeId);
-
-            // // Delete the like struct from the mapping.
-            // delete _tokenById[likeId];
             // Update the mapping that tracks likes of publish by profile.
             _commentToProfileToLike[commentId][profileAddress] = 0;
 
