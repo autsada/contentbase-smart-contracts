@@ -54,8 +54,12 @@ contract ContentBasePublish is
     uint24 public platformFee;
     // Mapping of publish struct by token id.
     mapping(uint256 => DataTypes.Publish) private _tokenById;
-    // Mapping of (publishId => profileId) to track if a specific profile disliked the publish.
-    mapping(uint256 => address) private _publishToDislikedProfile;
+    // Mapping of (publishId => (profileAddress => tokenId)) to track if a specific profile id has liked the publish, (1 => (A => 2)) means publish id 1 has been liked by profile address A and the associated like token is id 2.
+    mapping(uint256 => mapping(address => uint256))
+        private _publishToProfileToLike;
+    // Mapping of (publishId => (profileAddress => bool)) to track if a specific profile disliked the publish.
+    mapping(uint256 => mapping(address => bool))
+        private _publishToDislikedProfile;
 
     // Publish Events.
     event PublishCreated(
@@ -502,20 +506,20 @@ contract ContentBasePublish is
         // Validate ether sent.
         require(msg.value == likeFee, "Bad input");
 
-        // Call `like` function in the Like contract.
-        (
-            bool success,
-            uint256 likeId,
-            DataTypes.LikeActionType actionType
-        ) = IContentBaseLike(likeContract).like(msg.sender, likeData);
-        require(success, "Like failed");
+        // Find the like id (if exist).
+        uint256 likeId = _publishToProfileToLike[publishId][profileAddress];
 
         // Get the Publish's owner address.
         address publishOwner = ownerOf(publishId);
 
-        // Handle the logic depending on the actype type.
-        if (actionType == DataTypes.LikeActionType.LIKE) {
-            // LIKE --> transfer like fee to the publish owner.
+        // Identify if the call is for `like` or `unlike`.
+        if (likeId == 0) {
+            // LIKE --> mint Like NFT
+
+            // Call `like` function in the Like contract to mint a new Like NFT.
+            (bool success, uint256 tokenId) = IContentBaseLike(likeContract)
+                .like(msg.sender);
+            require(success, "Like failed");
 
             // Transfer like support fee (after deducting operational fee for the platform) to the publish owner.
             uint256 netFee = msg.value - ((msg.value * platformFee) / 100);
@@ -524,9 +528,21 @@ contract ContentBasePublish is
             // Increase the publish struct likes.
             _tokenById[publishId].likes++;
 
+            // Update the liked mapping.
+            _publishToProfileToLike[publishId][profileAddress] = tokenId;
+
+            // If the profile disliked the publish before, we need to update the disliked mapping and also decrease the publish's dislikes count.
+            if (_publishToDislikedProfile[publishId][profileAddress]) {
+                _publishToDislikedProfile[publishId][profileAddress] = false;
+
+                if (_tokenById[publishId].disLikes > 0) {
+                    _tokenById[publishId].disLikes--;
+                }
+            }
+
             // Emit like event.
             emit PublishLiked(
-                likeId,
+                tokenId,
                 publishId,
                 publishOwner,
                 profileAddress,
@@ -537,10 +553,16 @@ contract ContentBasePublish is
                 block.timestamp
             );
         } else {
-            // UNLIKE
+            // UNDO LIKE --> for undo like we will not burn the Like NFT as the profile already paid the like fee so we have them keep the NFT.
+
+            // Update the liked mapping.
+            _publishToProfileToLike[publishId][profileAddress] = 0;
 
             // Decrease the publish struct likes.
-            _tokenById[publishId].likes--;
+            // Make sure the count is greater than 0.
+            if (_tokenById[publishId].likes > 0) {
+                _tokenById[publishId].likes--;
+            }
 
             // emit unlike even.
             emit PublishUnLiked(
@@ -573,26 +595,27 @@ contract ContentBasePublish is
         require(_exists(publishId), "Publish not found");
 
         // Identify if the call is for `dislike` or `undo dislike`.
-        address disLikedAddr = _publishToDislikedProfile[publishId];
+        bool isDisLiked = _publishToDislikedProfile[publishId][profileAddress];
 
-        // Handle the logic depending on the actype type.
-        if (disLikedAddr == address(0)) {
-            // DISLIKE --> need to call the Like contract to update like state.
+        if (!isDisLiked) {
+            // DISLIKE
 
-            (bool success, bool isLiked) = IContentBaseLike(likeContract)
-                .handleDislikePublish(profileAddress, publishId);
+            // Update the disliked mapping.
+            _publishToDislikedProfile[publishId][profileAddress] = true;
 
-            require(success, "Dislike failed");
-
-            // Increase the publish struct likes.
+            // Increase the publish struct disLikes.
             _tokenById[publishId].disLikes++;
 
-            // If the profile has liked the publish before, we need to reduce the publish's likes count as well.
-            if (isLiked) {
-                _tokenById[publishId].likes--;
+            // If the profile liked the publish before, we need to update the liked mapping and decrease the publish's likes count as well.
+            if (_publishToProfileToLike[publishId][profileAddress] != 0) {
+                _publishToProfileToLike[publishId][profileAddress] = 0;
+
+                if (_tokenById[publishId].likes > 0) {
+                    _tokenById[publishId].likes--;
+                }
             }
 
-            // Emit like event.
+            // Emit dis like event.
             emit PublishDisLiked(
                 publishId,
                 profileAddress,
@@ -602,18 +625,24 @@ contract ContentBasePublish is
                 block.timestamp
             );
         } else {
-            // UNDO DISLIKE --> NO need to call the Like contract.
+            // UNDO DISLIKE.
 
             // Make sure the profile has disliked the publish before.
             require(
-                _publishToDislikedProfile[publishId] != address(0),
+                _publishToDislikedProfile[publishId][profileAddress],
                 "Undo failed"
             );
 
-            // Decrease dislikes count.
-            _tokenById[publishId].disLikes--;
+            // Update the disliked mapping.
+            _publishToDislikedProfile[publishId][profileAddress] = false;
 
-            // emit unlike even.
+            // Decrease dislikes count.
+            // Make sure the count is greater than 0.
+            if (_tokenById[publishId].disLikes > 0) {
+                _tokenById[publishId].disLikes--;
+            }
+
+            // emit undo dislike even.
             emit PublishUndoDisLiked(
                 publishId,
                 profileAddress,

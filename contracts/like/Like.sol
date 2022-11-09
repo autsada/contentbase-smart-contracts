@@ -34,11 +34,9 @@ contract ContentBaseLike is
 
     // Publish contract.
     address public publishContract;
+
     // // Mapping of like struct by token id.
     // mapping(uint256 => DataTypes.Like) private _tokenById;
-    // Mapping of (publishId => (profileAddress => tokenId)) to track if a specific profile id has liked the publish, (1 => (A => 2)) means publish id 1 has been liked by profile address A and the associated like token is id 2.
-    mapping(uint256 => mapping(address => uint256))
-        private _publishToProfileToLike;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -93,70 +91,20 @@ contract ContentBaseLike is
      * @inheritdoc IContentBaseLike
      * @dev only allow calls from the Publish contract
      */
-    function like(address owner, DataTypes.LikeData calldata likeData)
+    function like(address owner)
         external
         override
         onlyReady
         onlyPublishContract
-        returns (
-            bool,
-            uint256,
-            DataTypes.LikeActionType
-        )
+        returns (bool, uint256)
     {
-        address profileAddress = likeData.profileAddress;
-        uint256 publishId = likeData.publishId;
+        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter.current();
 
-        // Find the like id (if exist).
-        uint256 likeId = _publishToProfileToLike[publishId][profileAddress];
+        // Mint an NFT to the caller.
+        _safeMint(owner, tokenId);
 
-        // Identify if the call is for `like` or `unlike`.
-        if (likeId == 0) {
-            // LIKE (like id doesn't exist) --> mint a new like token to the profile owner.
-
-            // Increment the counter before using it so the id will start from 1 (instead of 0).
-            _tokenIdCounter.increment();
-            uint256 tokenId = _tokenIdCounter.current();
-
-            // Mint an NFT to the caller.
-            _safeMint(owner, tokenId);
-
-            // Update the mapping to track likes of the publish by profile.
-            _publishToProfileToLike[publishId][profileAddress] == tokenId;
-
-            return (true, tokenId, DataTypes.LikeActionType.LIKE);
-        } else {
-            // UNLIKE (like id exists).
-
-            // Make sure like token exists.
-            require(_exists(likeId), "Like not found");
-            // Make sure the given owner really owns the token.
-            require(ownerOf(likeId) == owner, "Unauthorized");
-
-            // Update the mapping that tracks likes of publish by profile.
-            _publishToProfileToLike[publishId][profileAddress] = 0;
-
-            return (true, likeId, DataTypes.LikeActionType.UNLIKE);
-        }
-    }
-
-    /**
-     * @inheritdoc IContentBaseLike
-     */
-    function handleDislikePublish(address profile, uint256 publishId)
-        external
-        override
-        returns (bool, bool)
-    {
-        // Check if the profile already liked the publish.
-        uint256 likeId = _publishToProfileToLike[publishId][profile];
-
-        if (likeId != 0) {
-            // Already liked --> reset the mapping.
-            _publishToProfileToLike[publishId][profile] = 0;
-        }
-
-        return (true, likeId != 0);
+        return (true, tokenId);
     }
 
     // The following functions are overrides required by Solidity.
