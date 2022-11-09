@@ -45,8 +45,11 @@ contract ContentBaseComment is
 
     // Mapping of comment struct by token id.
     mapping(uint256 => DataTypes.Comment) private _tokenById;
-    // Mapping of (commentId => profileAddress) to track if a specific profile id has liked the comment.
-    mapping(uint256 => address) private _commentToLikedProfile;
+    // Mapping of (commentId => (profileAddress => bool)) to track if a specific profile id liked the comment.
+    mapping(uint256 => mapping(address => bool)) private _commentToLikedProfile;
+    // Mapping of (commentId => (profileAddress => bool)) to track if a specific profile disliked the comment.
+    mapping(uint256 => mapping(address => bool))
+        private _commentToDislikedProfile;
 
     // Like Events.
     event CommentLiked(
@@ -55,6 +58,7 @@ contract ContentBaseComment is
         address profileAddress,
         address profileOwner,
         uint32 likes,
+        uint32 disLikes,
         uint256 timestamp
     );
     event CommentUnLiked(
@@ -62,6 +66,25 @@ contract ContentBaseComment is
         address profileAddress,
         address profileOwner,
         uint32 likes,
+        uint32 disLikes,
+        uint256 timestamp
+    );
+
+    // DisLike Events.
+    event CommentDisLiked(
+        uint256 indexed commentId,
+        address indexed profileAddress,
+        address profileOwner,
+        uint32 likes,
+        uint32 disLikes,
+        uint256 timestamp
+    );
+    event CommentUndoDisLiked(
+        uint256 indexed commentId,
+        address indexed profileAddress,
+        address profileOwner,
+        uint32 likes,
+        uint32 disLikes,
         uint256 timestamp
     );
 
@@ -180,6 +203,7 @@ contract ContentBaseComment is
             publishId: createCommentData.publishId,
             commentId: createCommentData.commentId,
             likes: 0,
+            disLikes: 0,
             text: createCommentData.text,
             contentURI: createCommentData.contentURI
         });
@@ -273,6 +297,7 @@ contract ContentBaseComment is
 
     /**
      * @inheritdoc IContentBaseComment
+     * @dev No Like NFT minted for like comment.
      */
     function likeComment(DataTypes.LikeData calldata likeData)
         external
@@ -290,13 +315,25 @@ contract ContentBaseComment is
         address commentOwner = ownerOf(commentId);
 
         // Identify if the call is for `like` or `unlike`.
-        address likedAddress = _commentToLikedProfile[commentId];
+        bool isLiked = _commentToLikedProfile[commentId][profileAddress];
 
-        if (likedAddress == address(0)) {
+        if (!isLiked) {
             // LIKE
+
+            // Update the liked mapping.
+            _commentToLikedProfile[commentId][profileAddress] = true;
 
             // Increase the comment struct likes.
             _tokenById[commentId].likes++;
+
+            // If the profile disliked the comment before, we need to update the disliked mapping and decrease the comment's dislikes count as well.
+            if (_commentToDislikedProfile[commentId][profileAddress]) {
+                _commentToDislikedProfile[commentId][profileAddress] = false;
+
+                if (_tokenById[commentId].disLikes > 0) {
+                    _tokenById[commentId].disLikes--;
+                }
+            }
 
             // Emit like event.
             emit CommentLiked(
@@ -305,12 +342,22 @@ contract ContentBaseComment is
                 profileAddress,
                 msg.sender,
                 _tokenById[commentId].likes,
+                _tokenById[commentId].disLikes,
                 block.timestamp
             );
         } else {
             // UNLIKE
 
-            // Decrease the publish struct likes.
+            // Make sure the profile liked the comment before.
+            require(
+                _commentToLikedProfile[commentId][profileAddress],
+                "Undo like failed"
+            );
+
+            // Update the liked mapping.
+            _commentToLikedProfile[commentId][profileAddress] = false;
+
+            // Decrease the comment struct likes.
             // Make sure the count is greater than 0.
             if (_tokenById[commentId].likes > 0) {
                 _tokenById[commentId].likes--;
@@ -322,6 +369,83 @@ contract ContentBaseComment is
                 profileAddress,
                 msg.sender,
                 _tokenById[commentId].likes,
+                _tokenById[commentId].disLikes,
+                block.timestamp
+            );
+        }
+    }
+
+    /**
+     * @inheritdoc IContentBaseComment
+     * @dev use this function for both `dislike` and `undo dislike`
+     */
+    function disLikeComment(DataTypes.LikeData calldata likeData)
+        external
+        override
+        onlyReady
+        onlyProfileOwner(likeData.profileAddress)
+    {
+        uint256 commentId = likeData.publishId; // `likeData.publishId` is a comment id.
+        address profileAddress = likeData.profileAddress;
+
+        // The comment must exist.
+        require(_exists(commentId), "Comment not found");
+
+        // Identify if the call is for `dislike` or `undo dislike`.
+        bool isDisLiked = _commentToDislikedProfile[commentId][profileAddress];
+
+        if (!isDisLiked) {
+            // DISLIKE
+
+            // Update the disliked mapping.
+            _commentToDislikedProfile[commentId][profileAddress] = true;
+
+            // Increase the comment struct disLikes.
+            _tokenById[commentId].disLikes++;
+
+            // If the profile liked the comment before, we need to update the liked mapping and decrease the comment's likes count as well.
+            if (_commentToLikedProfile[commentId][profileAddress]) {
+                _commentToLikedProfile[commentId][profileAddress] = false;
+
+                if (_tokenById[commentId].likes > 0) {
+                    _tokenById[commentId].likes--;
+                }
+            }
+
+            // Emit dislike event.
+            emit CommentDisLiked(
+                commentId,
+                profileAddress,
+                msg.sender,
+                _tokenById[commentId].likes,
+                _tokenById[commentId].disLikes,
+                block.timestamp
+            );
+        } else {
+            // UNDO DISLIKE
+
+            // Make sure the profile has disliked the comment before.
+            require(
+                _commentToDislikedProfile[commentId][profileAddress],
+                "Undo failed"
+            );
+
+            // Update the disliked mapping.
+            _commentToDislikedProfile[commentId][profileAddress] = false;
+
+            // Decrease dislikes count.
+            // Make sure the count is greater than 0.
+            if (_tokenById[commentId].disLikes > 0) {
+                _tokenById[commentId].disLikes--;
+            }
+
+            // emit unlike even.
+            emit CommentUndoDisLiked(
+                commentId,
+                profileAddress,
+                msg.sender,
+                _tokenById[commentId].likes,
+                _tokenById[commentId].disLikes,
                 block.timestamp
             );
         }

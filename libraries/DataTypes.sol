@@ -213,6 +213,7 @@ library DataTypes {
      * @param publishId {uint256} - the publish id to be commented
      * @param commentId {uint256} - the comment id to be commented, it can be 0 meaning that the comment is made on the publish itself, otherwise it is made on other comment (that is the given commentId).
      * @param likes - number of likes the comment has
+     * @param disLikes - number of dis-likes the comment has
      * @param text {string} - text input in the comment, can be empty
      * @param contentURI {string} - a uri point to the comment metadata json object, can be empty
      * @dev The contentURI should be in the following format.
@@ -231,6 +232,7 @@ library DataTypes {
         uint256 publishId;
         uint256 commentId;
         uint32 likes;
+        uint32 disLikes;
         string text;
         string contentURI;
     }

@@ -67,6 +67,13 @@ interface IContentBaseComment {
     function likeComment(DataTypes.LikeData calldata likeData) external;
 
     /**
+     * An external function to dislike a publish.
+     * @dev use this function for both `dislike` and `undo dislike`
+     * @param likeData - see DataTypes.LikeData
+     */
+    function disLikeComment(DataTypes.LikeData calldata likeData) external;
+
+    /**
      * An external function to get a comment from the provided id.
      * @param tokenId {uint256} - a comment id
      * @return comment {DataTypes.Comment}
