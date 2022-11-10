@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -39,7 +39,6 @@ contract ContentBasePublish is
 
     // Token Ids counter.
     CountersUpgradeable.Counter private _tokenIdCounter;
-
     // Contract owner address.
     address public platform;
     // Profile factory address for use to validate profiles.
@@ -337,6 +336,41 @@ contract ContentBasePublish is
     }
 
     /**
+     * A public function to burn a token.
+     * @dev use this fuction to delete a publish.
+     * @param tokenId {uint256} - a publish token id
+     * @param creatorId {address} - the profile address that created the publish
+     */
+    function deletePublish(uint256 tokenId, address creatorId)
+        public
+        override
+        onlyReady
+        onlyProfileOwner(creatorId)
+    {
+        // Publish must exist.
+        require(_exists(tokenId), "Publish not found");
+
+        // The caller must be the owner of the publish.
+        require(msg.sender == ownerOf(tokenId), "Forbidden");
+
+        // The publish must belong to the creator.
+        require(_tokenById[tokenId].creatorId == creatorId, "Not allow");
+
+        // Remove the publish from the struct mapping.
+        delete _tokenById[tokenId];
+
+        // Call the parent burn function.
+        super.burn(tokenId);
+
+        emit Events.PublishDeleted(
+            tokenId,
+            msg.sender,
+            creatorId,
+            block.timestamp
+        );
+    }
+
+    /**
      * @inheritdoc IContentBasePublish
      */
     function like(DataTypes.LikeData calldata likeData)
@@ -594,7 +628,7 @@ contract ContentBasePublish is
         require(_exists(publishId), "Publish not found");
 
         // Call the comment contract to delete the comment.
-        bool success = IContentBaseComment(commentContract).burn(
+        bool success = IContentBaseComment(commentContract).deleteComment(
             tokenId,
             publishId,
             msg.sender,
@@ -619,40 +653,6 @@ contract ContentBasePublish is
         require(_exists(tokenId), "Not found");
 
         return _tokenById[tokenId];
-    }
-
-    /**
-     * A public function to burn a token.
-     * @dev use this fuction to delete a publish.
-     * @param tokenId {uint256} - a publish token id
-     * @param creatorId {address} - the profile address that created the publish
-     */
-    function burn(uint256 tokenId, address creatorId)
-        public
-        onlyReady
-        onlyProfileOwner(creatorId)
-    {
-        // Publish must exist.
-        require(_exists(tokenId), "Publish not found");
-
-        // The caller must be the owner of the publish.
-        require(msg.sender == ownerOf(tokenId), "Forbidden");
-
-        // The publish must belong to the creator.
-        require(_tokenById[tokenId].creatorId == creatorId, "Not allow");
-
-        // Remove the publish from the struct mapping.
-        delete _tokenById[tokenId];
-
-        // Call the parent burn function.
-        super.burn(tokenId);
-
-        emit Events.PublishDeleted(
-            tokenId,
-            msg.sender,
-            creatorId,
-            block.timestamp
-        );
     }
 
     /**

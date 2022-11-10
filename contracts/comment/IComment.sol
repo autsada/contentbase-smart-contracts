@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.10;
 
 import {DataTypes} from "../../libraries/DataTypes.sol";
 
@@ -53,7 +53,7 @@ interface IContentBaseComment {
      * @param profileAddress {address} - a profile address that created the comment
      * @return success {bool}
      */
-    function burn(
+    function deleteComment(
         uint256 tokenId,
         uint256 publishId,
         address owner,

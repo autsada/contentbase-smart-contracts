@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.10;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
 import {Constants} from "../libraries/Constants.sol";
@@ -36,7 +36,11 @@ interface IContentBaseProfile {
 
     /**
      * An external function to get EOA's profile.
+     * @return addr {address} - the profile address
      * @return profile {Profile} - see DataTypes.Profile
      */
-    function getProfile() external view returns (DataTypes.Profile memory);
+    function getProfile()
+        external
+        view
+        returns (address, DataTypes.Profile memory);
 }

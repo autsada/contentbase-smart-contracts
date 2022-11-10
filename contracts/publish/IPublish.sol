@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.10;
 
 import {DataTypes} from "../../libraries/DataTypes.sol";
 
@@ -116,4 +116,9 @@ interface IContentBasePublish {
         external
         view
         returns (DataTypes.Publish memory);
+
+    /**
+     * An external function to burn a publish token.
+     */
+    function deletePublish(uint256 tokenId, address creatorId) external;
 }

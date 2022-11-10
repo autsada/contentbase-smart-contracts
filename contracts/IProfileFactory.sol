@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.10;
 
 import {Constants} from "../libraries/Constants.sol";
 import {DataTypes} from "../libraries/DataTypes.sol";
@@ -25,7 +25,7 @@ interface IContentBaseProfileFactory {
     function getDefaultProfile()
         external
         view
-        returns (DataTypes.Profile memory);
+        returns (address, DataTypes.Profile memory);
 
     /**
      * An external function to validate handle - validate length, special characters and uniqueness.

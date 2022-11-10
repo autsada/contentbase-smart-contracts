@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -181,7 +181,7 @@ contract ContentBaseProfileFactory is
         view
         override
         onlyReady
-        returns (DataTypes.Profile memory)
+        returns (address, DataTypes.Profile memory)
     {
         // Get the profile address of the caller.
         address profile = _ownerToDefaultProfile[msg.sender];

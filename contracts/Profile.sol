@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -31,9 +31,6 @@ contract ContentBaseProfile is
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    /**
-     * ===== Storage ===== *
-     */
     // ContentBase owner address.
     address public platform;
     // ContentBase factory contract address for use to communicate with the factory contract.
@@ -53,10 +50,6 @@ contract ContentBaseProfile is
     constructor() {
         _disableInitializers();
     }
-
-    /**
-     * ===== Initialize Function ===== *
-     */
 
     /**
      * @param _platform {address} - the address of ContentBase owner
@@ -88,10 +81,6 @@ contract ContentBaseProfile is
     }
 
     /**
-     * ===== Modifiers ===== *
-     */
-
-    /**
      * The modifer to check the profile contract is properly initialized.
      */
     modifier onlyReady() {
@@ -112,10 +101,6 @@ contract ContentBaseProfile is
 
         _;
     }
-
-    /**
-     * ===== Functions ===== *
-     */
 
     /**
      * @inheritdoc IContentBaseProfile
@@ -296,9 +281,9 @@ contract ContentBaseProfile is
         external
         view
         onlyReady
-        returns (DataTypes.Profile memory)
+        returns (address, DataTypes.Profile memory)
     {
-        return profile;
+        return (address(this), profile);
     }
 
     /**

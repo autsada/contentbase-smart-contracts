@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.10;
 
 library Constants {
     uint8 internal constant MIN_HANDLE_LENGTH = 3;
