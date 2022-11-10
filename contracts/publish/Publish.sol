@@ -371,18 +371,18 @@ contract ContentBasePublish is
         // The publish must exist.
         require(_exists(publishId), "Publish not found");
 
-        // Validate ether sent.
-        require(msg.value == likeFee, "Bad input");
-
         // Find the like id (if exist).
         uint256 likeId = _publishToProfileToLike[publishId][profileAddress];
-
-        // Get the Publish's owner address.
-        address publishOwner = ownerOf(publishId);
 
         // Identify if the call is for `like` or `unlike`.
         if (likeId == 0) {
             // LIKE --> mint Like NFT
+
+            // Validate ether sent.
+            require(msg.value == likeFee, "Bad input");
+
+            // Get the Publish's owner address.
+            address publishOwner = ownerOf(publishId);
 
             // Call `like` function in the Like contract to mint a new Like NFT.
             (bool success, uint256 tokenId) = IContentBaseLike(likeContract)
