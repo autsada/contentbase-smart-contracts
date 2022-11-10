@@ -11,14 +11,14 @@ import "hardhat/console.sol";
 
 import "./IComment.sol";
 import "../IProfileFactory.sol";
-import "../like/ILike.sol";
+import "../publish/IPublish.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 import {Events} from "../../libraries/Events.sol";
 
 /**
  * @title ContentBase Comment
- * Comment NFT will be minted when a profile comment on a publish, the minted NFT will be given to the profile that performs the comment.
- * The "createComment", "updateComment", and "burn" only accept calls from the publish contract.
+ * Comment NFT will be minted when a profile comment on a publish.
+ * @dev all write functions must me guarded with `onlyProfileOwner` to make sure the given profile address is a valid ContentBase profile.
  */
 
 contract ContentBaseComment is
@@ -41,8 +41,6 @@ contract ContentBaseComment is
     address public factoryContract;
     // Publish contract address.
     address public publishContract;
-    // Like contract for use to create comments.
-    address public likeContract;
 
     // Mapping of comment struct by token id.
     mapping(uint256 => DataTypes.Comment) private _tokenById;
@@ -77,18 +75,7 @@ contract ContentBaseComment is
      */
     modifier onlyReady() {
         require(factoryContract != address(0), "Not ready");
-        require(likeContract != address(0), "Not ready");
         require(publishContract != address(0), "Not ready");
-        _;
-    }
-
-    /**
-     * The modifier to check if the caller is the publish contract.
-     */
-    modifier onlyPublishContract() {
-        // Only accept a call from the publish contract.
-        require(msg.sender == publishContract, "Forbidden");
-
         _;
     }
 
@@ -128,26 +115,24 @@ contract ContentBaseComment is
 
     /**
      * @inheritdoc IContentBaseComment
-     */
-    function updateLikeContract(address contractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
-        likeContract = contractAddress;
-    }
-
-    /**
-     * @inheritdoc IContentBaseComment
-     */
-    /**
-     * @dev Since we only allow calls from the publish contract and we check the original caller and a given profile there so we don't need to check the owner and profile here again.
      * @dev This function is used for both the `main` comment where the comment is made on a publish and the `sub` comment where the comment is made on other comment.
      */
     function createComment(
-        address owner,
         DataTypes.CreateCommentData calldata createCommentData
-    ) external override onlyReady onlyPublishContract returns (bool, uint256) {
+    )
+        external
+        override
+        onlyReady
+        onlyProfileOwner(createCommentData.profileAddress)
+    {
+        uint256 publishId = createCommentData.publishId;
+
+        // The publish to be commented on must exist.
+        require(
+            IContentBasePublish(publishContract).publishExist(publishId),
+            "Publish not found"
+        );
+
         // If the call is for `sub` comment, the given comment id must exist.
         if (createCommentData.commentId != 0) {
             require(_exists(createCommentData.commentId), "Comment not found");
@@ -158,11 +143,11 @@ contract ContentBaseComment is
         uint256 tokenId = _tokenIdCounter.current();
 
         // Mint an NFT to the caller.
-        _safeMint(owner, tokenId);
+        _safeMint(msg.sender, tokenId);
 
         // Store the new comment in the mapping.
         _tokenById[tokenId] = DataTypes.Comment({
-            owner: owner,
+            owner: msg.sender,
             profileAddress: createCommentData.profileAddress,
             publishId: createCommentData.publishId,
             commentId: createCommentData.commentId,
@@ -172,27 +157,38 @@ contract ContentBaseComment is
             contentURI: createCommentData.contentURI
         });
 
-        return (true, tokenId);
+        // Emit comment created event.
+        emit Events.CommentCreated(
+            tokenId,
+            createCommentData.publishId,
+            createCommentData.profileAddress,
+            msg.sender,
+            createCommentData.text,
+            createCommentData.contentURI,
+            createCommentData.commentId,
+            block.timestamp
+        );
     }
 
     /**
      * @inheritdoc IContentBaseComment
      */
-    /**
-     * @dev Since we only allow calls from the publish contract and we check the original caller and a given profile there so we don't need to check the owner and profile here again.
-     */
     function updateComment(
-        address owner,
         DataTypes.UpdateCommentData calldata updateCommentData
-    ) external override onlyReady onlyPublishContract returns (bool) {
+    )
+        external
+        override
+        onlyReady
+        onlyProfileOwner(updateCommentData.profileAddress)
+    {
         uint256 tokenId = updateCommentData.tokenId;
         uint256 publishId = updateCommentData.publishId;
 
         // The comment must exist.
         require(_exists(tokenId), "Comment not found");
 
-        // Owner must own the token.
-        require(ownerOf(tokenId) == owner, "Forbidden");
+        // Caller must own the token.
+        require(ownerOf(tokenId) == msg.sender, "Forbidden");
 
         // The given publish id must match the publish id in the comment struct.
         require(publishId == _tokenById[tokenId].publishId);
@@ -220,7 +216,15 @@ contract ContentBaseComment is
             _tokenById[tokenId].contentURI = updateCommentData.contentURI;
         }
 
-        return true;
+        emit Events.CommentUpdated(
+            updateCommentData.tokenId,
+            publishId,
+            updateCommentData.profileAddress,
+            msg.sender,
+            updateCommentData.text,
+            updateCommentData.contentURI,
+            block.timestamp
+        );
     }
 
     /**
@@ -232,14 +236,13 @@ contract ContentBaseComment is
     function deleteComment(
         uint256 tokenId,
         uint256 publishId,
-        address owner,
         address profileAddress
-    ) external override onlyReady onlyPublishContract returns (bool) {
+    ) external override onlyReady onlyProfileOwner(profileAddress) {
         // Comment must exist.
         require(_exists(tokenId), "Comment not found");
 
         // The caller must be the owner of the comment.
-        require(owner == ownerOf(tokenId), "Forbidden");
+        require(msg.sender == ownerOf(tokenId), "Forbidden");
 
         // the given publish id must match the publish id on the token struct.
         require(_tokenById[tokenId].publishId == publishId, "Bad input");
@@ -256,7 +259,7 @@ contract ContentBaseComment is
         // Remove the struct from the mapping.
         delete _tokenById[tokenId];
 
-        return true;
+        emit Events.CommentDeleted(tokenId, publishId, block.timestamp);
     }
 
     /**

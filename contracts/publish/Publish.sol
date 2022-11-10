@@ -12,7 +12,6 @@ import "hardhat/console.sol";
 import "../IProfileFactory.sol";
 import "./IPublish.sol";
 import "../like/ILike.sol";
-import "../comment/IComment.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 import {Events} from "../../libraries/Events.sol";
@@ -20,7 +19,7 @@ import {Events} from "../../libraries/Events.sol";
 /**
  * @title ContentBase Publish
  * @notice Some data required to create a Publish NFT will not be stored on-chain, it will be used as an event arguments so the client listening to the event can update their UI/database accordingly.
- * @notice This contract will need to communicate to ContentBase Like Contract for like operation, and ContentBase Comment for commenting operation. It will also need to communicate to the Profile Factory Contract to validate the callers to ensure they are ContentBase Profiles.
+ * @notice This contract will need to communicate to ContentBase Like Contract for like operation, and the Profile Factory Contract to validate the callers to ensure they are ContentBase Profiles.
  * @dev metadataURI must resolve to the metadata json object file of the publish, the json object must have required fields as specified in Metadata Guild at Publish struct in DataTypes.sol.
  */
 
@@ -45,8 +44,6 @@ contract ContentBasePublish is
     address public factoryContract;
     // Like contract for use to create comments.
     address public likeContract;
-    // Comment contract for use to create comments.
-    address public commentContract;
 
     // The amount that a profile will send to the owner of the publish they like.
     uint256 public likeFee;
@@ -92,7 +89,6 @@ contract ContentBasePublish is
         require(platform != address(0), "Not ready");
         require(factoryContract != address(0), "Not ready");
         require(likeContract != address(0), "Not ready");
-        require(commentContract != address(0), "Not ready");
         require(likeFee != 0, "Not ready");
         require(platformFee != 0, "Not ready");
 
@@ -142,17 +138,6 @@ contract ContentBasePublish is
         onlyRole(ADMIN_ROLE)
     {
         likeContract = contractAddress;
-    }
-
-    /**
-     * @inheritdoc IContentBasePublish
-     */
-    function updateCommentContract(address contractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
-        commentContract = contractAddress;
     }
 
     /**
@@ -540,104 +525,13 @@ contract ContentBasePublish is
     /**
      * @inheritdoc IContentBasePublish
      */
-    function comment(DataTypes.CreateCommentData calldata createCommentData)
+    function publishExist(uint256 tokenId)
         external
+        view
         override
-        onlyReady
-        onlyProfileOwner(createCommentData.profileAddress)
-    {
-        uint256 publishId = createCommentData.publishId;
-
-        // The publish must exist.
-        require(_exists(publishId), "Publish not found");
-
-        // Call the comment contract to create a Comment NFT.
-        (bool success, uint256 commentId) = IContentBaseComment(commentContract)
-            .createComment(msg.sender, createCommentData);
-
-        require(success, "Create comment failed");
-
-        // Emit comment created event.
-        emit Events.CommentCreated(
-            commentId,
-            createCommentData.publishId,
-            createCommentData.profileAddress,
-            msg.sender,
-            createCommentData.text,
-            createCommentData.contentURI,
-            createCommentData.commentId,
-            block.timestamp
-        );
-    }
-
-    /**
-     * @inheritdoc IContentBasePublish
-     */
-    /**
-     * @dev For the field that has no change, existing data must be provided
-     */
-    function updateComment(
-        DataTypes.UpdateCommentData calldata updateCommentData
-    )
-        external
-        override
-        onlyReady
-        onlyProfileOwner(updateCommentData.profileAddress)
-    {
-        // uint256 commentId = updateCommentData.tokenId;
-        uint256 publishId = updateCommentData.publishId;
-        address profileAddress = updateCommentData.profileAddress;
-
-        // The publish must exist.
-        require(_exists(publishId), "Publish not found");
-
-        // Call the comment contract to update a comment.
-        bool success = IContentBaseComment(commentContract).updateComment(
-            msg.sender,
-            updateCommentData
-        );
-
-        require(success, "Update comment failed");
-
-        emit Events.CommentUpdated(
-            updateCommentData.tokenId,
-            publishId,
-            profileAddress,
-            msg.sender,
-            updateCommentData.text,
-            updateCommentData.contentURI,
-            block.timestamp
-        );
-    }
-
-    /**
-     * @inheritdoc IContentBasePublish
-     */
-    function deleteComment(
-        uint256 tokenId,
-        uint256 publishId,
-        address profileAddress
-    )
-        external
-        override
-        onlyReady
-        onlyProfileOwner(profileAddress)
         returns (bool)
     {
-        // The given publish id must exist.
-        require(_exists(publishId), "Publish not found");
-
-        // Call the comment contract to delete the comment.
-        bool success = IContentBaseComment(commentContract).deleteComment(
-            tokenId,
-            publishId,
-            msg.sender,
-            profileAddress
-        );
-
-        require(success, "Delete comment failed");
-
-        return true;
+        return _exists(tokenId);
     }
 
     /**

@@ -24,12 +24,6 @@ interface IContentBasePublish {
     function updateLikeContract(address contractAddress) external;
 
     /**
-     * An external function to update Comment contract address.
-     * @dev make sure to add modifier to only ADMIN_ROLE.
-     */
-    function updateCommentContract(address contractAddress) external;
-
-    /**
      * An external function to withdraw the contract's balance.
      * @dev make sure to add modifier to only ADMIN_ROLE.
      */
@@ -80,34 +74,6 @@ interface IContentBasePublish {
     function disLike(DataTypes.LikeData calldata likeData) external;
 
     /**
-     * An external function to comment on a publish.
-     * @param createCommentData - see DataTypes.CreateCommentData
-     */
-    function comment(DataTypes.CreateCommentData calldata createCommentData)
-        external;
-
-    /**
-     * An external function to update a comment.
-     * @param updateCommentData - see DataTypes.UpdateCommentData
-     */
-    function updateComment(
-        DataTypes.UpdateCommentData calldata updateCommentData
-    ) external;
-
-    /**
-     * An external function to delete a comment.
-     * @param tokenId {uint256} - a comment id
-     * @param publishId {uint256} - the publish id that the comment is on
-     * @param profileAddress {address} - a profile address that created the comment
-     * @return success {bool}
-     */
-    function deleteComment(
-        uint256 tokenId,
-        uint256 publishId,
-        address profileAddress
-    ) external returns (bool);
-
-    /**
      * An external function to get a publish struct from a given id.
      * @param tokenId {uint256}
      * @return token {Publish}
@@ -121,4 +87,11 @@ interface IContentBasePublish {
      * An external function to burn a publish token.
      */
     function deletePublish(uint256 tokenId, address creatorId) external;
+
+    /**
+     * An external function to check if the publish exists.
+     * @param tokenId {uint256}
+     * @return exist {bool}
+     */
+    function publishExist(uint256 tokenId) external view returns (bool);
 }
