@@ -97,7 +97,7 @@ contract ContentBaseProfile is
     modifier onlyContentBaseProfile(address profileAddress) {
         address profileOwner = IContentBaseProfileFactory(factoryContract)
             .getProfileOwner(profileAddress);
-        require(profileOwner != address(0));
+        require(profileOwner != address(0), "Not a ContentBase Profile");
 
         _;
     }
@@ -138,13 +138,10 @@ contract ContentBaseProfile is
 
     /**
      * @inheritdoc IContentBaseProfile
-     */
-    /**
      * @dev This function will be called by the owner of the profile contract when they want to follow other profile, and this function will forward the call to the `follow` function on the target profile address.
      *
      * This diagram shows the flow when profile address A follows profile address B.
-     * EOA -> A `requestFollow` -> B `follow` (update B's followers states) -> returned values to A `requestFollow` (update A's following states)
-     *
+     * The owner of A (EOA) -> call `requestFollow` on A -> call `follow` on B -> B update its followers states -> returned values to the caller (A-`requestFollow`) -> A update its following states.
      *
      */
     function requestFollow(address targetProfileAddress)
@@ -157,23 +154,22 @@ contract ContentBaseProfile is
         // Call the `follow` function on the `targetProfileAddress` and get returned values.
         (
             bool success,
-            DataTypes.Follow memory followToken,
+            address issuer,
             uint256 tokenId,
             DataTypes.FollowType followType
         ) = IContentBaseProfile(targetProfileAddress).follow();
 
         require(success, "Follow failed");
 
-        // On follow success, call the follow module to upate the following states.
-        // Update the following states depending on the follow type.
+        // On follow success, Update the following states depending on the follow type.
         if (followType == DataTypes.FollowType.FOLLOW) {
             // FOLLOW
             profile.following++;
-            _followingToTokenId[followToken.issuer] = tokenId;
+            _followingToTokenId[issuer] = tokenId;
         } else {
             // UNFOLLOW
             profile.following--;
-            delete _followingToTokenId[followToken.issuer];
+            delete _followingToTokenId[issuer];
         }
     }
 
@@ -182,7 +178,7 @@ contract ContentBaseProfile is
      */
     /**
      * @dev This function will be called from other profile contracts to follow the profile of the called address.
-     * @dev As the function will be called by a contract so the `msg.sender` is the profile contract address who calls the function, and this caller address is the following profile address.
+     * @dev As the function will be called by a contract so the `msg.sender` is the profile contract address who calls this function, which means the caller is the following profile address.
      */
     function follow()
         external
@@ -191,7 +187,7 @@ contract ContentBaseProfile is
         onlyContentBaseProfile(msg.sender)
         returns (
             bool,
-            DataTypes.Follow memory,
+            address,
             uint256,
             DataTypes.FollowType
         )
@@ -203,7 +199,8 @@ contract ContentBaseProfile is
 
         // Check to identify if the call is for follow or unfollow.
         if (_followerToTokenId[msg.sender] == 0) {
-            // FOLLOW CASE -->
+            // FOLLOW CASE --> issue a new Follow NFT to the owner of the caller address.
+
             // Increment the counter before using it so the id will start from 1 (instead of 0).
             _tokenIdCounter.increment();
             uint256 newTokenId = _tokenIdCounter.current();
@@ -215,7 +212,7 @@ contract ContentBaseProfile is
             _tokenIdToFollow[newTokenId] = DataTypes.Follow({
                 owner: profileOwner,
                 follower: msg.sender,
-                issuer: address(this) // As the Follow Contract will be inherited by the Profile Contract, so `address(this)` is the profile address.
+                issuer: address(this)
             });
 
             // Update the followers states of the contract.
@@ -232,12 +229,13 @@ contract ContentBaseProfile is
 
             return (
                 true,
-                _tokenIdToFollow[newTokenId],
+                _tokenIdToFollow[newTokenId].issuer,
                 newTokenId,
                 DataTypes.FollowType.FOLLOW
             );
         } else {
-            // UNFOLLOW CASE
+            // UNFOLLOW CASE --> burn the Follow token.
+
             uint256 followTokenId = _followerToTokenId[msg.sender];
 
             DataTypes.Follow memory followStruct = _tokenIdToFollow[
@@ -267,7 +265,7 @@ contract ContentBaseProfile is
 
             return (
                 true,
-                followStruct,
+                followStruct.issuer,
                 followTokenId,
                 DataTypes.FollowType.UNFOLLOW
             );

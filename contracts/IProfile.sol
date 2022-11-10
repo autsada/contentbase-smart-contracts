@@ -22,14 +22,14 @@ interface IContentBaseProfile {
      * An external function that will be called by other profiles to request to follow the profile of a specific address.
      * @return success {bool}
      * @return tokenId {uint256}
-     * @return followStruct {Follow Struct}
+     * @return issuer {address} the address who issues the token
      * @return followType {FollowType Enum}
      */
     function follow()
         external
         returns (
             bool,
-            DataTypes.Follow memory,
+            address,
             uint256,
             DataTypes.FollowType
         );
