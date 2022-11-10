@@ -13,8 +13,14 @@ interface IContentBaseLike {
     /**
      * An external function to handle `like` and `unlike` logic for publish like.
      * @param owner {address} - an EOA address that owns the profile that performs the like (or unlike)
+     * @param profile {address} - the profile address that performs the like
+     * @param publishId {uint256} - the liked publish
      * @return success {bool}
      * @return tokenId {uint256}
      */
-    function like(address owner) external returns (bool, uint256);
+    function like(
+        address owner,
+        address profile,
+        uint256 publishId
+    ) external returns (bool, uint256);
 }

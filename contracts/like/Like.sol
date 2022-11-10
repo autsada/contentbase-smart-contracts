@@ -35,8 +35,8 @@ contract ContentBaseLike is
     // Publish contract.
     address public publishContract;
 
-    // // Mapping of like struct by token id.
-    // mapping(uint256 => DataTypes.Like) private _tokenById;
+    // Mapping of like struct by token id.
+    mapping(uint256 => DataTypes.Like) private _tokenById;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -91,18 +91,23 @@ contract ContentBaseLike is
      * @inheritdoc IContentBaseLike
      * @dev only allow calls from the Publish contract
      */
-    function like(address owner)
-        external
-        override
-        onlyReady
-        onlyPublishContract
-        returns (bool, uint256)
-    {
+    function like(
+        address owner,
+        address profile,
+        uint256 publishId
+    ) external override onlyReady onlyPublishContract returns (bool, uint256) {
         _tokenIdCounter.increment();
         uint256 tokenId = _tokenIdCounter.current();
 
         // Mint an NFT to the caller.
         _safeMint(owner, tokenId);
+
+        // Create and store a new Like struct.
+        _tokenById[tokenId] = DataTypes.Like({
+            owner: owner,
+            profileAddress: profile,
+            publishId: publishId
+        });
 
         return (true, tokenId);
     }

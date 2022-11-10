@@ -518,7 +518,7 @@ contract ContentBasePublish is
 
             // Call `like` function in the Like contract to mint a new Like NFT.
             (bool success, uint256 tokenId) = IContentBaseLike(likeContract)
-                .like(msg.sender);
+                .like(msg.sender, profileAddress, publishId);
             require(success, "Like failed");
 
             // Transfer like support fee (after deducting operational fee for the platform) to the publish owner.
