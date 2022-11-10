@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import {Constants} from "./Constants.sol";
 import {DataTypes} from "./DataTypes.sol";
+import {Events} from "./Events.sol";
 
 library Helpers {
     /**
@@ -45,10 +46,11 @@ library Helpers {
         bytes memory bytesHandle = bytes(handle);
 
         // Check the length
-        if (
-            bytesHandle.length < Constants.MIN_HANDLE_LENGTH ||
-            bytesHandle.length > Constants.MAX_HANDLE_LENGTH
-        ) revert("Handle length invalid.");
+        require(
+            bytesHandle.length >= Constants.MIN_HANDLE_LENGTH &&
+                bytesHandle.length <= Constants.MAX_HANDLE_LENGTH,
+            "Handle length invalid"
+        );
 
         // Check if the handle contains invalid characters (Capital letters, spcecial characters).
         for (uint256 i = 0; i < bytesHandle.length; ) {
@@ -75,8 +77,7 @@ library Helpers {
     function notTooShortURI(string calldata uri) internal pure returns (bool) {
         bytes memory bytesURI = bytes(uri);
 
-        if (Constants.MIN_URI_LENGTH > bytesURI.length)
-            revert("URI is too short.");
+        require(Constants.MIN_URI_LENGTH <= bytesURI.length, "URI too short");
 
         return true;
     }
@@ -89,8 +90,7 @@ library Helpers {
     function notTooLongURI(string calldata uri) internal pure returns (bool) {
         bytes memory bytesURI = bytes(uri);
 
-        if (Constants.MAX_URI_LENGTH < bytesURI.length)
-            revert("URI is too long.");
+        require(Constants.MAX_URI_LENGTH >= bytesURI.length, "URI too long");
 
         return true;
     }
@@ -107,8 +107,10 @@ library Helpers {
     {
         bytes memory bytesTitle = bytes(title);
 
-        if (Constants.MIN_PUBLISH_TITLE > bytesTitle.length)
-            revert("Title too short.");
+        require(
+            Constants.MIN_PUBLISH_TITLE <= bytesTitle.length,
+            "Title too short"
+        );
 
         return true;
     }
@@ -125,8 +127,10 @@ library Helpers {
     {
         bytes memory bytesTitle = bytes(title);
 
-        if (Constants.MAX_PUBLISH_TITLE < bytesTitle.length)
-            revert("Title too long.");
+        require(
+            Constants.MAX_PUBLISH_TITLE >= bytesTitle.length,
+            "Title too long"
+        );
 
         return true;
     }
@@ -143,8 +147,10 @@ library Helpers {
     {
         bytes memory bytesDescription = bytes(description);
 
-        if (Constants.MAX_PUBLISH_DESCRIPTION < bytesDescription.length)
-            revert("Description too long.");
+        require(
+            Constants.MAX_PUBLISH_DESCRIPTION >= bytesDescription.length,
+            "Description too long"
+        );
 
         return true;
     }
@@ -187,5 +193,57 @@ library Helpers {
         );
 
         return true;
+    }
+
+    /**
+     * A helper function to emit a create publish event that accepts a create publish data struct in memory to avoid a stack too deep error.
+     * @param tokenId {uint256}
+     * @param owner {address}
+     * @param createPublishData {struct}
+     */
+    function _emitPublishCreated(
+        uint256 tokenId,
+        address owner,
+        DataTypes.CreatePublishData memory createPublishData
+    ) internal {
+        emit Events.PublishCreated(
+            tokenId,
+            createPublishData.creatorId,
+            owner,
+            createPublishData.imageURI,
+            createPublishData.contentURI,
+            createPublishData.metadataURI,
+            createPublishData.title,
+            createPublishData.description,
+            createPublishData.primaryCategory,
+            createPublishData.secondaryCategory,
+            createPublishData.tertiaryCategory,
+            block.timestamp
+        );
+    }
+
+    /**
+     * A helper function to emit a update publish event that accepts a update publish data struct in memory to avoid a stack too deep error.
+     * @param owner {address}
+     * @param updatePublishData {struct}
+     */
+    function _emitPublishUpdated(
+        address owner,
+        DataTypes.UpdatePublishData memory updatePublishData
+    ) internal {
+        emit Events.PublishUpdated(
+            updatePublishData.tokenId,
+            updatePublishData.creatorId,
+            owner,
+            updatePublishData.imageURI,
+            updatePublishData.contentURI,
+            updatePublishData.metadataURI,
+            updatePublishData.title,
+            updatePublishData.description,
+            updatePublishData.primaryCategory,
+            updatePublishData.secondaryCategory,
+            updatePublishData.tertiaryCategory,
+            block.timestamp
+        );
     }
 }

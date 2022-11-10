@@ -14,6 +14,7 @@ import "./Profile.sol";
 import "./IProfile.sol";
 import {Helpers} from "../libraries/Helpers.sol";
 import {DataTypes} from "../libraries/DataTypes.sol";
+import {Events} from "../libraries/Events.sol";
 
 /**
  * @title ContentBase Factory
@@ -40,20 +41,6 @@ contract ContentBaseProfileFactory is
     mapping(bytes32 => address) private _handleHashToProfile;
     // Mapping (owner => profile) of owner to their default profile address.
     mapping(address => address) private _ownerToDefaultProfile;
-
-    event ProfileCreated(
-        address indexed owner,
-        address indexed profileAddress,
-        string handle,
-        string imageURI,
-        bool isDefault,
-        uint256 timestamp
-    );
-    event DefaultProfileUpdated(
-        address indexed proxy,
-        address indexed owner,
-        uint256 timestamp
-    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -132,7 +119,7 @@ contract ContentBaseProfileFactory is
             _ownerToDefaultProfile[msg.sender] = profileAddress;
         }
 
-        emit ProfileCreated(
+        emit Events.ProfileCreated(
             msg.sender,
             profileAddress,
             createProfileData.handle,
@@ -165,7 +152,11 @@ contract ContentBaseProfileFactory is
 
         _ownerToDefaultProfile[msg.sender] = profileAddress;
 
-        emit DefaultProfileUpdated(profileAddress, msg.sender, block.timestamp);
+        emit Events.DefaultProfileUpdated(
+            profileAddress,
+            msg.sender,
+            block.timestamp
+        );
     }
 
     /**

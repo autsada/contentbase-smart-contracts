@@ -15,6 +15,7 @@ import "../like/ILike.sol";
 import "../comment/IComment.sol";
 import {Helpers} from "../../libraries/Helpers.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
+import {Events} from "../../libraries/Events.sol";
 
 /**
  * @title ContentBase Publish
@@ -60,110 +61,6 @@ contract ContentBasePublish is
     // Mapping of (publishId => (profileAddress => bool)) to track if a specific profile disliked the publish.
     mapping(uint256 => mapping(address => bool))
         private _publishToDislikedProfile;
-
-    // Publish Events.
-    event PublishCreated(
-        uint256 indexed tokenId,
-        address indexed creatorId,
-        address indexed owner,
-        string imageURI,
-        string contentURI,
-        string metadataURI,
-        string title,
-        string description,
-        DataTypes.Category primaryCategory,
-        DataTypes.Category secondaryCategory,
-        DataTypes.Category tertiaryCategory,
-        uint256 timestamp
-    );
-    event PublishUpdated(
-        uint256 indexed tokenId,
-        address creatorId,
-        address owner,
-        string imageURI,
-        string contentURI,
-        string metadataURI,
-        string title,
-        string description,
-        DataTypes.Category primaryCategory,
-        DataTypes.Category secondaryCategory,
-        DataTypes.Category tertiaryCategory,
-        uint256 timestamp
-    );
-    event PublishDeleted(
-        uint256 indexed tokenId,
-        address indexed owner,
-        address profileAddress,
-        uint256 timestamp
-    );
-
-    // Like Events.
-    event PublishLiked(
-        uint256 indexed likeId,
-        uint256 indexed publishId,
-        address indexed publishOwner,
-        address profileAddress,
-        address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 fee,
-        uint256 timestamp
-    );
-    event PublishUnLiked(
-        uint256 indexed likeId,
-        uint256 publishId,
-        address profileAddress,
-        address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-
-    // DisLike Events.
-    event PublishDisLiked(
-        uint256 indexed publishId,
-        address indexed profileAddress,
-        address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-    event PublishUndoDisLiked(
-        uint256 indexed publishId,
-        address indexed profileAddress,
-        address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-
-    /**
-     * @dev the `commentId` if not 0, it means the newly created comment was made on that commentId (this is the case where profile comments on other comments).
-     */
-    event CommentCreated(
-        uint256 indexed tokenId,
-        uint256 indexed publishId,
-        address indexed profileAddress,
-        address owner,
-        string text,
-        string contentURI,
-        uint256 commentId,
-        uint256 timestamp
-    );
-    event CommentUpdated(
-        uint256 indexed tokenId,
-        uint256 indexed publishId,
-        address indexed profileAddress,
-        address owner,
-        string text,
-        string contentURI,
-        uint256 timestamp
-    );
-    event CommentDeleted(
-        uint256 indexed tokenId,
-        uint256 publishId,
-        uint256 timestamp
-    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -326,10 +223,12 @@ contract ContentBasePublish is
         require(Helpers.validCategory(createPublishData.tertiaryCategory));
 
         // If the secondary category is Empty, the tertiary category must also Empty.
-        if (
-            createPublishData.secondaryCategory == DataTypes.Category.Empty &&
-            createPublishData.tertiaryCategory != DataTypes.Category.Empty
-        ) revert("Invalid category");
+        if (createPublishData.secondaryCategory == DataTypes.Category.Empty) {
+            require(
+                createPublishData.tertiaryCategory == DataTypes.Category.Empty,
+                "Invalid category"
+            );
+        }
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
@@ -350,34 +249,7 @@ contract ContentBasePublish is
         });
 
         // Emit publish created event.
-        _emitPublishCreated(tokenId, msg.sender, createPublishData);
-    }
-
-    /**
-     * A helper function to emit a create publish event that accepts a create publish data struct in memory to avoid a stack too deep error.
-     * @param tokenId {uint256}
-     * @param owner {address}
-     * @param createPublishData {struct}
-     */
-    function _emitPublishCreated(
-        uint256 tokenId,
-        address owner,
-        DataTypes.CreatePublishData memory createPublishData
-    ) private {
-        emit PublishCreated(
-            tokenId,
-            createPublishData.creatorId,
-            owner,
-            createPublishData.imageURI,
-            createPublishData.contentURI,
-            createPublishData.metadataURI,
-            createPublishData.title,
-            createPublishData.description,
-            createPublishData.primaryCategory,
-            createPublishData.secondaryCategory,
-            createPublishData.tertiaryCategory,
-            block.timestamp
-        );
+        Helpers._emitPublishCreated(tokenId, msg.sender, createPublishData);
     }
 
     /**
@@ -429,10 +301,12 @@ contract ContentBasePublish is
         require(Helpers.validCategory(updatePublishData.tertiaryCategory));
 
         // If the secondary category is Empty, the tertiary category must also Empty.
-        if (
-            updatePublishData.secondaryCategory == DataTypes.Category.Empty &&
-            updatePublishData.tertiaryCategory != DataTypes.Category.Empty
-        ) revert("Invalid category");
+        if (updatePublishData.secondaryCategory == DataTypes.Category.Empty) {
+            require(
+                updatePublishData.tertiaryCategory == DataTypes.Category.Empty,
+                "Invalid category"
+            );
+        }
 
         // Only update imageURI if it's changed.
         if (
@@ -459,32 +333,7 @@ contract ContentBasePublish is
         }
 
         // Emit publish updated event
-        _emitPublishUpdated(msg.sender, updatePublishData);
-    }
-
-    /**
-     * A helper function to emit a update publish event that accepts a update publish data struct in memory to avoid a stack too deep error.
-     * @param owner {address}
-     * @param updatePublishData {struct}
-     */
-    function _emitPublishUpdated(
-        address owner,
-        DataTypes.UpdatePublishData memory updatePublishData
-    ) private {
-        emit PublishUpdated(
-            updatePublishData.tokenId,
-            updatePublishData.creatorId,
-            owner,
-            updatePublishData.imageURI,
-            updatePublishData.contentURI,
-            updatePublishData.metadataURI,
-            updatePublishData.title,
-            updatePublishData.description,
-            updatePublishData.primaryCategory,
-            updatePublishData.secondaryCategory,
-            updatePublishData.tertiaryCategory,
-            block.timestamp
-        );
+        Helpers._emitPublishUpdated(msg.sender, updatePublishData);
     }
 
     /**
@@ -541,7 +390,7 @@ contract ContentBasePublish is
             }
 
             // Emit like event.
-            emit PublishLiked(
+            emit Events.PublishLiked(
                 tokenId,
                 publishId,
                 publishOwner,
@@ -565,7 +414,7 @@ contract ContentBasePublish is
             }
 
             // emit unlike even.
-            emit PublishUnLiked(
+            emit Events.PublishUnLiked(
                 likeId,
                 publishId,
                 profileAddress,
@@ -616,7 +465,7 @@ contract ContentBasePublish is
             }
 
             // Emit dis like event.
-            emit PublishDisLiked(
+            emit Events.PublishDisLiked(
                 publishId,
                 profileAddress,
                 msg.sender,
@@ -643,7 +492,7 @@ contract ContentBasePublish is
             }
 
             // emit undo dislike even.
-            emit PublishUndoDisLiked(
+            emit Events.PublishUndoDisLiked(
                 publishId,
                 profileAddress,
                 msg.sender,
@@ -675,7 +524,7 @@ contract ContentBasePublish is
         require(success, "Create comment failed");
 
         // Emit comment created event.
-        emit CommentCreated(
+        emit Events.CommentCreated(
             commentId,
             createCommentData.publishId,
             createCommentData.profileAddress,
@@ -716,7 +565,7 @@ contract ContentBasePublish is
 
         require(success, "Update comment failed");
 
-        emit CommentUpdated(
+        emit Events.CommentUpdated(
             updateCommentData.tokenId,
             publishId,
             profileAddress,
@@ -798,7 +647,12 @@ contract ContentBasePublish is
         // Call the parent burn function.
         super.burn(tokenId);
 
-        emit PublishDeleted(tokenId, msg.sender, creatorId, block.timestamp);
+        emit Events.PublishDeleted(
+            tokenId,
+            msg.sender,
+            creatorId,
+            block.timestamp
+        );
     }
 
     /**

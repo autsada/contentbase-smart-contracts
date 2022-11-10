@@ -13,6 +13,7 @@ import "./IComment.sol";
 import "../IProfileFactory.sol";
 import "../like/ILike.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
+import {Events} from "../../libraries/Events.sol";
 
 /**
  * @title ContentBase Comment
@@ -50,43 +51,6 @@ contract ContentBaseComment is
     // Mapping of (commentId => (profileAddress => bool)) to track if a specific profile disliked the comment.
     mapping(uint256 => mapping(address => bool))
         private _commentToDislikedProfile;
-
-    // Like Events.
-    event CommentLiked(
-        uint256 indexed commentId,
-        address commentOwner,
-        address profileAddress,
-        address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-    event CommentUnLiked(
-        uint256 indexed commentId,
-        address profileAddress,
-        address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-
-    // DisLike Events.
-    event CommentDisLiked(
-        uint256 indexed commentId,
-        address indexed profileAddress,
-        address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-    event CommentUndoDisLiked(
-        uint256 indexed commentId,
-        address indexed profileAddress,
-        address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -336,7 +300,7 @@ contract ContentBaseComment is
             }
 
             // Emit like event.
-            emit CommentLiked(
+            emit Events.CommentLiked(
                 commentId,
                 commentOwner,
                 profileAddress,
@@ -364,7 +328,7 @@ contract ContentBaseComment is
             }
 
             // emit unlike even.
-            emit CommentUnLiked(
+            emit Events.CommentUnLiked(
                 commentId,
                 profileAddress,
                 msg.sender,
@@ -413,7 +377,7 @@ contract ContentBaseComment is
             }
 
             // Emit dislike event.
-            emit CommentDisLiked(
+            emit Events.CommentDisLiked(
                 commentId,
                 profileAddress,
                 msg.sender,
@@ -440,7 +404,7 @@ contract ContentBaseComment is
             }
 
             // emit unlike even.
-            emit CommentUndoDisLiked(
+            emit Events.CommentUndoDisLiked(
                 commentId,
                 profileAddress,
                 msg.sender,

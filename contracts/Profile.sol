@@ -12,6 +12,7 @@ import "./IProfile.sol";
 import "./IProfileFactory.sol";
 import {DataTypes} from "../libraries/DataTypes.sol";
 import {Helpers} from "../libraries/Helpers.sol";
+import {Events} from "../libraries/Events.sol";
 
 /**
  * @title ContentBase Profile Contract
@@ -47,33 +48,6 @@ contract ContentBaseProfile is
     mapping(address => uint256) private _followingToTokenId;
     // Mapping (tokenId => followStruct).
     mapping(uint256 => DataTypes.Follow) private _tokenIdToFollow;
-
-    /**
-     * ===== Events ===== *
-     */
-    event ProfileImageUpdated(
-        address indexed owner,
-        address indexed proxy,
-        string imageURI,
-        uint256 timestamp
-    );
-    /**
-     * @dev `follower` and `followee` are proxy profile addresses, `followerOwner` is an EOA that owns the follower proxy contract, `tokenId` is a token id.
-     */
-    event FollowNFTMinted(
-        uint256 indexed tokenId,
-        address indexed follower,
-        address indexed followerOwner,
-        address followee,
-        uint256 timestamp
-    );
-    event FollowNFTBurned(
-        uint256 indexed tokenId,
-        address indexed follower,
-        address indexed followerOwner,
-        address followee,
-        uint256 timestamp
-    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -169,7 +143,7 @@ contract ContentBaseProfile is
         // Update the profile struct.
         profile.imageURI = imageURI;
 
-        emit ProfileImageUpdated(
+        emit Events.ProfileImageUpdated(
             msg.sender,
             address(this),
             imageURI,
@@ -263,7 +237,7 @@ contract ContentBaseProfile is
             _followerToTokenId[msg.sender] = newTokenId;
             profile.followers++;
 
-            emit FollowNFTMinted(
+            emit Events.FollowNFTMinted(
                 newTokenId,
                 msg.sender,
                 profileOwner,
@@ -298,7 +272,7 @@ contract ContentBaseProfile is
             delete _followerToTokenId[msg.sender];
             profile.followers--;
 
-            emit FollowNFTBurned(
+            emit Events.FollowNFTBurned(
                 followTokenId,
                 msg.sender,
                 profileOwner,
