@@ -13,7 +13,7 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 
 /**
  * @title ContentBase Like
- * @notice Like NFT will be minted when when a porifle likes a publish, the minted NFT will be given to the profile that performs the like.
+ * @notice Like NFT will be minted when when a porifle likes a publish, and the minted NFTs will NOT be burned when a profile undo like.
  * @notice Like operation must be performed in the publish Contract, and this contract will only accept calls from the publish contract.
  */
 
