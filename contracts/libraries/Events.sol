@@ -1,54 +1,53 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity ^0.8.9;
 
 import {Constants} from "./Constants.sol";
 import {DataTypes} from "./DataTypes.sol";
 
 library Events {
-    // Factory Events
+    // Profile Events
     event ProfileCreated(
+        uint256 indexed profileId,
         address indexed owner,
-        address indexed profileAddress,
         string handle,
         string imageURI,
         bool isDefault,
         uint256 timestamp
     );
+
+    event ProfileImageUpdated(
+        uint256 indexed profileId,
+        address indexed owner,
+        string imageURI,
+        uint256 timestamp
+    );
+
     event DefaultProfileUpdated(
-        address indexed proxy,
+        uint256 indexed profileId,
         address indexed owner,
         uint256 timestamp
     );
 
-    // Profile Events
-    event ProfileImageUpdated(
-        address indexed owner,
-        address indexed proxy,
-        string imageURI,
-        uint256 timestamp
-    );
-    /**
-     * @dev `follower` and `followee` are proxy profile addresses, `followerOwner` is an EOA that owns the follower proxy contract, `tokenId` is a token id.
-     */
+    // Follow Events
     event FollowNFTMinted(
         uint256 indexed tokenId,
-        address indexed follower,
-        address indexed followerOwner,
-        address followee,
+        uint256 indexed followerId,
+        uint256 indexed followeeId,
+        address owner,
         uint256 timestamp
     );
     event FollowNFTBurned(
         uint256 indexed tokenId,
-        address indexed follower,
-        address indexed followerOwner,
-        address followee,
+        uint256 indexed followerId,
+        uint256 indexed followeeId,
+        address owner,
         uint256 timestamp
     );
 
     // Publish Events.
     event PublishCreated(
         uint256 indexed tokenId,
-        address indexed creatorId,
+        uint256 indexed creatorId,
         address indexed owner,
         string imageURI,
         string contentURI,
@@ -62,8 +61,8 @@ library Events {
     );
     event PublishUpdated(
         uint256 indexed tokenId,
-        address creatorId,
-        address owner,
+        uint256 indexed creatorId,
+        address indexed owner,
         string imageURI,
         string contentURI,
         string metadataURI,
@@ -76,17 +75,41 @@ library Events {
     );
     event PublishDeleted(
         uint256 indexed tokenId,
+        uint256 indexed creatorId,
         address indexed owner,
-        address profileAddress,
         uint256 timestamp
     );
 
-    // Like Events.
+    // Comment Events.
+    event CommentCreated(
+        uint256 indexed tokenId,
+        uint256 indexed targetId,
+        uint256 indexed creatorId,
+        address owner,
+        string contentURI,
+        uint256 timestamp
+    );
+    event CommentUpdated(
+        uint256 indexed tokenId,
+        uint256 indexed creatorId,
+        address owner,
+        string contentURI,
+        uint256 timestamp
+    );
+    event CommentDeleted(
+        uint256 indexed tokenId,
+        uint256 indexed creatorId,
+        address owner,
+        uint256 timestamp
+    );
+
+    // Like Events (Publish).
+    // For Publish like events, there will be Like NFT involve, a new Like NFT will be created when `like`, however when `unlike` the Like NFT will NOT be burned.
     event PublishLiked(
-        uint256 indexed likeId,
+        uint256 indexed tokenId,
         uint256 indexed publishId,
-        address indexed publishOwner,
-        address profileAddress,
+        uint256 indexed profileId,
+        address publishOwner,
         address profileOwner,
         uint32 likes,
         uint32 disLikes,
@@ -94,19 +117,17 @@ library Events {
         uint256 timestamp
     );
     event PublishUnLiked(
-        uint256 indexed likeId,
-        uint256 publishId,
-        address profileAddress,
+        uint256 indexed publishId,
+        uint256 indexed profileId,
         address profileOwner,
         uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
 
-    // DisLike Events.
     event PublishDisLiked(
         uint256 indexed publishId,
-        address indexed profileAddress,
+        uint256 indexed profileId,
         address profileOwner,
         uint32 likes,
         uint32 disLikes,
@@ -114,46 +135,19 @@ library Events {
     );
     event PublishUndoDisLiked(
         uint256 indexed publishId,
-        address indexed profileAddress,
+        uint256 indexed profileId,
         address profileOwner,
         uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
 
-    /**
-     * @dev the `commentId` if not 0, it means the newly created comment was made on that commentId (this is the case where profile comments on other comments).
-     */
-    event CommentCreated(
-        uint256 indexed tokenId,
-        uint256 indexed publishId,
-        address indexed profileAddress,
-        address owner,
-        string text,
-        string contentURI,
-        uint256 commentId,
-        uint256 timestamp
-    );
-    event CommentUpdated(
-        uint256 indexed tokenId,
-        uint256 indexed publishId,
-        address indexed profileAddress,
-        address owner,
-        string text,
-        string contentURI,
-        uint256 timestamp
-    );
-    event CommentDeleted(
-        uint256 indexed tokenId,
-        uint256 publishId,
-        uint256 timestamp
-    );
-
-    // Comment Events
+    // Like Events (Comment).
+    // For Comment like events, there is no Like NFT involve.
     event CommentLiked(
         uint256 indexed commentId,
+        uint256 indexed profileId,
         address commentOwner,
-        address profileAddress,
         address profileOwner,
         uint32 likes,
         uint32 disLikes,
@@ -161,7 +155,7 @@ library Events {
     );
     event CommentUnLiked(
         uint256 indexed commentId,
-        address profileAddress,
+        uint256 indexed profileId,
         address profileOwner,
         uint32 likes,
         uint32 disLikes,
@@ -169,7 +163,7 @@ library Events {
     );
     event CommentDisLiked(
         uint256 indexed commentId,
-        address indexed profileAddress,
+        uint256 indexed profileId,
         address profileOwner,
         uint32 likes,
         uint32 disLikes,
@@ -177,7 +171,7 @@ library Events {
     );
     event CommentUndoDisLiked(
         uint256 indexed commentId,
-        address indexed profileAddress,
+        uint256 indexed profileId,
         address profileOwner,
         uint32 likes,
         uint32 disLikes,

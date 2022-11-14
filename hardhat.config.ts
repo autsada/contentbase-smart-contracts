@@ -4,6 +4,7 @@ dotenv.config({ path: path.join(__dirname, ".env") })
 import { HardhatUserConfig } from "hardhat/config"
 import "@nomicfoundation/hardhat-toolbox"
 import "@openzeppelin/hardhat-upgrades"
+import "hardhat-contract-sizer"
 
 const { GOERLI_URL, PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env
 
@@ -11,7 +12,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.10",
+        version: "0.8.9",
         settings: {
           optimizer: {
             enabled: true,
@@ -26,7 +27,7 @@ const config: HardhatUserConfig = {
       url: GOERLI_URL || "",
       accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
     },
-    localhost: {
+    hardhat: {
       allowUnlimitedContractSize: true,
     },
   },
@@ -38,6 +39,12 @@ const config: HardhatUserConfig = {
   },
   typechain: {
     outDir: "./typechain-types",
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
   },
 }
 
