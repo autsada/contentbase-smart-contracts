@@ -16,7 +16,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 10,
+            runs: 20,
           },
         },
       },
@@ -27,7 +27,7 @@ const config: HardhatUserConfig = {
       url: GOERLI_URL || "",
       accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
     },
-    hardhat: {
+    localhost: {
       allowUnlimitedContractSize: true,
     },
   },

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Constants} from "./Constants.sol";
 import {DataTypes} from "./DataTypes.sol";
 
 library Events {
@@ -85,6 +84,7 @@ library Events {
         uint256 indexed tokenId,
         uint256 indexed targetId,
         uint256 indexed creatorId,
+        DataTypes.CommentTarget targetType,
         address owner,
         string contentURI,
         uint256 timestamp
