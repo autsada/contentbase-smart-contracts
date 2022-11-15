@@ -19,10 +19,11 @@ import {Events} from "../libraries/Events.sol";
  * @title ContentBasePublishV1
  * @author Autsada
  *
- * @notice This contract contains 2 ERC721 NFT collections - `PUBLISH` and `LIKE`.
- * @notice Publish NFTs are burnable, Like NFTs are non-burnable.
- * @notice Both publish NFTs and like NFTs can only be minted by addresses (EOA) that own profile NFTs.
+ * @notice This contract contains 3 ERC721 NFT collections - `PUBLISH`, `LIKE`, and `COMMENT`.
+ * @notice Publish and Comments NFTs are burnable, Like NFTs are non-burnable.
+ * @notice These 3 collections can only be minted by addresses (EOA) that own profile NFTs.
  * @notice To mint a like NFT, the caller must send a long some ethers that equals to the specified `like fee` with the request, the platform fee will be applied to the like fee and the net total will be transfered to an owner of the liked publish.
+ * @notice No Like NFTs involve when minting Comment NFTs.
  */
 
 contract ContentBasePublishV1 is
@@ -52,6 +53,7 @@ contract ContentBasePublishV1 is
     // Token Collections.
     uint256 public constant PUBLISH = 1;
     uint256 public constant LIKE = 2;
+    uint256 public constant COMMENT = 3;
 
     // Mappping to track token id to token collection.
     mapping(uint256 => uint256) private _tokenIdToCollection;
@@ -66,6 +68,14 @@ contract ContentBasePublishV1 is
         private _publishIdToProfileIdToDislikeStatus;
     // Mapping to track how many Like NFT a profile has.
     mapping(uint256 => uint256) internal _profileIdToLikeNFTCount;
+    // Mapping (tokenId => publish struct).
+    mapping(uint256 => DataTypes.Comment) private _tokenIdToComment;
+    // Mapping of (commentId => (profileId => bool)) to track if a specific profile liked a comment.
+    mapping(uint256 => mapping(uint256 => bool))
+        internal _commentIdToProfileIdToLikeStatus;
+    // Mapping of (commentId => (profileId => bool)) to track if a specific profile disliked the comment.
+    mapping(uint256 => mapping(uint256 => bool))
+        internal _commentIdToProfileIdToDislikeStatus;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -643,13 +653,261 @@ contract ContentBasePublishV1 is
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function publishExists(uint256 publishId)
+    function createComment(
+        DataTypes.CreateCommentData calldata createCommentData
+    )
         external
-        view
         override
-        returns (bool)
+        onlyReady
+        onlyProfileOwner(createCommentData.creatorId)
     {
-        return _exists(publishId);
+        uint256 targetId = createCommentData.targetId;
+
+        // Target token must exist.
+        require(_exists(targetId), "Token not found");
+
+        // Target token must be a Publish or a Comment.
+        require(
+            _tokenIdToCollection[targetId] == PUBLISH ||
+                _tokenIdToCollection[targetId] == COMMENT,
+            "Wrong collection"
+        );
+
+        // Increment the counter before using it so the id will start from 1 (instead of 0).
+        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter.current();
+
+        // Mint a Comment NFT to the caller.
+        _safeMint(msg.sender, tokenId);
+
+        // Set the new token to COMMENT collection.
+        _tokenIdToCollection[tokenId] = COMMENT;
+
+        // Create and store a new comment struct in the mapping.
+        _tokenIdToComment[tokenId] = DataTypes.Comment({
+            owner: msg.sender,
+            creatorId: createCommentData.creatorId,
+            targetId: createCommentData.targetId,
+            likes: 0,
+            disLikes: 0,
+            contentURI: createCommentData.contentURI
+        });
+
+        // Emit comment created event.
+        emit Events.CommentCreated(
+            tokenId,
+            createCommentData.targetId,
+            createCommentData.creatorId,
+            msg.sender,
+            createCommentData.contentURI,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function updateComment(
+        DataTypes.UpdateCommentData calldata updateCommentData
+    )
+        external
+        override
+        onlyReady
+        onlyProfileOwner(updateCommentData.creatorId)
+        onlyTokenOwner(updateCommentData.tokenId)
+        onlyCollection(updateCommentData.tokenId, COMMENT)
+    {
+        uint256 tokenId = updateCommentData.tokenId;
+
+        // The given creatorId must be the profile id that created the comment.
+        require(
+            _tokenIdToComment[tokenId].creatorId == updateCommentData.creatorId,
+            "Not allow"
+        );
+
+        // Check if there is any change.
+        require(
+            keccak256(abi.encodePacked(updateCommentData.newContentURI)) !=
+                keccak256(
+                    abi.encodePacked(_tokenIdToComment[tokenId].contentURI)
+                ),
+            "Nothing change"
+        );
+
+        // Update the comment struct.
+        _tokenIdToComment[tokenId].contentURI = updateCommentData.newContentURI;
+
+        emit Events.CommentUpdated(
+            updateCommentData.tokenId,
+            updateCommentData.creatorId,
+            msg.sender,
+            updateCommentData.newContentURI,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function deleteComment(uint256 tokenId, uint256 creatorId)
+        external
+        override
+        onlyReady
+        onlyTokenOwner(tokenId)
+        onlyProfileOwner(creatorId)
+        onlyCollection(tokenId, COMMENT)
+    {
+        // The given profile id must be the creator of the comment.
+        require(_tokenIdToComment[tokenId].creatorId == creatorId, "Not allow");
+
+        // Call the parent burn function.
+        super.burn(tokenId);
+
+        // Update the token to collection struct.
+        delete _tokenIdToCollection[tokenId];
+
+        // Remove the struct from the mapping.
+        delete _tokenIdToComment[tokenId];
+
+        emit Events.CommentDeleted(
+            tokenId,
+            creatorId,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function likeComment(uint256 commentId, uint256 profileId)
+        external
+        override
+        onlyReady
+        onlyProfileOwner(profileId)
+        onlyCollection(commentId, COMMENT)
+    {
+        // Check if the call is for `like` or `unlike`.
+        bool isLiked = _commentIdToProfileIdToLikeStatus[commentId][profileId];
+
+        if (!isLiked) {
+            // LIKE
+
+            // Update the comment to profile to like status mapping.
+            _commentIdToProfileIdToLikeStatus[commentId][profileId] = true;
+
+            // Update the comment struct `likes` count.
+            _tokenIdToComment[commentId].likes++;
+
+            // If the profile `dislike` the comment before, update the dislike states.
+            if (_commentIdToProfileIdToDislikeStatus[commentId][profileId]) {
+                _commentIdToProfileIdToDislikeStatus[commentId][
+                    profileId
+                ] = false;
+
+                // Update the comment `dislikes` count.
+                if (_tokenIdToComment[commentId].disLikes > 0) {
+                    _tokenIdToComment[commentId].disLikes--;
+                }
+            }
+
+            // Emit comment liked event.
+            emit Events.CommentLiked(
+                commentId,
+                profileId,
+                ownerOf(commentId),
+                msg.sender,
+                _tokenIdToComment[commentId].likes,
+                _tokenIdToComment[commentId].disLikes,
+                block.timestamp
+            );
+        } else {
+            // UNLIKE
+
+            // Update the comment to profile to like mapping.
+            _commentIdToProfileIdToLikeStatus[commentId][profileId] = false;
+
+            // Update the comment struct `likes` count.
+            if (_tokenIdToComment[commentId].likes > 0) {
+                _tokenIdToComment[commentId].likes--;
+            }
+
+            // Emit comment unliked event.
+            emit Events.CommentUnLiked(
+                commentId,
+                profileId,
+                msg.sender,
+                _tokenIdToComment[commentId].likes,
+                _tokenIdToComment[commentId].disLikes,
+                block.timestamp
+            );
+        }
+    }
+
+    /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function disLikeComment(uint256 commentId, uint256 profileId)
+        external
+        override
+        onlyReady
+        onlyProfileOwner(profileId)
+        onlyCollection(commentId, COMMENT)
+    {
+        // Check if the call is for `dislike` or `undoDislike`.
+        bool isDisLiked = _commentIdToProfileIdToDislikeStatus[commentId][
+            profileId
+        ];
+
+        if (!isDisLiked) {
+            // DISLIKE
+
+            // Update the comment to profile to dislike status mapping.
+            _commentIdToProfileIdToDislikeStatus[commentId][profileId] = true;
+
+            // Update the comment struct `disLikes` count.
+            _tokenIdToComment[commentId].disLikes++;
+
+            // If the profile `like` the comment before, update the like states.
+            if (_commentIdToProfileIdToLikeStatus[commentId][profileId]) {
+                _commentIdToProfileIdToLikeStatus[commentId][profileId] = false;
+
+                // Update the comment `likes` count.
+                if (_tokenIdToComment[commentId].likes > 0) {
+                    _tokenIdToComment[commentId].likes--;
+                }
+            }
+
+            // Emit comment disliked event.
+            emit Events.CommentDisLiked(
+                commentId,
+                profileId,
+                msg.sender,
+                _tokenIdToComment[commentId].likes,
+                _tokenIdToComment[commentId].disLikes,
+                block.timestamp
+            );
+        } else {
+            // UNDO DISLIKE
+
+            // Update the comment to profile to dislike status mapping.
+            _commentIdToProfileIdToDislikeStatus[commentId][profileId] = false;
+
+            // Update the comment struct `disLikes` count.
+            if (_tokenIdToComment[commentId].disLikes > 0) {
+                _tokenIdToComment[commentId].disLikes--;
+            }
+
+            // Emit comment disliked event.
+            emit Events.CommentUndoDisLiked(
+                commentId,
+                profileId,
+                msg.sender,
+                _tokenIdToComment[commentId].likes,
+                _tokenIdToComment[commentId].disLikes,
+                block.timestamp
+            );
+        }
     }
 
     /**
@@ -660,13 +918,14 @@ contract ContentBasePublishV1 is
         if (_tokenIdToCollection[tokenId] == LIKE) {
             revert("Forbidden");
         } else {
-            revert("Use `deletePublish` function instead");
+            revert("Use `deletePublish` or `deleteComment`");
         }
     }
 
     /**
      * This function will return a token uri depending on the token category.
      * @dev the Publish tokens return metadata uris.
+     * @dev the Comment tokens return content uris.
      * @dev The Like tokens return empty string.
      */
     function tokenURI(uint256 tokenId)
@@ -677,6 +936,8 @@ contract ContentBasePublishV1 is
     {
         if (_tokenIdToCollection[tokenId] == PUBLISH)
             return _tokenIdToPublish[tokenId].metadataURI;
+        if (_tokenIdToCollection[tokenId] == COMMENT)
+            return _tokenIdToComment[tokenId].contentURI;
         else return "";
     }
 

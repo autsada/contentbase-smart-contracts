@@ -137,16 +137,6 @@ library DataTypes {
     }
 
     /**
-     * An enum to identify a comment type - "PUBLISH" | "COMMENT".
-     * "PUBLISH" means a comment is made on a Publish token.
-     * "COMMENT" means a comment is made on a Comment token.
-     */
-    enum CommentTarget {
-        PUBLISH,
-        COMMENT
-    }
-
-    /**
      * A struct containing data of Comment NFT.
      * @param owner {address} - an owner of the profile address that owns the token.
      * @param creatorId {uint256} - a profile token id that comments a publish.
@@ -168,7 +158,6 @@ library DataTypes {
         address owner;
         uint256 creatorId;
         uint256 targetId;
-        CommentTarget targetType;
         uint32 likes;
         uint32 disLikes;
         string contentURI;
@@ -176,14 +165,12 @@ library DataTypes {
 
     /**
      * A struct containing data required to comment on a publish.
-     * @param targetType {enum} - see Comment struct
      * @param targetId {uint256} - see Comment struct
      * @param creatorId {uint256} - see Comment struct
      * @param contentURI {string} - see Comment struct
      * @dev at least one of text and medaiURI must not empty.
      */
     struct CreateCommentData {
-        CommentTarget targetType;
         uint256 targetId;
         uint256 creatorId;
         string contentURI;

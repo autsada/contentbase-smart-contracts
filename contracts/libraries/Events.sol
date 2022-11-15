@@ -84,7 +84,6 @@ library Events {
         uint256 indexed tokenId,
         uint256 indexed targetId,
         uint256 indexed creatorId,
-        DataTypes.CommentTarget targetType,
         address owner,
         string contentURI,
         uint256 timestamp
