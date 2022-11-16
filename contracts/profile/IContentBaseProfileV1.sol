@@ -8,9 +8,13 @@ interface IContentBaseProfileV1 {
      * An external function to create a ContentBase profile. This function is to be called by EOA addresses to create their profiles.
      * @param handle {string} - the handle of a profile.
      * @param imageURI {string} - the imageURI of a profile, this can be empty as profiles can update their profile images later.
+     * @param originalHandle {string} - the unformatted handle used to display on the UI.
      */
-    function createProfile(string calldata handle, string calldata imageURI)
-        external;
+    function createProfile(
+        string calldata handle,
+        string calldata imageURI,
+        string calldata originalHandle
+    ) external;
 
     /**
      * An external to update a profile image uri. The function must only be called by an owner of the profile.

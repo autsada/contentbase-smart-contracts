@@ -10,6 +10,7 @@ library Events {
         address indexed owner,
         string handle,
         string imageURI,
+        string originalHandle,
         bool isDefault,
         uint256 timestamp
     );

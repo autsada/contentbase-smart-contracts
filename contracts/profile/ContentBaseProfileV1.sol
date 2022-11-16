@@ -111,10 +111,11 @@ contract ContentBaseProfileV1 is
     /**
      * @inheritdoc IContentBaseProfileV1
      */
-    function createProfile(string calldata handle, string calldata imageURI)
-        external
-        override
-    {
+    function createProfile(
+        string calldata handle,
+        string calldata imageURI,
+        string calldata originalHandle
+    ) external override {
         // Validate handle length and special characters, the helper function will revert with an error message if the check failed so we don't have to set the error message here.
         require(Helpers.validateHandle(handle));
 
@@ -157,6 +158,7 @@ contract ContentBaseProfileV1 is
             msg.sender,
             handle,
             imageURI,
+            originalHandle,
             _ownerToDefaultProfileId[msg.sender] == tokenId,
             block.timestamp
         );
