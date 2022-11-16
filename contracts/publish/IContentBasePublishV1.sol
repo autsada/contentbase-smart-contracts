@@ -126,4 +126,14 @@ interface IContentBasePublishV1 {
      * @param profileId {uint256}
      */
     function disLikeComment(uint256 commentId, uint256 profileId) external;
+
+    /**
+     * An external function to get a comment struct by provided id.
+     * @param tokenId {uint256} - a token id of the publish.
+     * @return comment {Comment struct}
+     */
+    function getCommentById(uint256 tokenId)
+        external
+        view
+        returns (DataTypes.Comment memory);
 }

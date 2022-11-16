@@ -645,6 +645,7 @@ contract ContentBasePublishV1 is
         external
         view
         override
+        onlyCollection(tokenId, PUBLISH)
         returns (DataTypes.Publish memory)
     {
         return _tokenIdToPublish[tokenId];
@@ -908,6 +909,19 @@ contract ContentBasePublishV1 is
                 block.timestamp
             );
         }
+    }
+
+    /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function getCommentById(uint256 tokenId)
+        external
+        view
+        override
+        onlyCollection(tokenId, COMMENT)
+        returns (DataTypes.Comment memory)
+    {
+        return _tokenIdToComment[tokenId];
     }
 
     /**

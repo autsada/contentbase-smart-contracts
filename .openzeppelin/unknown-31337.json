@@ -47,13 +47,13 @@
       "kind": "uups"
     },
     {
-      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0x3508c3f04c929d41a611c2e23539898a165b61cbbbccc9f992fa80c6ffa13462",
+      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "txHash": "0xa2e3ce5b06a33b763af12dd6a20ca7adaaa36520f714bb9ed2805673a3aa59ce",
       "kind": "uups"
     },
     {
-      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-      "txHash": "0xa2e3ce5b06a33b763af12dd6a20ca7adaaa36520f714bb9ed2805673a3aa59ce",
+      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "txHash": "0x1a5855691f9b0f388735aa15cd19f49d94935f1b87986945c1897be1f86c04f2",
       "kind": "uups"
     }
   ],
@@ -2113,9 +2113,9 @@
         }
       }
     },
-    "5a6d96669d6ad5642732ea4659a5d37545ad9976b9cbf64777dd812c1101eed3": {
-      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x84e98055f065d16daf98436d93feede25b21345a6da71fc09d84814b938d8254",
+    "feb3bea2d347585bcad3895fda2a15ff3e546b106b085a4bf708c50470281a05": {
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "txHash": "0xab56762238996fd800c432e3ac42bd567e995b05ae0e3166cf856181e6164449",
       "layout": {
         "storage": [
           {
@@ -2252,56 +2252,104 @@
             "offset": 0,
             "slot": "351",
             "type": "t_struct(Counter)2482_storage",
-            "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:36"
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:39"
+          },
+          {
+            "label": "platformOwner",
+            "offset": 0,
+            "slot": "352",
+            "type": "t_address",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:45"
+          },
+          {
+            "label": "profileContract",
+            "offset": 0,
+            "slot": "353",
+            "type": "t_address",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:47"
+          },
+          {
+            "label": "likeFee",
+            "offset": 0,
+            "slot": "354",
+            "type": "t_uint256",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:49"
+          },
+          {
+            "label": "platformFee",
+            "offset": 0,
+            "slot": "355",
+            "type": "t_uint256",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:51"
           },
           {
             "label": "_tokenIdToCollection",
             "offset": 0,
-            "slot": "352",
-            "type": "t_mapping(t_uint256,t_uint256)",
-            "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:46"
-          },
-          {
-            "label": "_tokenIdToProfile",
-            "offset": 0,
-            "slot": "353",
-            "type": "t_mapping(t_uint256,t_struct(Profile)2936_storage)",
-            "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:49"
-          },
-          {
-            "label": "_handleHashToProfileId",
-            "offset": 0,
-            "slot": "354",
-            "type": "t_mapping(t_bytes32,t_uint256)",
-            "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:51"
-          },
-          {
-            "label": "_ownerToDefaultProfileId",
-            "offset": 0,
-            "slot": "355",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:53"
-          },
-          {
-            "label": "_profileIdToFolloweeIdToTokenId",
-            "offset": 0,
             "slot": "356",
-            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
-            "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:55"
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:59"
           },
           {
-            "label": "_profileIdToFollowerIdToTokenId",
+            "label": "_tokenIdToPublish",
             "offset": 0,
             "slot": "357",
+            "type": "t_mapping(t_uint256,t_struct(Publish)2973_storage)",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:62"
+          },
+          {
+            "label": "_publishIdToProfileIdToLikeId",
+            "offset": 0,
+            "slot": "358",
             "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
-            "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:58"
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:64"
+          },
+          {
+            "label": "_publishIdToProfileIdToDislikeStatus",
+            "offset": 0,
+            "slot": "359",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:67"
+          },
+          {
+            "label": "_profileIdToLikeNFTCount",
+            "offset": 0,
+            "slot": "360",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:70"
+          },
+          {
+            "label": "_tokenIdToComment",
+            "offset": 0,
+            "slot": "361",
+            "type": "t_mapping(t_uint256,t_struct(Comment)3032_storage)",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:72"
+          },
+          {
+            "label": "_commentIdToProfileIdToLikeStatus",
+            "offset": 0,
+            "slot": "362",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:74"
+          },
+          {
+            "label": "_commentIdToProfileIdToDislikeStatus",
+            "offset": 0,
+            "slot": "363",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+            "contract": "ContentBasePublishV1",
+            "src": "contracts/publish/ContentBasePublishV1.sol:77"
           }
         ],
         "types": {
@@ -2345,20 +2393,28 @@
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_uint256)": {
-            "label": "mapping(bytes32 => uint256)",
-            "numberOfBytes": "32"
-          },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(uint256 => mapping(uint256 => bool))",
             "numberOfBytes": "32"
           },
           "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))": {
             "label": "mapping(uint256 => mapping(uint256 => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Profile)2936_storage)": {
-            "label": "mapping(uint256 => struct DataTypes.Profile)",
+          "t_mapping(t_uint256,t_struct(Comment)3032_storage)": {
+            "label": "mapping(uint256 => struct DataTypes.Comment)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Publish)2973_storage)": {
+            "label": "mapping(uint256 => struct DataTypes.Publish)",
             "numberOfBytes": "32"
           },
           "t_mapping(t_uint256,t_uint256)": {
@@ -2368,6 +2424,48 @@
           "t_string_storage": {
             "label": "string",
             "numberOfBytes": "32"
+          },
+          "t_struct(Comment)3032_storage": {
+            "label": "struct DataTypes.Comment",
+            "members": [
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "creatorId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "targetId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "likes",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "disLikes",
+                "type": "t_uint32",
+                "offset": 4,
+                "slot": "3"
+              },
+              {
+                "label": "contentURI",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
           },
           "t_struct(Counter)2482_storage": {
             "label": "struct CountersUpgradeable.Counter",
@@ -2381,8 +2479,8 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(Profile)2936_storage": {
-            "label": "struct DataTypes.Profile",
+          "t_struct(Publish)2973_storage": {
+            "label": "struct DataTypes.Publish",
             "members": [
               {
                 "label": "owner",
@@ -2391,31 +2489,43 @@
                 "slot": "0"
               },
               {
-                "label": "handle",
-                "type": "t_string_storage",
+                "label": "creatorId",
+                "type": "t_uint256",
                 "offset": 0,
                 "slot": "1"
+              },
+              {
+                "label": "likes",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "disLikes",
+                "type": "t_uint32",
+                "offset": 4,
+                "slot": "2"
               },
               {
                 "label": "imageURI",
                 "type": "t_string_storage",
                 "offset": 0,
-                "slot": "2"
+                "slot": "3"
               },
               {
-                "label": "followers",
-                "type": "t_uint32",
+                "label": "contentURI",
+                "type": "t_string_storage",
                 "offset": 0,
-                "slot": "3"
+                "slot": "4"
               },
               {
-                "label": "following",
-                "type": "t_uint32",
-                "offset": 4,
-                "slot": "3"
+                "label": "metadataURI",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "5"
               }
             ],
-            "numberOfBytes": "128"
+            "numberOfBytes": "192"
           },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",
@@ -2450,9 +2560,9 @@
         }
       }
     },
-    "feb3bea2d347585bcad3895fda2a15ff3e546b106b085a4bf708c50470281a05": {
-      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0xab56762238996fd800c432e3ac42bd567e995b05ae0e3166cf856181e6164449",
+    "c1508d0c19ed81f4d992fb0ea124c25e575a23243a404b673accdbb91e16c570": {
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "txHash": "0xb13efb27ebcce83df6ea0754ce107ec3c9744bb3d11de69bd1e84406c55b0b65",
       "layout": {
         "storage": [
           {
