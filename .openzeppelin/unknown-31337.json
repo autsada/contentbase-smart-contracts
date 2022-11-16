@@ -2253,7 +2253,7 @@
             "slot": "351",
             "type": "t_struct(Counter)2482_storage",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:39"
+            "src": "contracts/publish/ContentBasePublishV1.sol:38"
           },
           {
             "label": "platformOwner",
@@ -2261,7 +2261,7 @@
             "slot": "352",
             "type": "t_address",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:45"
+            "src": "contracts/publish/ContentBasePublishV1.sol:44"
           },
           {
             "label": "profileContract",
@@ -2269,7 +2269,7 @@
             "slot": "353",
             "type": "t_address",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:47"
+            "src": "contracts/publish/ContentBasePublishV1.sol:46"
           },
           {
             "label": "likeFee",
@@ -2277,7 +2277,7 @@
             "slot": "354",
             "type": "t_uint256",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:49"
+            "src": "contracts/publish/ContentBasePublishV1.sol:48"
           },
           {
             "label": "platformFee",
@@ -2285,7 +2285,7 @@
             "slot": "355",
             "type": "t_uint256",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:51"
+            "src": "contracts/publish/ContentBasePublishV1.sol:50"
           },
           {
             "label": "_tokenIdToCollection",
@@ -2293,7 +2293,7 @@
             "slot": "356",
             "type": "t_mapping(t_uint256,t_uint256)",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:59"
+            "src": "contracts/publish/ContentBasePublishV1.sol:58"
           },
           {
             "label": "_tokenIdToPublish",
@@ -2301,7 +2301,7 @@
             "slot": "357",
             "type": "t_mapping(t_uint256,t_struct(Publish)2973_storage)",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:62"
+            "src": "contracts/publish/ContentBasePublishV1.sol:61"
           },
           {
             "label": "_publishIdToProfileIdToLikeId",
@@ -2309,7 +2309,7 @@
             "slot": "358",
             "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:64"
+            "src": "contracts/publish/ContentBasePublishV1.sol:63"
           },
           {
             "label": "_publishIdToProfileIdToDislikeStatus",
@@ -2317,7 +2317,7 @@
             "slot": "359",
             "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:67"
+            "src": "contracts/publish/ContentBasePublishV1.sol:66"
           },
           {
             "label": "_profileIdToLikeNFTCount",
@@ -2325,7 +2325,7 @@
             "slot": "360",
             "type": "t_mapping(t_uint256,t_uint256)",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:70"
+            "src": "contracts/publish/ContentBasePublishV1.sol:69"
           },
           {
             "label": "_tokenIdToComment",
@@ -2333,7 +2333,7 @@
             "slot": "361",
             "type": "t_mapping(t_uint256,t_struct(Comment)3032_storage)",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:72"
+            "src": "contracts/publish/ContentBasePublishV1.sol:71"
           },
           {
             "label": "_commentIdToProfileIdToLikeStatus",
@@ -2341,7 +2341,7 @@
             "slot": "362",
             "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:74"
+            "src": "contracts/publish/ContentBasePublishV1.sol:73"
           },
           {
             "label": "_commentIdToProfileIdToDislikeStatus",
@@ -2349,7 +2349,7 @@
             "slot": "363",
             "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
             "contract": "ContentBasePublishV1",
-            "src": "contracts/publish/ContentBasePublishV1.sol:77"
+            "src": "contracts/publish/ContentBasePublishV1.sol:76"
           }
         ],
         "types": {
@@ -3037,7 +3037,7 @@
             "slot": "351",
             "type": "t_struct(Counter)2482_storage",
             "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:36"
+            "src": "contracts/profile/ContentBaseProfileV1.sol:35"
           },
           {
             "label": "_tokenIdToCollection",
@@ -3045,7 +3045,7 @@
             "slot": "352",
             "type": "t_mapping(t_uint256,t_uint256)",
             "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:46"
+            "src": "contracts/profile/ContentBaseProfileV1.sol:45"
           },
           {
             "label": "_tokenIdToProfile",
@@ -3053,7 +3053,7 @@
             "slot": "353",
             "type": "t_mapping(t_uint256,t_struct(Profile)2936_storage)",
             "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:49"
+            "src": "contracts/profile/ContentBaseProfileV1.sol:48"
           },
           {
             "label": "_handleHashToProfileId",
@@ -3061,7 +3061,7 @@
             "slot": "354",
             "type": "t_mapping(t_bytes32,t_uint256)",
             "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:51"
+            "src": "contracts/profile/ContentBaseProfileV1.sol:50"
           },
           {
             "label": "_ownerToDefaultProfileId",
@@ -3069,7 +3069,7 @@
             "slot": "355",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:53"
+            "src": "contracts/profile/ContentBaseProfileV1.sol:52"
           },
           {
             "label": "_profileIdToFolloweeIdToTokenId",
@@ -3077,7 +3077,7 @@
             "slot": "356",
             "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
             "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:55"
+            "src": "contracts/profile/ContentBaseProfileV1.sol:54"
           },
           {
             "label": "_profileIdToFollowerIdToTokenId",
@@ -3085,7 +3085,7 @@
             "slot": "357",
             "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
             "contract": "ContentBaseProfileV1",
-            "src": "contracts/profile/ContentBaseProfileV1.sol:58"
+            "src": "contracts/profile/ContentBaseProfileV1.sol:57"
           }
         ],
         "types": {

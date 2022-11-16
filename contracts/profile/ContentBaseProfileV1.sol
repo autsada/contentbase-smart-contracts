@@ -12,7 +12,6 @@ import "hardhat/console.sol";
 import {IContentBaseProfileV1} from "./IContentBaseProfileV1.sol";
 import {DataTypes} from "../libraries/DataTypes.sol";
 import {Helpers} from "../libraries/Helpers.sol";
-import {Events} from "../libraries/Events.sol";
 
 /**
  * @title ContentBaseProfileV1
@@ -57,6 +56,46 @@ contract ContentBaseProfileV1 is
     // Mapping (profile id => (follower id => follow token id)) to tract the follower profiles of a profile.
     mapping(uint256 => mapping(uint256 => uint256))
         internal _profileIdToFollowerIdToTokenId;
+
+    // Profile Events
+    event ProfileCreated(
+        uint256 indexed profileId,
+        address indexed owner,
+        string handle,
+        string imageURI,
+        string originalHandle,
+        bool isDefault,
+        uint256 timestamp
+    );
+
+    event ProfileImageUpdated(
+        uint256 indexed profileId,
+        address indexed owner,
+        string imageURI,
+        uint256 timestamp
+    );
+
+    event DefaultProfileUpdated(
+        uint256 indexed profileId,
+        address indexed owner,
+        uint256 timestamp
+    );
+
+    // Follow Events
+    event FollowNFTMinted(
+        uint256 indexed tokenId,
+        uint256 indexed followerId,
+        uint256 indexed followeeId,
+        address owner,
+        uint256 timestamp
+    );
+    event FollowNFTBurned(
+        uint256 indexed tokenId,
+        uint256 indexed followerId,
+        uint256 indexed followeeId,
+        address owner,
+        uint256 timestamp
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -153,7 +192,7 @@ contract ContentBaseProfileV1 is
         });
 
         // Emit a profile created event.
-        emit Events.ProfileCreated(
+        emit ProfileCreated(
             tokenId,
             msg.sender,
             handle,
@@ -190,7 +229,7 @@ contract ContentBaseProfileV1 is
         _tokenIdToProfile[tokenId].imageURI = newImageURI;
 
         // Emit an event.
-        emit Events.ProfileImageUpdated(
+        emit ProfileImageUpdated(
             tokenId,
             ownerOf(tokenId),
             newImageURI,
@@ -222,11 +261,7 @@ contract ContentBaseProfileV1 is
         _ownerToDefaultProfileId[msg.sender] = profileId;
 
         // Emit a set default profile event.
-        emit Events.DefaultProfileUpdated(
-            profileId,
-            msg.sender,
-            block.timestamp
-        );
+        emit DefaultProfileUpdated(profileId, msg.sender, block.timestamp);
     }
 
     /**
@@ -270,7 +305,7 @@ contract ContentBaseProfileV1 is
             _tokenIdToProfile[followerId].following++;
             _tokenIdToProfile[followeeId].followers++;
 
-            emit Events.FollowNFTMinted(
+            emit FollowNFTMinted(
                 tokenId,
                 followerId,
                 followeeId,
@@ -308,7 +343,7 @@ contract ContentBaseProfileV1 is
                 _tokenIdToProfile[followeeId].followers--;
             }
 
-            emit Events.FollowNFTBurned(
+            emit FollowNFTBurned(
                 followTokenId,
                 followerId,
                 followeeId,
