@@ -28,9 +28,25 @@ async function main() {
   )
 
   // For use in Subgraph project.
+  // Write abi.
   await fs.writeFile(
     path.join(__dirname, "../..", "/subgraph/abis/ContentBasePublishV1.json"),
     JSON.stringify(data.abi)
+  )
+  // Write address.
+  const networksFile = await fs.readFile(
+    path.join(__dirname, "../..", "/subgraph/networks.json"),
+    "utf8"
+  )
+  const networks = JSON.parse(networksFile)
+  await fs.writeFile(
+    path.join(__dirname, "../..", "/subgraph/networks.json"),
+    JSON.stringify({
+      localhost: {
+        ...networks.localhost,
+        ContentBasePublishV1: { address: data.address },
+      },
+    })
   )
 }
 
