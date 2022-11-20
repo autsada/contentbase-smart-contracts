@@ -76,8 +76,8 @@ contract ContentBaseProfileV1 is
     );
 
     event DefaultProfileUpdated(
-        uint256 indexed profileId,
-        address indexed owner,
+        uint256 indexed newProfileId,
+        uint256 indexed oldProfileId,
         uint256 timestamp
     );
 
@@ -257,11 +257,14 @@ contract ContentBaseProfileV1 is
             "Already the default"
         );
 
+        // Get the existing default profile id.
+        uint256 oldProfileId = _ownerToDefaultProfileId[msg.sender];
+
         // Update the default profile mapping.
         _ownerToDefaultProfileId[msg.sender] = profileId;
 
         // Emit a set default profile event.
-        emit DefaultProfileUpdated(profileId, msg.sender, block.timestamp);
+        emit DefaultProfileUpdated(profileId, oldProfileId, block.timestamp);
     }
 
     /**
