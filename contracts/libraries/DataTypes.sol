@@ -77,6 +77,7 @@ library DataTypes {
     struct Publish {
         address owner;
         uint256 creatorId;
+        uint256 revenue;
         uint32 likes;
         uint32 disLikes;
         string imageURI;
@@ -192,10 +193,7 @@ library DataTypes {
         uint256 tokenId;
         uint256 publishId;
         uint256 profileId;
-        address publishOwner;
         address owner;
-        uint32 likes;
-        uint32 disLikes;
         uint256 netFee;
     }
 }

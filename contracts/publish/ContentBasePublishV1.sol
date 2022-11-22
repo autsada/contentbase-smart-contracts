@@ -93,8 +93,6 @@ contract ContentBasePublishV1 is
     );
     event PublishUpdated(
         uint256 indexed tokenId,
-        uint256 indexed creatorId,
-        address indexed owner,
         string imageURI,
         string contentURI,
         string metadataURI,
@@ -105,12 +103,7 @@ contract ContentBasePublishV1 is
         DataTypes.Category tertiaryCategory,
         uint256 timestamp
     );
-    event PublishDeleted(
-        uint256 indexed tokenId,
-        uint256 indexed creatorId,
-        address indexed owner,
-        uint256 timestamp
-    );
+    event PublishDeleted(uint256 indexed tokenId, uint256 timestamp);
 
     // Comment Events.
     event CommentCreated(
@@ -123,52 +116,34 @@ contract ContentBasePublishV1 is
     );
     event CommentUpdated(
         uint256 indexed tokenId,
-        uint256 indexed creatorId,
-        address owner,
         string contentURI,
         uint256 timestamp
     );
-    event CommentDeleted(
-        uint256 indexed tokenId,
-        uint256 indexed creatorId,
-        address owner,
-        uint256 timestamp
-    );
+    event CommentDeleted(uint256 indexed tokenId, uint256 timestamp);
 
     // Like Events (Publish).
     event PublishLiked(
         uint256 indexed tokenId,
         uint256 indexed publishId,
         uint256 indexed profileId,
-        address publishOwner,
         address profileOwner,
-        uint32 likes,
-        uint32 disLikes,
         uint256 fee,
         uint256 timestamp
     );
     event PublishUnLiked(
         uint256 indexed publishId,
-        uint256 indexed profileId,
-        address profileOwner,
         uint32 likes,
-        uint32 disLikes,
         uint256 timestamp
     );
 
     event PublishDisLiked(
         uint256 indexed publishId,
-        uint256 indexed profileId,
-        address profileOwner,
         uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
     event PublishUndoDisLiked(
         uint256 indexed publishId,
-        uint256 indexed profileId,
-        address profileOwner,
-        uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
@@ -176,34 +151,23 @@ contract ContentBasePublishV1 is
     // Like Events (Comment).
     event CommentLiked(
         uint256 indexed commentId,
-        uint256 indexed profileId,
-        address commentOwner,
-        address profileOwner,
         uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
     event CommentUnLiked(
         uint256 indexed commentId,
-        uint256 indexed profileId,
-        address profileOwner,
         uint32 likes,
-        uint32 disLikes,
         uint256 timestamp
     );
     event CommentDisLiked(
         uint256 indexed commentId,
-        uint256 indexed profileId,
-        address profileOwner,
         uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
     event CommentUndoDisLiked(
         uint256 indexed commentId,
-        uint256 indexed profileId,
-        address profileOwner,
-        uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
@@ -405,6 +369,7 @@ contract ContentBasePublishV1 is
         _tokenIdToPublish[tokenId] = DataTypes.Publish({
             owner: msg.sender,
             creatorId: createPublishData.creatorId,
+            revenue: 0,
             likes: 0,
             disLikes: 0,
             imageURI: createPublishData.imageURI,
@@ -528,22 +493,18 @@ contract ContentBasePublishV1 is
         }
 
         // Emit publish updated event
-        _emitPublishUpdated(msg.sender, updatePublishData);
+        _emitPublishUpdated(updatePublishData);
     }
 
     /**
      * A helper function to emit a update publish event that accepts a update publish data struct in memory to avoid a stack too deep error.
-     * @param owner {address}
      * @param updatePublishData {struct}
      */
     function _emitPublishUpdated(
-        address owner,
         DataTypes.UpdatePublishData memory updatePublishData
     ) internal {
         emit PublishUpdated(
             updatePublishData.tokenId,
-            updatePublishData.creatorId,
-            owner,
             updatePublishData.imageURI,
             updatePublishData.contentURI,
             updatePublishData.metadataURI,
@@ -579,7 +540,7 @@ contract ContentBasePublishV1 is
         // Remove the publish from the struct mapping.
         delete _tokenIdToPublish[tokenId];
 
-        emit PublishDeleted(tokenId, creatorId, msg.sender, block.timestamp);
+        emit PublishDeleted(tokenId, block.timestamp);
     }
 
     /**
@@ -620,6 +581,9 @@ contract ContentBasePublishV1 is
             // Update the profile's Like NFT count.
             _profileIdToLikeNFTCount[profileId]++;
 
+            // Update the publish's revenue.
+            _tokenIdToPublish[publishId].revenue += netFee;
+
             // Increase `likes` count of the publish struct.
             _tokenIdToPublish[publishId].likes++;
 
@@ -643,10 +607,7 @@ contract ContentBasePublishV1 is
                     tokenId: tokenId,
                     publishId: publishId,
                     profileId: profileId,
-                    publishOwner: ownerOf(publishId),
                     owner: msg.sender,
-                    likes: _tokenIdToPublish[publishId].likes,
-                    disLikes: _tokenIdToPublish[publishId].disLikes,
                     netFee: netFee
                 })
             );
@@ -668,10 +629,7 @@ contract ContentBasePublishV1 is
             // Emit publish unliked event.
             emit PublishUnLiked(
                 publishId,
-                profileId,
-                msg.sender,
                 _tokenIdToPublish[publishId].likes,
-                _tokenIdToPublish[publishId].disLikes,
                 block.timestamp
             );
         }
@@ -688,10 +646,7 @@ contract ContentBasePublishV1 is
             vars.tokenId,
             vars.publishId,
             vars.profileId,
-            vars.publishOwner,
             vars.owner,
-            vars.likes,
-            vars.disLikes,
             vars.netFee,
             block.timestamp
         );
@@ -734,8 +689,6 @@ contract ContentBasePublishV1 is
             // Emit publihs dislike event.
             emit PublishDisLiked(
                 publishId,
-                profileId,
-                msg.sender,
                 _tokenIdToPublish[publishId].likes,
                 _tokenIdToPublish[publishId].disLikes,
                 block.timestamp
@@ -755,9 +708,6 @@ contract ContentBasePublishV1 is
             // Emit publihs undo-dislike event.
             emit PublishUndoDisLiked(
                 publishId,
-                profileId,
-                msg.sender,
-                _tokenIdToPublish[publishId].likes,
                 _tokenIdToPublish[publishId].disLikes,
                 block.timestamp
             );
@@ -866,8 +816,6 @@ contract ContentBasePublishV1 is
 
         emit CommentUpdated(
             updateCommentData.tokenId,
-            updateCommentData.creatorId,
-            msg.sender,
             updateCommentData.newContentURI,
             block.timestamp
         );
@@ -896,7 +844,7 @@ contract ContentBasePublishV1 is
         // Remove the struct from the mapping.
         delete _tokenIdToComment[tokenId];
 
-        emit CommentDeleted(tokenId, creatorId, msg.sender, block.timestamp);
+        emit CommentDeleted(tokenId, block.timestamp);
     }
 
     /**
@@ -936,9 +884,6 @@ contract ContentBasePublishV1 is
             // Emit comment liked event.
             emit CommentLiked(
                 commentId,
-                profileId,
-                ownerOf(commentId),
-                msg.sender,
                 _tokenIdToComment[commentId].likes,
                 _tokenIdToComment[commentId].disLikes,
                 block.timestamp
@@ -957,10 +902,7 @@ contract ContentBasePublishV1 is
             // Emit comment unliked event.
             emit CommentUnLiked(
                 commentId,
-                profileId,
-                msg.sender,
                 _tokenIdToComment[commentId].likes,
-                _tokenIdToComment[commentId].disLikes,
                 block.timestamp
             );
         }
@@ -1003,8 +945,6 @@ contract ContentBasePublishV1 is
             // Emit comment disliked event.
             emit CommentDisLiked(
                 commentId,
-                profileId,
-                msg.sender,
                 _tokenIdToComment[commentId].likes,
                 _tokenIdToComment[commentId].disLikes,
                 block.timestamp
@@ -1023,9 +963,6 @@ contract ContentBasePublishV1 is
             // Emit comment disliked event.
             emit CommentUndoDisLiked(
                 commentId,
-                profileId,
-                msg.sender,
-                _tokenIdToComment[commentId].likes,
                 _tokenIdToComment[commentId].disLikes,
                 block.timestamp
             );
