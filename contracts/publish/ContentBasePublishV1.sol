@@ -1025,15 +1025,7 @@ contract ContentBasePublishV1 is
         address to,
         uint256 tokenId
     ) internal override(ERC721Upgradeable) {
-        if (from != address(0) && to != address(0)) {
-            require(
-                (msg.sender == ownerOf(tokenId)) &&
-                    (msg.sender == from) &&
-                    (msg.sender == to),
-                "Token is non-transferable"
-            );
-        }
-
+        require(from == address(0) || to == address(0), "Non transferable");
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
