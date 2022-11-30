@@ -70,7 +70,6 @@ contract ContentBaseProfileV1 is
 
     event ProfileImageUpdated(
         uint256 indexed profileId,
-        address indexed owner,
         string imageURI,
         uint256 timestamp
     );
@@ -86,16 +85,9 @@ contract ContentBaseProfileV1 is
         uint256 indexed tokenId,
         uint256 indexed followerId,
         uint256 indexed followeeId,
-        address owner,
         uint256 timestamp
     );
-    event FollowNFTBurned(
-        uint256 indexed tokenId,
-        uint256 indexed followerId,
-        uint256 indexed followeeId,
-        address owner,
-        uint256 timestamp
-    );
+    event FollowNFTBurned(uint256 indexed tokenId, uint256 timestamp);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -229,12 +221,7 @@ contract ContentBaseProfileV1 is
         _tokenIdToProfile[tokenId].imageURI = newImageURI;
 
         // Emit an event.
-        emit ProfileImageUpdated(
-            tokenId,
-            ownerOf(tokenId),
-            newImageURI,
-            block.timestamp
-        );
+        emit ProfileImageUpdated(tokenId, newImageURI, block.timestamp);
     }
 
     /**
@@ -312,7 +299,6 @@ contract ContentBaseProfileV1 is
                 tokenId,
                 followerId,
                 followeeId,
-                msg.sender,
                 block.timestamp
             );
         } else {
@@ -346,13 +332,7 @@ contract ContentBaseProfileV1 is
                 _tokenIdToProfile[followeeId].followers--;
             }
 
-            emit FollowNFTBurned(
-                followTokenId,
-                followerId,
-                followeeId,
-                msg.sender,
-                block.timestamp
-            );
+            emit FollowNFTBurned(followTokenId, block.timestamp);
         }
     }
 
