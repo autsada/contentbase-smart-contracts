@@ -2,11 +2,16 @@ import { ethers, upgrades } from "hardhat"
 import path from "path"
 import fs from "fs/promises"
 
+import profileContractV1 from "../abi/ContentBaseProfileV1.json"
+
 async function main() {
   const ContentBasePublishV1 = await ethers.getContractFactory(
     "ContentBasePublishV1"
   )
-  const contentBasePublishV1 = await upgrades.deployProxy(ContentBasePublishV1)
+  const contentBasePublishV1 = await upgrades.deployProxy(
+    ContentBasePublishV1,
+    [profileContractV1.address]
+  )
 
   await contentBasePublishV1.deployed()
 
@@ -20,28 +25,6 @@ async function main() {
   await fs.writeFile(
     path.join(__dirname, "..", "/abi/ContentBasePublishV1.json"),
     JSON.stringify(data)
-  )
-
-  // For use in Subgraph project.
-  // Write abi.
-  await fs.writeFile(
-    path.join(__dirname, "../..", "/subgraph/abis/ContentBasePublishV1.json"),
-    JSON.stringify(data.abi)
-  )
-  // Write address.
-  const networksFile = await fs.readFile(
-    path.join(__dirname, "../..", "/subgraph/networks.json"),
-    "utf8"
-  )
-  const networks = JSON.parse(networksFile)
-  await fs.writeFile(
-    path.join(__dirname, "../..", "/subgraph/networks.json"),
-    JSON.stringify({
-      localhost: {
-        ...networks.localhost,
-        ContentBasePublishV1: { address: data.address },
-      },
-    })
   )
 }
 

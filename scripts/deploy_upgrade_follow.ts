@@ -2,28 +2,28 @@ import { ethers, upgrades } from "hardhat"
 import path from "path"
 import fs from "fs/promises"
 
-import profileContractV1 from "../abi/ContentBaseProfileV1.json"
+import followContractV1 from "../abi/ContentBaseFollowV1.json"
 
 async function main() {
-  const ContentBaseProfileV1 = await ethers.getContractFactory(
-    "ContentBaseProfileV1"
+  const ContentBaseFollowV1 = await ethers.getContractFactory(
+    "ContentBaseFollowV1"
   )
-  const contentBaseProfileV1 = await upgrades.upgradeProxy(
-    profileContractV1.address,
-    ContentBaseProfileV1
+  const contentBaseFollowV1 = await upgrades.upgradeProxy(
+    followContractV1.address,
+    ContentBaseFollowV1
   )
 
-  await contentBaseProfileV1.deployed()
+  await contentBaseFollowV1.deployed()
 
-  console.log("ContentBaseProfileV1 deployed to:", contentBaseProfileV1.address)
+  console.log("ContentBaseFollowV1 deployed to:", contentBaseFollowV1.address)
   // Pull the address and ABI out, since that will be key in interacting with the smart contract later.
   const data = {
-    address: contentBaseProfileV1.address,
-    abi: JSON.parse(contentBaseProfileV1.interface.format("json") as string),
+    address: contentBaseFollowV1.address,
+    abi: JSON.parse(contentBaseFollowV1.interface.format("json") as string),
   }
 
   await fs.writeFile(
-    path.join(__dirname, "..", "/abi/ContentBaseProfileV1.json"),
+    path.join(__dirname, "..", "/abi/ContentBaseFollowV1.json"),
     JSON.stringify(data)
   )
 }
