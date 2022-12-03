@@ -193,7 +193,8 @@ library DataTypes {
         uint256 tokenId;
         uint256 publishId;
         uint256 profileId;
-        address owner;
         uint256 netFee;
+        uint32 likes;
+        uint32 disLikes;
     }
 }

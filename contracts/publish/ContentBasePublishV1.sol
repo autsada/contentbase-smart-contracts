@@ -126,8 +126,9 @@ contract ContentBasePublishV1 is
         uint256 indexed tokenId,
         uint256 indexed publishId,
         uint256 indexed profileId,
-        address profileOwner,
         uint256 fee,
+        uint32 likes,
+        uint32 disLikes,
         uint256 timestamp
     );
     event PublishUnLiked(
@@ -607,8 +608,9 @@ contract ContentBasePublishV1 is
                     tokenId: tokenId,
                     publishId: publishId,
                     profileId: profileId,
-                    owner: msg.sender,
-                    netFee: netFee
+                    netFee: netFee,
+                    likes: _tokenIdToPublish[publishId].likes,
+                    disLikes: _tokenIdToPublish[publishId].disLikes
                 })
             );
         } else {
@@ -646,8 +648,9 @@ contract ContentBasePublishV1 is
             vars.tokenId,
             vars.publishId,
             vars.profileId,
-            vars.owner,
             vars.netFee,
+            vars.likes,
+            vars.disLikes,
             block.timestamp
         );
     }
