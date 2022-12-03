@@ -16,13 +16,10 @@ import {Helpers} from "../libraries/Helpers.sol";
 
 /**
  * @title ContentBasePublishV1
- * @author Autsada
+ * @author Autsada T
  *
- * @notice This contract contains 3 ERC721 NFT collections - `PUBLISH`, `LIKE`, and `COMMENT`.
- * @notice Publish and Comments NFTs are burnable, Like NFTs are non-burnable.
- * @notice These 3 collections can only be minted by addresses (EOA) that own profile NFTs.
- * @notice To mint a like NFT, the caller must send a long some ethers that equals to the specified `like fee` with the request, the platform fee will be applied to the like fee and the net total will be transfered to an owner of the liked publish.
- * @notice No Like NFTs involve when minting Comment NFTs.
+ * @notice A publish NFT will be minted to a profile owner upon the creation (upload) of a publish.
+ * @notice The publish NFTs are non-burnable.
  */
 
 contract ContentBasePublishV1 is
@@ -40,43 +37,12 @@ contract ContentBasePublishV1 is
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    // ContentBase owner address.
-    address public platformOwner;
     // Profile contract address.
-    address public profileContract;
-    // The amount that a profile will send to the owner of the publish they like.
-    uint256 public likeFee;
-    // The percentage to be deducted from the like fee (as the platform commission) before transfering the like fee to the publish's owner, need to store it as a whole number and do division when using it.
-    uint256 public platformFee;
-
-    // Token Collections.
-    uint256 public constant PUBLISH = 1;
-    uint256 public constant LIKE = 2;
-    uint256 public constant COMMENT = 3;
-
-    // Mappping to track token id to token collection.
-    mapping(uint256 => uint256) private _tokenIdToCollection;
-
+    address private _profileContractAddress;
     // Mapping (tokenId => publish struct).
     mapping(uint256 => DataTypes.Publish) private _tokenIdToPublish;
-    // Mapping of (publishId => (profileId => likeId)) to track if a specific profile id liked a publish, for example (1 => (2 => 3)) means publish token id 1 has been liked by profile token id 2, and like token id 3 has been minted to the profile id 2.
-    mapping(uint256 => mapping(uint256 => uint256))
-        private _publishIdToProfileIdToLikeId;
-    // Mapping of (publishId => (profileId => bool)) to track if a specific profile disliked a publish, for example (1 => (2 => true)) means publish token id 1 has been dis-liked by profile token id 2.
-    mapping(uint256 => mapping(uint256 => bool))
-        private _publishIdToProfileIdToDislikeStatus;
-    // Mapping to track how many Like NFT a profile has.
-    mapping(uint256 => uint256) internal _profileIdToLikeNFTCount;
-    // Mapping (tokenId => publish struct).
-    mapping(uint256 => DataTypes.Comment) private _tokenIdToComment;
-    // Mapping of (commentId => (profileId => bool)) to track if a specific profile liked a comment.
-    mapping(uint256 => mapping(uint256 => bool))
-        internal _commentIdToProfileIdToLikeStatus;
-    // Mapping of (commentId => (profileId => bool)) to track if a specific profile disliked the comment.
-    mapping(uint256 => mapping(uint256 => bool))
-        internal _commentIdToProfileIdToDislikeStatus;
 
-    // Publish Events.
+    // Events.
     event PublishCreated(
         uint256 indexed tokenId,
         uint256 indexed creatorId,
@@ -105,74 +71,6 @@ contract ContentBasePublishV1 is
     );
     event PublishDeleted(uint256 indexed tokenId, uint256 timestamp);
 
-    // Comment Events.
-    event CommentCreated(
-        uint256 indexed tokenId,
-        uint256 indexed targetId,
-        uint256 indexed creatorId,
-        address owner,
-        string contentURI,
-        uint256 timestamp
-    );
-    event CommentUpdated(
-        uint256 indexed tokenId,
-        string contentURI,
-        uint256 timestamp
-    );
-    event CommentDeleted(uint256 indexed tokenId, uint256 timestamp);
-
-    // Like Events (Publish).
-    event PublishLiked(
-        uint256 indexed tokenId,
-        uint256 indexed publishId,
-        uint256 indexed profileId,
-        uint256 fee,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-    event PublishUnLiked(
-        uint256 indexed publishId,
-        uint32 likes,
-        uint256 timestamp
-    );
-
-    event PublishDisLiked(
-        uint256 indexed publishId,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-    event PublishUndoDisLiked(
-        uint256 indexed publishId,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-
-    // Like Events (Comment).
-    event CommentLiked(
-        uint256 indexed commentId,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-    event CommentUnLiked(
-        uint256 indexed commentId,
-        uint32 likes,
-        uint256 timestamp
-    );
-    event CommentDisLiked(
-        uint256 indexed commentId,
-        uint32 likes,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-    event CommentUndoDisLiked(
-        uint256 indexed commentId,
-        uint32 disLikes,
-        uint256 timestamp
-    );
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -181,7 +79,7 @@ contract ContentBasePublishV1 is
     /**
      * Initialize function.
      */
-    function initialize() public initializer {
+    function initialize(address profileContractAddress) public initializer {
         __ERC721_init("ContentBase Publish Module", "CPM");
         __ERC721Burnable_init();
         __AccessControl_init();
@@ -191,9 +89,7 @@ contract ContentBasePublishV1 is
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
 
-        platformOwner = msg.sender;
-        likeFee = 1000 ether;
-        platformFee = 50;
+        _profileContractAddress = profileContractAddress;
     }
 
     /**
@@ -201,10 +97,10 @@ contract ContentBasePublishV1 is
      * @dev Extract code inside the modifier to a private function to reduce contract size.
      */
     function _onlyReady() private view {
-        require(platformOwner != address(0), "Not ready");
-        require(profileContract != address(0), "Not ready");
-        require(likeFee != 0, "Not ready");
-        require(platformFee != 0, "Not ready");
+        require(
+            _profileContractAddress != address(0),
+            "Profile contract not set"
+        );
     }
 
     modifier onlyReady() {
@@ -231,8 +127,11 @@ contract ContentBasePublishV1 is
      * @dev Extract code inside the modifier to a private function to reduce contract size.
      */
     function _onlyProfileOwner(uint256 profileId) private view {
-        require(profileContract != address(0), "Not ready");
-        address profileOwner = IContentBaseProfileV1(profileContract)
+        require(
+            _profileContractAddress != address(0),
+            "Profile contract not set"
+        );
+        address profileOwner = IContentBaseProfileV1(_profileContractAddress)
             .profileOwner(profileId);
         require(msg.sender == profileOwner, "Forbidden");
     }
@@ -243,36 +142,8 @@ contract ContentBasePublishV1 is
     }
 
     /**
-     * A modifier to check of the token is of the given collection.
-     * @dev Extract code inside the modifier to a private function to reduce contract size.
-     */
-    function _onlyCollection(uint256 tokenId, uint256 collection) private view {
-        require(_exists(tokenId), "Token not found");
-        require(
-            _tokenIdToCollection[tokenId] == collection,
-            "Wrong collection"
-        );
-    }
-
-    modifier onlyCollection(uint256 tokenId, uint256 collection) {
-        _onlyCollection(tokenId, collection);
-        _;
-    }
-
-    /**
      *  ***** ADMIN RELATED FUNCTIONS *****
      */
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function updatePlatformOwner(address ownerAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
-        platformOwner = ownerAddress;
-    }
 
     /**
      * @inheritdoc IContentBasePublishV1
@@ -282,33 +153,12 @@ contract ContentBasePublishV1 is
         override
         onlyRole(ADMIN_ROLE)
     {
-        profileContract = contractAddress;
+        _profileContractAddress = contractAddress;
     }
 
     /**
-     * @inheritdoc IContentBasePublishV1
+     *  ***** PUBLIC FUNCTIONS *****
      */
-    function updateLikeFee(uint256 fee) external override onlyRole(ADMIN_ROLE) {
-        likeFee = fee;
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function updatePlatformFee(uint256 fee)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
-        platformFee = fee;
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function withdraw() external override onlyReady onlyRole(ADMIN_ROLE) {
-        payable(platformOwner).transfer(address(this).balance);
-    }
 
     /**
      * @inheritdoc IContentBasePublishV1
@@ -363,16 +213,10 @@ contract ContentBasePublishV1 is
         // Mint a Publish NFT to the caller.
         _safeMint(msg.sender, tokenId);
 
-        // Set the new token to PUBLISH collection.
-        _tokenIdToCollection[tokenId] = PUBLISH;
-
         // Update the publish struct mapping.
         _tokenIdToPublish[tokenId] = DataTypes.Publish({
             owner: msg.sender,
             creatorId: createPublishData.creatorId,
-            revenue: 0,
-            likes: 0,
-            disLikes: 0,
             imageURI: createPublishData.imageURI,
             contentURI: createPublishData.contentURI,
             metadataURI: createPublishData.metadataURI
@@ -421,7 +265,6 @@ contract ContentBasePublishV1 is
         onlyReady
         onlyProfileOwner(updatePublishData.creatorId)
         onlyTokenOwner(updatePublishData.tokenId)
-        onlyCollection(updatePublishData.tokenId, PUBLISH)
     {
         uint256 tokenId = updatePublishData.tokenId;
 
@@ -527,16 +370,12 @@ contract ContentBasePublishV1 is
         onlyReady
         onlyProfileOwner(creatorId)
         onlyTokenOwner(tokenId)
-        onlyCollection(tokenId, PUBLISH)
     {
         // The publish must belong to the creator.
         require(_tokenIdToPublish[tokenId].creatorId == creatorId, "Not allow");
 
         // Call the parent burn function.
         super.burn(tokenId);
-
-        // Update the token to collection mapping.
-        delete _tokenIdToCollection[tokenId];
 
         // Remove the publish from the struct mapping.
         delete _tokenIdToPublish[tokenId];
@@ -547,174 +386,8 @@ contract ContentBasePublishV1 is
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function likePublish(uint256 publishId, uint256 profileId)
-        external
-        payable
-        override
-        onlyReady
-        onlyProfileOwner(profileId)
-        onlyCollection(publishId, PUBLISH)
-    {
-        // Find the like id (if exist).
-        uint256 likeId = _publishIdToProfileIdToLikeId[publishId][profileId];
-
-        // Check if the call is for `like` or `unlike`.
-        if (likeId == 0) {
-            // A. `like` - Mint a LIKE token to the caller.
-
-            // Validate ether sent.
-            require(msg.value == likeFee, "Bad input");
-
-            // Transfer the like fee (after deducting operational fee for the platform) to the publish owner.
-            uint256 netFee = msg.value - ((msg.value * platformFee) / 100);
-            payable(ownerOf(publishId)).transfer(netFee);
-
-            // Increment the counter before using it so the id will start from 1 (instead of 0).
-            _tokenIdCounter.increment();
-            uint256 tokenId = _tokenIdCounter.current();
-
-            // Mint a Like NFT to the caller.
-            _safeMint(msg.sender, tokenId);
-
-            // Set the token to LIKE collection.
-            _tokenIdToCollection[tokenId] = LIKE;
-
-            // Update the profile's Like NFT count.
-            _profileIdToLikeNFTCount[profileId]++;
-
-            // Update the publish's revenue.
-            _tokenIdToPublish[publishId].revenue += netFee;
-
-            // Increase `likes` count of the publish struct.
-            _tokenIdToPublish[publishId].likes++;
-
-            // Update publish to profile to like mapping.
-            _publishIdToProfileIdToLikeId[publishId][profileId] = tokenId;
-
-            // If the profile disliked the publish before, we need to update all related states.
-            if (_publishIdToProfileIdToDislikeStatus[publishId][profileId]) {
-                _publishIdToProfileIdToDislikeStatus[publishId][
-                    profileId
-                ] = false;
-
-                if (_tokenIdToPublish[publishId].disLikes > 0) {
-                    _tokenIdToPublish[publishId].disLikes--;
-                }
-            }
-
-            // Emit publish liked event.
-            _emitPublishLiked(
-                DataTypes.PublishLikedEventArgs({
-                    tokenId: tokenId,
-                    publishId: publishId,
-                    profileId: profileId,
-                    netFee: netFee,
-                    likes: _tokenIdToPublish[publishId].likes,
-                    disLikes: _tokenIdToPublish[publishId].disLikes
-                })
-            );
-        } else {
-            // B `unlike` - NOT to burn the Like token, just update the related states.
-
-            // The caller must own the Like token.
-            require(ownerOf(likeId) == msg.sender);
-
-            // Decrease `likes` count of the publish struct.
-            // Make sure the count is greater than 0.
-            if (_tokenIdToPublish[publishId].likes > 0) {
-                _tokenIdToPublish[publishId].likes--;
-            }
-
-            // Remove the like id from the publish to profile to like mapping, this will make this profile can like the given publish id again.
-            _publishIdToProfileIdToLikeId[publishId][profileId] = 0;
-
-            // Emit publish unliked event.
-            emit PublishUnLiked(
-                publishId,
-                _tokenIdToPublish[publishId].likes,
-                block.timestamp
-            );
-        }
-    }
-
-    /**
-     * A helper function to emit a publish liked event that accepts args as a struct in memory to avoid a stack too deep error.
-     * @param vars - see DataTypes.PublishLikedEventArgs
-     */
-    function _emitPublishLiked(DataTypes.PublishLikedEventArgs memory vars)
-        internal
-    {
-        emit PublishLiked(
-            vars.tokenId,
-            vars.publishId,
-            vars.profileId,
-            vars.netFee,
-            vars.likes,
-            vars.disLikes,
-            block.timestamp
-        );
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     * @dev NO Like NFT involve for this function.
-     */
-    function disLikePublish(uint256 publishId, uint256 profileId)
-        external
-        override
-        onlyReady
-        onlyProfileOwner(profileId)
-        onlyCollection(publishId, PUBLISH)
-    {
-        // Identify if the call is for `dislike` or `undo dislike`.
-        bool isDisLiked = _publishIdToProfileIdToDislikeStatus[publishId][
-            profileId
-        ];
-
-        if (!isDisLiked) {
-            // DISLIKE
-
-            // Update the disliked mapping.
-            _publishIdToProfileIdToDislikeStatus[publishId][profileId] = true;
-
-            // Increase the publish struct disLikes.
-            _tokenIdToPublish[publishId].disLikes++;
-
-            // If the profile liked the publish before, we need to update the liked mapping and decrease the publish's likes count as well.
-            if (_publishIdToProfileIdToLikeId[publishId][profileId] != 0) {
-                _publishIdToProfileIdToLikeId[publishId][profileId] = 0;
-
-                if (_tokenIdToPublish[publishId].likes > 0) {
-                    _tokenIdToPublish[publishId].likes--;
-                }
-            }
-
-            // Emit publihs dislike event.
-            emit PublishDisLiked(
-                publishId,
-                _tokenIdToPublish[publishId].likes,
-                _tokenIdToPublish[publishId].disLikes,
-                block.timestamp
-            );
-        } else {
-            // UNDO DISLIKE
-
-            // Update the disliked mapping.
-            _publishIdToProfileIdToDislikeStatus[publishId][profileId] = false;
-
-            // Decrease dislikes count.
-            // Make sure the count is greater than 0.
-            if (_tokenIdToPublish[publishId].disLikes > 0) {
-                _tokenIdToPublish[publishId].disLikes--;
-            }
-
-            // Emit publihs undo-dislike event.
-            emit PublishUndoDisLiked(
-                publishId,
-                _tokenIdToPublish[publishId].disLikes,
-                block.timestamp
-            );
-        }
+    function getProfileContract() external view override returns (address) {
+        return _profileContractAddress;
     }
 
     /**
@@ -724,7 +397,6 @@ contract ContentBasePublishV1 is
         external
         view
         override
-        onlyCollection(tokenId, PUBLISH)
         returns (DataTypes.Publish memory)
     {
         return _tokenIdToPublish[tokenId];
@@ -733,306 +405,26 @@ contract ContentBasePublishV1 is
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function createComment(
-        DataTypes.CreateCommentData calldata createCommentData
-    )
-        external
-        override
-        onlyReady
-        onlyProfileOwner(createCommentData.creatorId)
-    {
-        uint256 targetId = createCommentData.targetId;
-
-        // Target token must exist.
-        require(_exists(targetId), "Token not found");
-
-        // Target token must be a Publish or a Comment.
-        require(
-            _tokenIdToCollection[targetId] == PUBLISH ||
-                _tokenIdToCollection[targetId] == COMMENT,
-            "Wrong collection"
-        );
-
-        // Increment the counter before using it so the id will start from 1 (instead of 0).
-        _tokenIdCounter.increment();
-        uint256 tokenId = _tokenIdCounter.current();
-
-        // Mint a Comment NFT to the caller.
-        _safeMint(msg.sender, tokenId);
-
-        // Set the new token to COMMENT collection.
-        _tokenIdToCollection[tokenId] = COMMENT;
-
-        // Create and store a new comment struct in the mapping.
-        _tokenIdToComment[tokenId] = DataTypes.Comment({
-            owner: msg.sender,
-            creatorId: createCommentData.creatorId,
-            targetId: createCommentData.targetId,
-            likes: 0,
-            disLikes: 0,
-            contentURI: createCommentData.contentURI
-        });
-
-        // Emit comment created event.
-        emit CommentCreated(
-            tokenId,
-            createCommentData.targetId,
-            createCommentData.creatorId,
-            msg.sender,
-            createCommentData.contentURI,
-            block.timestamp
-        );
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function updateComment(
-        DataTypes.UpdateCommentData calldata updateCommentData
-    )
-        external
-        override
-        onlyReady
-        onlyProfileOwner(updateCommentData.creatorId)
-        onlyTokenOwner(updateCommentData.tokenId)
-        onlyCollection(updateCommentData.tokenId, COMMENT)
-    {
-        uint256 tokenId = updateCommentData.tokenId;
-
-        // The given creatorId must be the profile id that created the comment.
-        require(
-            _tokenIdToComment[tokenId].creatorId == updateCommentData.creatorId,
-            "Not allow"
-        );
-
-        // Check if there is any change.
-        require(
-            keccak256(abi.encodePacked(updateCommentData.newContentURI)) !=
-                keccak256(
-                    abi.encodePacked(_tokenIdToComment[tokenId].contentURI)
-                ),
-            "Nothing change"
-        );
-
-        // Update the comment struct.
-        _tokenIdToComment[tokenId].contentURI = updateCommentData.newContentURI;
-
-        emit CommentUpdated(
-            updateCommentData.tokenId,
-            updateCommentData.newContentURI,
-            block.timestamp
-        );
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function deleteComment(uint256 tokenId, uint256 creatorId)
-        external
-        override
-        onlyReady
-        onlyTokenOwner(tokenId)
-        onlyProfileOwner(creatorId)
-        onlyCollection(tokenId, COMMENT)
-    {
-        // The given profile id must be the creator of the comment.
-        require(_tokenIdToComment[tokenId].creatorId == creatorId, "Not allow");
-
-        // Call the parent burn function.
-        super.burn(tokenId);
-
-        // Update the token to collection struct.
-        delete _tokenIdToCollection[tokenId];
-
-        // Remove the struct from the mapping.
-        delete _tokenIdToComment[tokenId];
-
-        emit CommentDeleted(tokenId, block.timestamp);
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function likeComment(uint256 commentId, uint256 profileId)
-        external
-        override
-        onlyReady
-        onlyProfileOwner(profileId)
-        onlyCollection(commentId, COMMENT)
-    {
-        // Check if the call is for `like` or `unlike`.
-        bool isLiked = _commentIdToProfileIdToLikeStatus[commentId][profileId];
-
-        if (!isLiked) {
-            // LIKE
-
-            // Update the comment to profile to like status mapping.
-            _commentIdToProfileIdToLikeStatus[commentId][profileId] = true;
-
-            // Update the comment struct `likes` count.
-            _tokenIdToComment[commentId].likes++;
-
-            // If the profile `dislike` the comment before, update the dislike states.
-            if (_commentIdToProfileIdToDislikeStatus[commentId][profileId]) {
-                _commentIdToProfileIdToDislikeStatus[commentId][
-                    profileId
-                ] = false;
-
-                // Update the comment `dislikes` count.
-                if (_tokenIdToComment[commentId].disLikes > 0) {
-                    _tokenIdToComment[commentId].disLikes--;
-                }
-            }
-
-            // Emit comment liked event.
-            emit CommentLiked(
-                commentId,
-                _tokenIdToComment[commentId].likes,
-                _tokenIdToComment[commentId].disLikes,
-                block.timestamp
-            );
-        } else {
-            // UNLIKE
-
-            // Update the comment to profile to like mapping.
-            _commentIdToProfileIdToLikeStatus[commentId][profileId] = false;
-
-            // Update the comment struct `likes` count.
-            if (_tokenIdToComment[commentId].likes > 0) {
-                _tokenIdToComment[commentId].likes--;
-            }
-
-            // Emit comment unliked event.
-            emit CommentUnLiked(
-                commentId,
-                _tokenIdToComment[commentId].likes,
-                block.timestamp
-            );
-        }
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function disLikeComment(uint256 commentId, uint256 profileId)
-        external
-        override
-        onlyReady
-        onlyProfileOwner(profileId)
-        onlyCollection(commentId, COMMENT)
-    {
-        // Check if the call is for `dislike` or `undoDislike`.
-        bool isDisLiked = _commentIdToProfileIdToDislikeStatus[commentId][
-            profileId
-        ];
-
-        if (!isDisLiked) {
-            // DISLIKE
-
-            // Update the comment to profile to dislike status mapping.
-            _commentIdToProfileIdToDislikeStatus[commentId][profileId] = true;
-
-            // Update the comment struct `disLikes` count.
-            _tokenIdToComment[commentId].disLikes++;
-
-            // If the profile `like` the comment before, update the like states.
-            if (_commentIdToProfileIdToLikeStatus[commentId][profileId]) {
-                _commentIdToProfileIdToLikeStatus[commentId][profileId] = false;
-
-                // Update the comment `likes` count.
-                if (_tokenIdToComment[commentId].likes > 0) {
-                    _tokenIdToComment[commentId].likes--;
-                }
-            }
-
-            // Emit comment disliked event.
-            emit CommentDisLiked(
-                commentId,
-                _tokenIdToComment[commentId].likes,
-                _tokenIdToComment[commentId].disLikes,
-                block.timestamp
-            );
-        } else {
-            // UNDO DISLIKE
-
-            // Update the comment to profile to dislike status mapping.
-            _commentIdToProfileIdToDislikeStatus[commentId][profileId] = false;
-
-            // Update the comment struct `disLikes` count.
-            if (_tokenIdToComment[commentId].disLikes > 0) {
-                _tokenIdToComment[commentId].disLikes--;
-            }
-
-            // Emit comment disliked event.
-            emit CommentUndoDisLiked(
-                commentId,
-                _tokenIdToComment[commentId].disLikes,
-                block.timestamp
-            );
-        }
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function getCommentById(uint256 tokenId)
-        external
-        view
-        override
-        onlyCollection(tokenId, COMMENT)
-        returns (DataTypes.Comment memory)
-    {
-        return _tokenIdToComment[tokenId];
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function checkLikedPublish(uint256 profileId, uint256 publishId)
+    function publishExist(uint256 publishId)
         external
         view
         override
         returns (bool)
     {
-        uint256 likeId = _publishIdToProfileIdToLikeId[publishId][profileId];
-
-        return likeId != 0;
+        return _exists(publishId);
     }
 
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function checkDisLikedPublish(uint256 profileId, uint256 publishId)
+    function publishOwner(uint256 publishId)
         external
         view
         override
-        returns (bool)
+        returns (address)
     {
-        return _publishIdToProfileIdToDislikeStatus[publishId][profileId];
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function checkLikedComment(uint256 profileId, uint256 commentId)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _commentIdToProfileIdToLikeStatus[commentId][profileId];
-    }
-
-    /**
-     * @inheritdoc IContentBasePublishV1
-     */
-    function checkDisLikedComment(uint256 profileId, uint256 commentId)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _commentIdToProfileIdToDislikeStatus[commentId][profileId];
+        require(_exists(publishId), "Publish not found");
+        return ownerOf(publishId);
     }
 
     /**
@@ -1040,18 +432,12 @@ contract ContentBasePublishV1 is
      * @dev Force `burn` function to use `deletePublish` function so we can update the related states.
      */
     function burn(uint256 tokenId) public view override {
-        if (_tokenIdToCollection[tokenId] == LIKE) {
-            revert("Forbidden");
-        } else {
-            revert("Use `deletePublish` or `deleteComment`");
-        }
+        require(_exists(tokenId), "Publish not found");
+        revert("Use `deletePublish`");
     }
 
     /**
-     * This function will return a token uri depending on the token category.
-     * @dev the Publish tokens return metadata uris.
-     * @dev the Comment tokens return content uris.
-     * @dev The Like tokens return empty string.
+     * Return the publish' metadata uri.
      */
     function tokenURI(uint256 tokenId)
         public
@@ -1059,11 +445,7 @@ contract ContentBasePublishV1 is
         override
         returns (string memory)
     {
-        if (_tokenIdToCollection[tokenId] == PUBLISH)
-            return _tokenIdToPublish[tokenId].metadataURI;
-        if (_tokenIdToCollection[tokenId] == COMMENT)
-            return _tokenIdToComment[tokenId].contentURI;
-        else return "";
+        return _tokenIdToPublish[tokenId].metadataURI;
     }
 
     /**

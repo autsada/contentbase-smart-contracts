@@ -53,8 +53,6 @@ library DataTypes {
      * A struct containing data of Publish NFT.
      * @param owner {address} - an address that owns the token.
      * @param creatorId {uint256} - a profile token id that creates the publish.
-     * @param likes {uint256} - number of likes a publish has.
-     * @param disLikes {uint256} - number of dis-likes a publish has.
      * @param imageURI {string} - a publish's thumbnail image uri.
      * @param contentURI {string} - a publish's content uri, tipically it's a uri point to a video content.
      * @param metadataURI {string} - a uri point to the publish's metadata json file that contain all information about a publish.
@@ -75,9 +73,6 @@ library DataTypes {
     struct Publish {
         address owner;
         uint256 creatorId;
-        uint256 revenue;
-        uint32 likes;
-        uint32 disLikes;
         string imageURI;
         string contentURI;
         string metadataURI;
@@ -135,11 +130,17 @@ library DataTypes {
         Category tertiaryCategory;
     }
 
+    enum CommentType {
+        PUBLISH,
+        COMMENT
+    }
+
     /**
      * A struct containing data of Comment NFT.
      * @param owner {address} - an owner of the profile address that owns the token.
      * @param creatorId {uint256} - a profile token id that comments a publish.
-     * @param targetId {uint256} - a publish or comment token id to be commented.
+     * @param parentId {uint256} - a publish or comment token id that the comment belongs to.
+     * @param commentType {enum} - "PUBLISH" | "COMMENT"
      * @param likes - number of likes the comment has
      * @param disLikes - number of dis-likes the comment has
      * @param contentURI {string} - a uri point to the comment metadata json object.
@@ -156,7 +157,8 @@ library DataTypes {
     struct Comment {
         address owner;
         uint256 creatorId;
-        uint256 targetId;
+        uint256 parentId;
+        CommentType commentType;
         uint32 likes;
         uint32 disLikes;
         string contentURI;
@@ -164,13 +166,26 @@ library DataTypes {
 
     /**
      * A struct containing data required to comment on a publish.
-     * @param targetId {uint256} - see Comment struct
+     * @param publishId {uint256} - a publish token id to be commented on
      * @param creatorId {uint256} - see Comment struct
      * @param contentURI {string} - see Comment struct
      * @dev at least one of text and medaiURI must not empty.
      */
-    struct CreateCommentData {
-        uint256 targetId;
+    struct CreateCommentOnPublishData {
+        uint256 publishId;
+        uint256 creatorId;
+        string contentURI;
+    }
+
+    /**
+     * A struct containing data required to comment on a comment.
+     * @param commentId {uint256} - a comment token id to be commented on
+     * @param creatorId {uint256} - see Comment struct
+     * @param contentURI {string} - see Comment struct
+     * @dev at least one of text and medaiURI must not empty.
+     */
+    struct CreateCommentOnCommentData {
+        uint256 commentId;
         uint256 creatorId;
         string contentURI;
     }
@@ -192,6 +207,7 @@ library DataTypes {
         uint256 publishId;
         uint256 profileId;
         uint256 netFee;
+        uint256 totalReceived;
         uint32 likes;
         uint32 disLikes;
     }
