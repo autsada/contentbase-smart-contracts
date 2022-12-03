@@ -986,6 +986,56 @@ contract ContentBasePublishV1 is
     }
 
     /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function checkLikedPublish(uint256 profileId, uint256 publishId)
+        external
+        view
+        override
+        returns (bool)
+    {
+        uint256 likeId = _publishIdToProfileIdToLikeId[publishId][profileId];
+
+        return likeId != 0;
+    }
+
+    /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function checkDisLikedPublish(uint256 profileId, uint256 publishId)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return _publishIdToProfileIdToDislikeStatus[publishId][profileId];
+    }
+
+    /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function checkLikedComment(uint256 profileId, uint256 commentId)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return _commentIdToProfileIdToLikeStatus[commentId][profileId];
+    }
+
+    /**
+     * @inheritdoc IContentBasePublishV1
+     */
+    function checkDisLikedComment(uint256 profileId, uint256 commentId)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return _commentIdToProfileIdToDislikeStatus[commentId][profileId];
+    }
+
+    /**
      * Override the parent burn function.
      * @dev Force `burn` function to use `deletePublish` function so we can update the related states.
      */

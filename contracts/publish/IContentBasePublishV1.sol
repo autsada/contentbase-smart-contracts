@@ -136,4 +136,48 @@ interface IContentBasePublishV1 {
         external
         view
         returns (DataTypes.Comment memory);
+
+    /**
+     * An external function to check if a profile liked the publish.
+     * @param profileId {uint256} - a token id of the profile
+     * @param publishId {uint256} - a token id of the publish
+     * @return liked {bool}
+     */
+    function checkLikedPublish(uint256 profileId, uint256 publishId)
+        external
+        view
+        returns (bool);
+
+    /**
+     * An external function to check if a profile dis-liked the publish.
+     * @param profileId {uint256} - a token id of the profile
+     * @param publishId {uint256} - a token id of the publish
+     * @return disLiked {bool}
+     */
+    function checkDisLikedPublish(uint256 profileId, uint256 publishId)
+        external
+        view
+        returns (bool);
+
+    /**
+     * An external function to check if a profile liked the comment.
+     * @param profileId {uint256} - a token id of the profile
+     * @param commentId {uint256} - a token id of the comment
+     * @return liked {bool}
+     */
+    function checkLikedComment(uint256 profileId, uint256 commentId)
+        external
+        view
+        returns (bool);
+
+    /**
+     * An external function to check if a profile dis-liked the comment.
+     * @param profileId {uint256} - a token id of the profile
+     * @param commentId {uint256} - a token id of the comment
+     * @return disLiked {bool}
+     */
+    function checkDisLikedComment(uint256 profileId, uint256 commentId)
+        external
+        view
+        returns (bool);
 }
