@@ -18,8 +18,6 @@ library DataTypes {
         address owner;
         string handle;
         string imageURI;
-        uint32 followers;
-        uint32 following;
     }
 
     /**

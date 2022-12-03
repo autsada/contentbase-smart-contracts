@@ -31,16 +31,6 @@ interface IContentBaseProfileV1 {
     function setDefaultProfile(string calldata handle) external;
 
     /**
-     * An external function for a profile to follow another profile.
-     * @dev The caller must own the given follower id.
-     * @dev Use this function for both `follow` and `unfollow`.
-     * @dev A Follow NFT will be minted to the caller in the case of `follow`, the existing Follow NFT will be burned in the case of `unfollow`.
-     * @param followerId {uint256}
-     * @param followeeId {uint256}
-     */
-    function follow(uint256 followerId, uint256 followeeId) external;
-
-    /**
      * An external function to validate handle - validate length, special characters and uniqueness.
      * @param handle {string} - a handle to be validated/
      * @return valid {bool} - `true` of the given handle is valid
@@ -59,6 +49,13 @@ interface IContentBaseProfileV1 {
         external
         view
         returns (uint256 tokenId, DataTypes.Profile memory);
+
+    /**
+     * An external function to check if a given profile id exists.
+     * @param profileId {uint256}
+     * @return exist {bool}
+     */
+    function profileExist(uint256 profileId) external view returns (bool);
 
     /**
      * An external function to get profile owner address.
