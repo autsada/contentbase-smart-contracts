@@ -46,18 +46,18 @@ contract ContentBaseFollowV1 is
     mapping(uint256 => mapping(uint256 => uint256))
         private _profileIdToFollowerIdToTokenId;
     // A mapping (profile id => following) to track profile's following count.
-    mapping(uint256 => uint256) private _profileIdToFollowingCount;
+    mapping(uint256 => uint32) private _profileIdToFollowingCount;
     // A mapping (profile id => followers) to track profile's followers count.
-    mapping(uint256 => uint256) private _profileIdToFollowersCount;
+    mapping(uint256 => uint32) private _profileIdToFollowersCount;
 
-    // Follow Events
-    event FollowNFTMinted(
+    // Events
+    event Following(
         uint256 indexed tokenId,
         uint256 indexed followerId,
-        uint256 indexed followeeId,
+        uint256 followeeId,
         uint256 timestamp
     );
-    event FollowNFTBurned(uint256 indexed tokenId, uint256 timestamp);
+    event UnFollowing(uint256 indexed tokenId, uint256 timestamp);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -178,12 +178,7 @@ contract ContentBaseFollowV1 is
             // Update the followee's followers count.
             _profileIdToFollowersCount[followeeId]++;
 
-            emit FollowNFTMinted(
-                tokenId,
-                followerId,
-                followeeId,
-                block.timestamp
-            );
+            emit Following(tokenId, followerId, followeeId, block.timestamp);
         } else {
             // UNFOLLOW CASE --> burn the Follow token.
 
@@ -207,7 +202,7 @@ contract ContentBaseFollowV1 is
                 _profileIdToFollowersCount[followeeId]--;
             }
 
-            emit FollowNFTBurned(followTokenId, block.timestamp);
+            emit UnFollowing(followTokenId, block.timestamp);
         }
     }
 
