@@ -76,6 +76,7 @@ contract ContentBaseLikeV1 is
         uint256 timestamp
     );
     event PublishUnLiked(
+        uint256 indexed likeId,
         uint256 indexed publishId,
         uint32 likes,
         uint256 timestamp
@@ -205,33 +206,27 @@ contract ContentBaseLikeV1 is
     /**
      * @inheritdoc IContentBaseLikeV1
      */
-    function updatePlatformOwner(address ownerAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function updatePlatformOwner(
+        address ownerAddress
+    ) external override onlyRole(ADMIN_ROLE) {
         platformOwner = ownerAddress;
     }
 
     /**
      * @inheritdoc IContentBaseLikeV1
      */
-    function updateProfileContract(address contractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function updateProfileContract(
+        address contractAddress
+    ) external override onlyRole(ADMIN_ROLE) {
         _profileContractAddress = contractAddress;
     }
 
     /**
      * @inheritdoc IContentBaseLikeV1
      */
-    function updatePublishContract(address contractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function updatePublishContract(
+        address contractAddress
+    ) external override onlyRole(ADMIN_ROLE) {
         _publishContractAddress = contractAddress;
     }
 
@@ -245,11 +240,9 @@ contract ContentBaseLikeV1 is
     /**
      * @inheritdoc IContentBaseLikeV1
      */
-    function updatePlatformFee(uint256 fee)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function updatePlatformFee(
+        uint256 fee
+    ) external override onlyRole(ADMIN_ROLE) {
         platformFee = fee;
     }
 
@@ -267,7 +260,10 @@ contract ContentBaseLikeV1 is
     /**
      * @inheritdoc IContentBaseLikeV1
      */
-    function likePublish(uint256 publishId, uint256 profileId)
+    function likePublish(
+        uint256 publishId,
+        uint256 profileId
+    )
         external
         payable
         override
@@ -361,6 +357,7 @@ contract ContentBaseLikeV1 is
 
             // Emit publish unliked event.
             emit PublishUnLiked(
+                likeId,
                 publishId,
                 publishIdToLikesCount[publishId],
                 block.timestamp
@@ -372,9 +369,9 @@ contract ContentBaseLikeV1 is
      * A helper function to emit a publish liked event that accepts args as a struct in memory to avoid a stack too deep error.
      * @param vars - see DataTypes.PublishLikedEventArgs
      */
-    function _emitPublishLiked(DataTypes.PublishLikedEventArgs memory vars)
-        internal
-    {
+    function _emitPublishLiked(
+        DataTypes.PublishLikedEventArgs memory vars
+    ) internal {
         emit PublishLiked(
             vars.tokenId,
             vars.publishId,
@@ -391,7 +388,10 @@ contract ContentBaseLikeV1 is
      * @inheritdoc IContentBaseLikeV1
      * @dev NO Like NFT involve for this function.
      */
-    function disLikePublish(uint256 publishId, uint256 profileId)
+    function disLikePublish(
+        uint256 publishId,
+        uint256 profileId
+    )
         external
         override
         onlyReady
@@ -463,12 +463,10 @@ contract ContentBaseLikeV1 is
     /**
      * @inheritdoc IContentBaseLikeV1
      */
-    function checkLikedPublish(uint256 profileId, uint256 publishId)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function checkLikedPublish(
+        uint256 profileId,
+        uint256 publishId
+    ) external view override returns (bool) {
         uint256 likeId = _publishIdToProfileIdToLikeId[publishId][profileId];
 
         return likeId != 0;
@@ -477,12 +475,10 @@ contract ContentBaseLikeV1 is
     /**
      * @inheritdoc IContentBaseLikeV1
      */
-    function checkDisLikedPublish(uint256 profileId, uint256 publishId)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function checkDisLikedPublish(
+        uint256 profileId,
+        uint256 publishId
+    ) external view override returns (bool) {
         return _publishIdToProfileIdToDislikeStatus[publishId][profileId];
     }
 
@@ -511,15 +507,15 @@ contract ContentBaseLikeV1 is
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     // The following functions are overrides required by Solidity.
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         override(ERC721Upgradeable, AccessControlUpgradeable)
