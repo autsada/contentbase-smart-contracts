@@ -41,7 +41,7 @@ contract ContentBaseProfileV1 is
     // Mapping (owner => profile id) of owner to their default profile id.
     mapping(address => uint256) private _ownerToDefaultProfileId;
 
-    // Profile Events
+    // Events
     event ProfileCreated(
         uint256 indexed profileId,
         address indexed owner,
@@ -51,13 +51,11 @@ contract ContentBaseProfileV1 is
         bool isDefault,
         uint256 timestamp
     );
-
     event ProfileImageUpdated(
         uint256 indexed profileId,
         string imageURI,
         uint256 timestamp
     );
-
     event DefaultProfileUpdated(
         uint256 indexed newProfileId,
         uint256 indexed oldProfileId,
@@ -150,11 +148,10 @@ contract ContentBaseProfileV1 is
     /**
      * @inheritdoc IContentBaseProfileV1
      */
-    function updateProfileImage(uint256 tokenId, string calldata newImageURI)
-        external
-        override
-        onlyTokenOwner(tokenId)
-    {
+    function updateProfileImage(
+        uint256 tokenId,
+        string calldata newImageURI
+    ) external override onlyTokenOwner(tokenId) {
         // Validate the image uri.
         require(Helpers.notTooShortURI(newImageURI));
         require(Helpers.notTooLongURI(newImageURI));
@@ -205,12 +202,9 @@ contract ContentBaseProfileV1 is
     /**
      * @inheritdoc IContentBaseProfileV1
      */
-    function validateHandle(string calldata handle)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function validateHandle(
+        string calldata handle
+    ) external view override returns (bool) {
         return
             Helpers.handleUnique(handle, _handleHashToProfileId) &&
             Helpers.validateHandle(handle);
@@ -237,24 +231,18 @@ contract ContentBaseProfileV1 is
     /**
      * @inheritdoc IContentBaseProfileV1
      */
-    function profileExist(uint256 profileId)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function profileExist(
+        uint256 profileId
+    ) external view override returns (bool) {
         return _exists(profileId);
     }
 
     /**
      * @inheritdoc IContentBaseProfileV1
      */
-    function profileOwner(uint256 profileId)
-        external
-        view
-        override
-        returns (address)
-    {
+    function profileOwner(
+        uint256 profileId
+    ) external view override returns (address) {
         require(_exists(profileId), "Profile not found");
         return ownerOf(profileId);
     }
@@ -262,12 +250,9 @@ contract ContentBaseProfileV1 is
     /**
      * Return the profile's imageURI.
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view override returns (string memory) {
         return _tokenIdToProfile[tokenId].imageURI;
     }
 
@@ -287,15 +272,15 @@ contract ContentBaseProfileV1 is
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     // The following functions are overrides required by Solidity.
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         override(ERC721Upgradeable, AccessControlUpgradeable)
