@@ -59,10 +59,6 @@ contract ContentBaseLikeV1 is
     mapping(uint256 => uint256) public publishIdToTotalReceived;
     // A mapping to track how many Like NFT a profile has.
     mapping(uint256 => uint256) public profileIdToLikeNFTCount;
-    // A mapping (publish id => likes) to track the likes count of a publish.
-    mapping(uint256 => uint32) public publishIdToLikesCount;
-    // A mapping (publish id => disLikes) to track the disLikes count of a publish.
-    mapping(uint256 => uint32) public publishIdToDisLikesCount;
 
     // Events.
     event PublishLiked(
@@ -70,28 +66,17 @@ contract ContentBaseLikeV1 is
         uint256 indexed publishId,
         uint256 indexed profileId,
         uint256 fee,
-        uint256 totalReceived,
-        uint32 likes,
-        uint32 disLikes,
         uint256 timestamp
     );
-    event PublishUnLiked(
-        uint256 indexed likeId,
-        uint256 indexed publishId,
-        uint32 likes,
-        uint256 timestamp
-    );
+    event PublishUnLiked(uint256 indexed likeId, uint256 timestamp);
     event PublishDisLiked(
         uint256 indexed publishId,
         uint256 indexed profileId,
-        uint32 likes,
-        uint32 disLikes,
         uint256 timestamp
     );
     event PublishUndoDisLiked(
         uint256 indexed publishId,
         uint256 indexed profileId,
-        uint32 disLikes,
         uint256 timestamp
     );
 
@@ -306,10 +291,6 @@ contract ContentBaseLikeV1 is
                 _publishIdToProfileIdToDislikeStatus[publishId][
                     profileId
                 ] = false;
-
-                if (publishIdToDisLikesCount[publishId] > 0) {
-                    publishIdToDisLikesCount[publishId]--;
-                }
             }
 
             // Update the publish's total received.
@@ -318,19 +299,13 @@ contract ContentBaseLikeV1 is
             // Update the profile's Like NFT count.
             profileIdToLikeNFTCount[profileId]++;
 
-            // Update the publish's likes count.
-            publishIdToLikesCount[publishId]++;
-
             // Emit publish liked event.
             _emitPublishLiked(
                 DataTypes.PublishLikedEventArgs({
                     tokenId: tokenId,
                     publishId: publishId,
                     profileId: profileId,
-                    netFee: netFee,
-                    totalReceived: publishIdToTotalReceived[publishId],
-                    likes: publishIdToLikesCount[publishId],
-                    disLikes: publishIdToDisLikesCount[publishId]
+                    netFee: netFee
                 })
             );
         } else {
@@ -351,19 +326,8 @@ contract ContentBaseLikeV1 is
                 profileIdToLikeNFTCount[profileId]--;
             }
 
-            // Update the publish's likes count.
-            // Make sure the count is greater than 0.
-            if (publishIdToLikesCount[publishId] > 0) {
-                publishIdToLikesCount[publishId]--;
-            }
-
             // Emit publish unliked event.
-            emit PublishUnLiked(
-                likeId,
-                publishId,
-                publishIdToLikesCount[publishId],
-                block.timestamp
-            );
+            emit PublishUnLiked(likeId, block.timestamp);
         }
     }
 
@@ -379,9 +343,6 @@ contract ContentBaseLikeV1 is
             vars.publishId,
             vars.profileId,
             vars.netFee,
-            vars.totalReceived,
-            vars.likes,
-            vars.disLikes,
             block.timestamp
         );
     }
@@ -411,42 +372,16 @@ contract ContentBaseLikeV1 is
             // Update the disliked mapping.
             _publishIdToProfileIdToDislikeStatus[publishId][profileId] = true;
 
-            // Update the publish's disLikes count.
-            publishIdToDisLikesCount[publishId]++;
-
-            // Update the publish's likes count.
-            // Make sure the count is greater than 0.
-            if (publishIdToLikesCount[publishId] > 0) {
-                publishIdToLikesCount[publishId]--;
-            }
-
             // Emit publihs dislike event.
-            emit PublishDisLiked(
-                publishId,
-                profileId,
-                publishIdToLikesCount[publishId],
-                publishIdToDisLikesCount[publishId],
-                block.timestamp
-            );
+            emit PublishDisLiked(publishId, profileId, block.timestamp);
         } else {
             // UNDO DISLIKE
 
             // Update the disliked mapping.
             _publishIdToProfileIdToDislikeStatus[publishId][profileId] = false;
 
-            // Update the publish's disLikes count.
-            // Make sure the count is greater than 0.
-            if (publishIdToDisLikesCount[publishId] > 0) {
-                publishIdToDisLikesCount[publishId]--;
-            }
-
             // Emit publihs undo-dislike event.
-            emit PublishUndoDisLiked(
-                publishId,
-                profileId,
-                publishIdToDisLikesCount[publishId],
-                block.timestamp
-            );
+            emit PublishUndoDisLiked(publishId, profileId, block.timestamp);
         }
     }
 

@@ -205,8 +205,5 @@ library DataTypes {
         uint256 publishId;
         uint256 profileId;
         uint256 netFee;
-        uint256 totalReceived;
-        uint32 likes;
-        uint32 disLikes;
     }
 }
