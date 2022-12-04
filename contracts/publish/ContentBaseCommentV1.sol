@@ -70,23 +70,27 @@ contract ContentBaseCommentV1 is
     event CommentDeleted(uint256 indexed tokenId, uint256 timestamp);
     event CommentLiked(
         uint256 indexed commentId,
+        uint256 indexed profileId,
         uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
     event CommentUnLiked(
         uint256 indexed commentId,
+        uint256 indexed profileId,
         uint32 likes,
         uint256 timestamp
     );
     event CommentDisLiked(
         uint256 indexed commentId,
+        uint256 indexed profileId,
         uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
     event CommentUndoDisLiked(
         uint256 indexed commentId,
+        uint256 indexed profileId,
         uint32 disLikes,
         uint256 timestamp
     );
@@ -395,6 +399,7 @@ contract ContentBaseCommentV1 is
             // Emit comment liked event.
             emit CommentLiked(
                 commentId,
+                profileId,
                 _tokenIdToComment[commentId].likes,
                 _tokenIdToComment[commentId].disLikes,
                 block.timestamp
@@ -413,6 +418,7 @@ contract ContentBaseCommentV1 is
             // Emit comment unliked event.
             emit CommentUnLiked(
                 commentId,
+                profileId,
                 _tokenIdToComment[commentId].likes,
                 block.timestamp
             );
@@ -455,6 +461,7 @@ contract ContentBaseCommentV1 is
             // Emit comment disliked event.
             emit CommentDisLiked(
                 commentId,
+                profileId,
                 _tokenIdToComment[commentId].likes,
                 _tokenIdToComment[commentId].disLikes,
                 block.timestamp
@@ -473,6 +480,7 @@ contract ContentBaseCommentV1 is
             // Emit comment disliked event.
             emit CommentUndoDisLiked(
                 commentId,
+                profileId,
                 _tokenIdToComment[commentId].disLikes,
                 block.timestamp
             );
