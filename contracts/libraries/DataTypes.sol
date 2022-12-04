@@ -159,8 +159,6 @@ library DataTypes {
         uint256 creatorId;
         uint256 parentId;
         CommentType commentType;
-        uint32 likes;
-        uint32 disLikes;
         string contentURI;
     }
 

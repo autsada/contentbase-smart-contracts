@@ -71,27 +71,21 @@ contract ContentBaseCommentV1 is
     event CommentLiked(
         uint256 indexed commentId,
         uint256 indexed profileId,
-        uint32 likes,
-        uint32 disLikes,
         uint256 timestamp
     );
     event CommentUnLiked(
         uint256 indexed commentId,
         uint256 indexed profileId,
-        uint32 likes,
         uint256 timestamp
     );
     event CommentDisLiked(
         uint256 indexed commentId,
         uint256 indexed profileId,
-        uint32 likes,
-        uint32 disLikes,
         uint256 timestamp
     );
     event CommentUndoDisLiked(
         uint256 indexed commentId,
         uint256 indexed profileId,
-        uint32 disLikes,
         uint256 timestamp
     );
 
@@ -180,22 +174,18 @@ contract ContentBaseCommentV1 is
     /**
      * @inheritdoc IContentBaseCommentV1
      */
-    function updateProfileContract(address contractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function updateProfileContract(
+        address contractAddress
+    ) external override onlyRole(ADMIN_ROLE) {
         _profileContractAddress = contractAddress;
     }
 
     /**
      * @inheritdoc IContentBaseCommentV1
      */
-    function updatePublishContract(address contractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function updatePublishContract(
+        address contractAddress
+    ) external override onlyRole(ADMIN_ROLE) {
         _publishContractAddress = contractAddress;
     }
 
@@ -238,8 +228,6 @@ contract ContentBaseCommentV1 is
             creatorId: creatorId,
             parentId: publishId,
             commentType: DataTypes.CommentType.PUBLISH,
-            likes: 0,
-            disLikes: 0,
             contentURI: createCommentOnPublishData.contentURI
         });
 
@@ -285,8 +273,6 @@ contract ContentBaseCommentV1 is
             creatorId: creatorId,
             parentId: commentId,
             commentType: DataTypes.CommentType.COMMENT,
-            likes: 0,
-            disLikes: 0,
             contentURI: createCommentOnCommentData.contentURI
         });
 
@@ -344,7 +330,10 @@ contract ContentBaseCommentV1 is
     /**
      * @inheritdoc IContentBaseCommentV1
      */
-    function deleteComment(uint256 tokenId, uint256 creatorId)
+    function deleteComment(
+        uint256 tokenId,
+        uint256 creatorId
+    )
         external
         override
         onlyReady
@@ -366,12 +355,10 @@ contract ContentBaseCommentV1 is
     /**
      * @inheritdoc IContentBaseCommentV1
      */
-    function likeComment(uint256 commentId, uint256 profileId)
-        external
-        override
-        onlyReady
-        onlyProfileOwner(profileId)
-    {
+    function likeComment(
+        uint256 commentId,
+        uint256 profileId
+    ) external override onlyReady onlyProfileOwner(profileId) {
         // Check if the call is for `like` or `unlike`.
         bool liked = _commentIdToProfileIdToLikeStatus[commentId][profileId];
 
@@ -381,59 +368,33 @@ contract ContentBaseCommentV1 is
             // Update the comment to profile to like status mapping.
             _commentIdToProfileIdToLikeStatus[commentId][profileId] = true;
 
-            // Update the comment struct `likes` count.
-            _tokenIdToComment[commentId].likes++;
-
             // If the profile `dislike` the comment before, update the dislike states.
             if (_commentIdToProfileIdToDislikeStatus[commentId][profileId]) {
                 _commentIdToProfileIdToDislikeStatus[commentId][
                     profileId
                 ] = false;
-
-                // Update the comment `dislikes` count.
-                if (_tokenIdToComment[commentId].disLikes > 0) {
-                    _tokenIdToComment[commentId].disLikes--;
-                }
             }
 
             // Emit comment liked event.
-            emit CommentLiked(
-                commentId,
-                profileId,
-                _tokenIdToComment[commentId].likes,
-                _tokenIdToComment[commentId].disLikes,
-                block.timestamp
-            );
+            emit CommentLiked(commentId, profileId, block.timestamp);
         } else {
             // UNLIKE
 
             // Update the comment to profile to like mapping.
             _commentIdToProfileIdToLikeStatus[commentId][profileId] = false;
 
-            // Update the comment struct `likes` count.
-            if (_tokenIdToComment[commentId].likes > 0) {
-                _tokenIdToComment[commentId].likes--;
-            }
-
             // Emit comment unliked event.
-            emit CommentUnLiked(
-                commentId,
-                profileId,
-                _tokenIdToComment[commentId].likes,
-                block.timestamp
-            );
+            emit CommentUnLiked(commentId, profileId, block.timestamp);
         }
     }
 
     /**
      * @inheritdoc IContentBaseCommentV1
      */
-    function disLikeComment(uint256 commentId, uint256 profileId)
-        external
-        override
-        onlyReady
-        onlyProfileOwner(profileId)
-    {
+    function disLikeComment(
+        uint256 commentId,
+        uint256 profileId
+    ) external override onlyReady onlyProfileOwner(profileId) {
         // Check if the call is for `dislike` or `undoDislike`.
         bool disLiked = _commentIdToProfileIdToDislikeStatus[commentId][
             profileId
@@ -445,45 +406,21 @@ contract ContentBaseCommentV1 is
             // Update the comment to profile to dislike status mapping.
             _commentIdToProfileIdToDislikeStatus[commentId][profileId] = true;
 
-            // Update the comment struct `disLikes` count.
-            _tokenIdToComment[commentId].disLikes++;
-
             // If the profile `like` the comment before, update the like states.
             if (_commentIdToProfileIdToLikeStatus[commentId][profileId]) {
                 _commentIdToProfileIdToLikeStatus[commentId][profileId] = false;
-
-                // Update the comment `likes` count.
-                if (_tokenIdToComment[commentId].likes > 0) {
-                    _tokenIdToComment[commentId].likes--;
-                }
             }
 
             // Emit comment disliked event.
-            emit CommentDisLiked(
-                commentId,
-                profileId,
-                _tokenIdToComment[commentId].likes,
-                _tokenIdToComment[commentId].disLikes,
-                block.timestamp
-            );
+            emit CommentDisLiked(commentId, profileId, block.timestamp);
         } else {
             // UNDO DISLIKE
 
             // Update the comment to profile to dislike status mapping.
             _commentIdToProfileIdToDislikeStatus[commentId][profileId] = false;
 
-            // Update the comment struct `disLikes` count.
-            if (_tokenIdToComment[commentId].disLikes > 0) {
-                _tokenIdToComment[commentId].disLikes--;
-            }
-
             // Emit comment disliked event.
-            emit CommentUndoDisLiked(
-                commentId,
-                profileId,
-                _tokenIdToComment[commentId].disLikes,
-                block.timestamp
-            );
+            emit CommentUndoDisLiked(commentId, profileId, block.timestamp);
         }
     }
 
@@ -504,12 +441,9 @@ contract ContentBaseCommentV1 is
     /**
      * @inheritdoc IContentBaseCommentV1
      */
-    function getCommentById(uint256 tokenId)
-        external
-        view
-        override
-        returns (DataTypes.Comment memory)
-    {
+    function getCommentById(
+        uint256 tokenId
+    ) external view override returns (DataTypes.Comment memory) {
         return _tokenIdToComment[tokenId];
     }
 
@@ -523,17 +457,11 @@ contract ContentBaseCommentV1 is
     }
 
     /**
-     * This function will return a token uri depending on the token category.
-     * @dev the Publish tokens return metadata uris.
-     * @dev the Comment tokens return content uris.
-     * @dev The Like tokens return empty string.
+     * Return the comment's content uri
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view override returns (string memory) {
         require(_exists(tokenId), "Comment not found");
         return _tokenIdToComment[tokenId].contentURI;
     }
@@ -554,15 +482,15 @@ contract ContentBaseCommentV1 is
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     // The following functions are overrides required by Solidity.
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         override(ERC721Upgradeable, AccessControlUpgradeable)
