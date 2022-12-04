@@ -83,12 +83,14 @@ contract ContentBaseLikeV1 is
     );
     event PublishDisLiked(
         uint256 indexed publishId,
+        uint256 indexed profileId,
         uint32 likes,
         uint32 disLikes,
         uint256 timestamp
     );
     event PublishUndoDisLiked(
         uint256 indexed publishId,
+        uint256 indexed profileId,
         uint32 disLikes,
         uint256 timestamp
     );
@@ -421,6 +423,7 @@ contract ContentBaseLikeV1 is
             // Emit publihs dislike event.
             emit PublishDisLiked(
                 publishId,
+                profileId,
                 publishIdToLikesCount[publishId],
                 publishIdToDisLikesCount[publishId],
                 block.timestamp
@@ -440,6 +443,7 @@ contract ContentBaseLikeV1 is
             // Emit publihs undo-dislike event.
             emit PublishUndoDisLiked(
                 publishId,
+                profileId,
                 publishIdToDisLikesCount[publishId],
                 block.timestamp
             );
