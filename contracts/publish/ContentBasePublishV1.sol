@@ -148,11 +148,9 @@ contract ContentBasePublishV1 is
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function updateProfileContract(address contractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function updateProfileContract(
+        address contractAddress
+    ) external override onlyRole(ADMIN_ROLE) {
         _profileContractAddress = contractAddress;
     }
 
@@ -364,7 +362,10 @@ contract ContentBasePublishV1 is
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function deletePublish(uint256 tokenId, uint256 creatorId)
+    function deletePublish(
+        uint256 tokenId,
+        uint256 creatorId
+    )
         external
         override
         onlyReady
@@ -393,36 +394,27 @@ contract ContentBasePublishV1 is
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function getPublishById(uint256 tokenId)
-        external
-        view
-        override
-        returns (DataTypes.Publish memory)
-    {
+    function getPublishById(
+        uint256 tokenId
+    ) external view override returns (DataTypes.Publish memory) {
         return _tokenIdToPublish[tokenId];
     }
 
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function publishExist(uint256 publishId)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function publishExist(
+        uint256 publishId
+    ) external view override returns (bool) {
         return _exists(publishId);
     }
 
     /**
      * @inheritdoc IContentBasePublishV1
      */
-    function publishOwner(uint256 publishId)
-        external
-        view
-        override
-        returns (address)
-    {
+    function publishOwner(
+        uint256 publishId
+    ) external view override returns (address) {
         require(_exists(publishId), "Publish not found");
         return ownerOf(publishId);
     }
@@ -439,12 +431,9 @@ contract ContentBasePublishV1 is
     /**
      * Return the publish' metadata uri.
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view override returns (string memory) {
         return _tokenIdToPublish[tokenId].metadataURI;
     }
 
@@ -464,15 +453,15 @@ contract ContentBasePublishV1 is
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     // The following functions are overrides required by Solidity.
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         override(ERC721Upgradeable, AccessControlUpgradeable)

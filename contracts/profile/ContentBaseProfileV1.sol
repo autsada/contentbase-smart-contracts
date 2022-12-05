@@ -178,7 +178,7 @@ contract ContentBaseProfileV1 is
     function setDefaultProfile(string calldata handle) external override {
         // Get a profile id by the given handle.
         uint256 profileId = _handleHashToProfileId[Helpers.hashHandle(handle)];
-        require(profileId != 0, "Profile not found");
+        require(_exists(profileId), "Profile not found");
 
         // The caller must own the token.
         require(ownerOf(profileId) == msg.sender, "Forbidden");

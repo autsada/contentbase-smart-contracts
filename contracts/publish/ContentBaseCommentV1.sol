@@ -168,6 +168,18 @@ contract ContentBaseCommentV1 is
     }
 
     /**
+     * A modifier to check if the comment exists.
+     */
+    function _onlyCommentExists(uint256 commentId) private view {
+        require(_exists(commentId), "Comment not found");
+    }
+
+    modifier onlyCommentExists(uint256 commentId) {
+        _onlyCommentExists(commentId);
+        _;
+    }
+
+    /**
      *  ***** ADMIN RELATED FUNCTIONS *****
      */
 
@@ -253,12 +265,10 @@ contract ContentBaseCommentV1 is
         override
         onlyReady
         onlyProfileOwner(createCommentOnCommentData.creatorId)
+        onlyCommentExists(createCommentOnCommentData.commentId)
     {
         uint256 commentId = createCommentOnCommentData.commentId;
         uint256 creatorId = createCommentOnCommentData.creatorId;
-
-        // The parent comment to be commented on must exist.
-        require(_exists(commentId), "Comment not found");
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
@@ -358,7 +368,13 @@ contract ContentBaseCommentV1 is
     function likeComment(
         uint256 commentId,
         uint256 profileId
-    ) external override onlyReady onlyProfileOwner(profileId) {
+    )
+        external
+        override
+        onlyReady
+        onlyProfileOwner(profileId)
+        onlyCommentExists(commentId)
+    {
         // Check if the call is for `like` or `unlike`.
         bool liked = _commentIdToProfileIdToLikeStatus[commentId][profileId];
 
@@ -394,7 +410,13 @@ contract ContentBaseCommentV1 is
     function disLikeComment(
         uint256 commentId,
         uint256 profileId
-    ) external override onlyReady onlyProfileOwner(profileId) {
+    )
+        external
+        override
+        onlyReady
+        onlyProfileOwner(profileId)
+        onlyCommentExists(commentId)
+    {
         // Check if the call is for `dislike` or `undoDislike`.
         bool disLiked = _commentIdToProfileIdToDislikeStatus[commentId][
             profileId

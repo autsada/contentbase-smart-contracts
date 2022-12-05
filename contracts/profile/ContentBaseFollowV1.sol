@@ -123,13 +123,28 @@ contract ContentBaseFollowV1 is
     }
 
     /**
+     * A modifier to check if the given profile exists.
+     */
+    function _onlyProfileExists(uint256 profileId) private view {
+        require(
+            IContentBaseProfileV1(_profileContractAddress).profileExist(
+                profileId
+            ),
+            "Profile not found"
+        );
+    }
+
+    modifier onlyProfileExists(uint256 profileId) {
+        _onlyProfileExists(profileId);
+        _;
+    }
+
+    /**
      * @inheritdoc IContentBaseFollowV1
      */
-    function updateProfileContract(address newContractAddress)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function updateProfileContract(
+        address newContractAddress
+    ) external override onlyRole(ADMIN_ROLE) {
         _profileContractAddress = newContractAddress;
     }
 
@@ -143,11 +158,15 @@ contract ContentBaseFollowV1 is
     /**
      * @inheritdoc IContentBaseFollowV1
      */
-    function follow(uint256 followerId, uint256 followeeId)
+    function follow(
+        uint256 followerId,
+        uint256 followeeId
+    )
         external
         override
         onlyReady
-        onlyProfileOwner(followerId)
+        onlyProfileOwner(followerId) // This will also check if the profile exists
+        onlyProfileExists(followeeId)
     {
         // A profile cannot follow itself.
         require(followerId != followeeId, "Not allow");
@@ -209,12 +228,9 @@ contract ContentBaseFollowV1 is
     /**
      * @inheritdoc IContentBaseFollowV1
      */
-    function getFollowCounts(uint256 profileId)
-        external
-        view
-        override
-        returns (uint256, uint256)
-    {
+    function getFollowCounts(
+        uint256 profileId
+    ) external view override returns (uint256, uint256) {
         // The given profile must exist.
         require(
             IContentBaseProfileV1(_profileContractAddress).profileExist(
@@ -233,12 +249,9 @@ contract ContentBaseFollowV1 is
      * Override the parent burn function.
      * @dev use the `follow` function to burn (unfollow) the token.
      */
-    function burn(uint256 tokenId)
-        public
-        view
-        override
-        onlyTokenOwner(tokenId)
-    {
+    function burn(
+        uint256 tokenId
+    ) public view override onlyTokenOwner(tokenId) {
         revert("Use the `follow` function");
     }
 
@@ -258,15 +271,15 @@ contract ContentBaseFollowV1 is
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     // The following functions are overrides required by Solidity.
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         override(ERC721Upgradeable, AccessControlUpgradeable)
