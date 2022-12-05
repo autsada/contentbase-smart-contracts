@@ -6,8 +6,7 @@ import "@nomicfoundation/hardhat-toolbox"
 import "@openzeppelin/hardhat-upgrades"
 import "hardhat-contract-sizer"
 
-const { GOERLI_URL, DEV_PRIVATE_KEY, PRIVATE_KEY, ETHERSCAN_API_KEY } =
-  process.env
+const { GOERLI_URL, OWNER_PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -26,7 +25,7 @@ const config: HardhatUserConfig = {
   networks: {
     goerli: {
       url: GOERLI_URL || "",
-      accounts: DEV_PRIVATE_KEY !== undefined ? [DEV_PRIVATE_KEY] : [],
+      accounts: OWNER_PRIVATE_KEY !== undefined ? [OWNER_PRIVATE_KEY] : [],
     },
     localhost: {
       allowUnlimitedContractSize: true,
