@@ -32,18 +32,18 @@ interface IContentBaseCommentV1 {
 
     /**
      * An external function to comment on a publish (and mint Comment NFT).
-     * @param createCommentOnPublishData - see DataTypes.CreateCommentOnPublishData
+     * @param createCommentData - see DataTypes.CreateCommentData
      */
     function commentOnPublish(
-        DataTypes.CreateCommentOnPublishData calldata createCommentOnPublishData
+        DataTypes.CreateCommentData calldata createCommentData
     ) external;
 
     /**
      * An external function to comment on a comment (and mint Comment NFT).
-     * @param createCommentOnCommentData - see DataTypes.CreateCommentOnCommentData
+     * @param createCommentData - see DataTypes.CreateCommentData
      */
     function commentOnComment(
-        DataTypes.CreateCommentOnCommentData calldata createCommentOnCommentData
+        DataTypes.CreateCommentData calldata createCommentData
     ) external;
 
     /**
@@ -84,8 +84,7 @@ interface IContentBaseCommentV1 {
      * @param tokenId {uint256} - a token id of the publish.
      * @return comment {Comment struct}
      */
-    function getCommentById(uint256 tokenId)
-        external
-        view
-        returns (DataTypes.Comment memory);
+    function getCommentById(
+        uint256 tokenId
+    ) external view returns (DataTypes.Comment memory);
 }

@@ -141,14 +141,12 @@ library DataTypes {
      * @param creatorId {uint256} - a profile token id that comments a publish.
      * @param parentId {uint256} - a publish or comment token id that the comment belongs to.
      * @param commentType {enum} - "PUBLISH" | "COMMENT"
-     * @param likes - number of likes the comment has
-     * @param disLikes - number of dis-likes the comment has
-     * @param contentURI {string} - a uri point to the comment metadata json object.
+     * @param contentURI {string} - a uri point to the comment metadata json object that contains the detail of the comment.
      * @dev The contentURI should be in the following format.
      * {
      *      name: "ContentBase Comment NFT",
      *      description: "the text input of the comment",
-     *      image: "If the comment as a media file, this is the uri point to that file",
+     *      image: "If the comment has a media file, this is the uri point to that file",
      *      properties: {
      *          // Other info if any
      *      }
@@ -163,41 +161,36 @@ library DataTypes {
     }
 
     /**
-     * A struct containing data required to comment on a publish.
-     * @param publishId {uint256} - a publish token id to be commented on
+     * A struct containing data required to create a comment.
+     * @param parentId {uint256} - a publish or comment token id to be commented on
      * @param creatorId {uint256} - see Comment struct
      * @param contentURI {string} - see Comment struct
-     * @dev at least one of text and medaiURI must not empty.
+     * @param text {string} - a text comment
+     * @param mediaURI {string} - a uri point to an image/video if user sends it in a comment.
+     * @dev We don't store `text` and `mediaURI` on on-chain, they are required for event emitting to inform the UIs so they can do what ever they want with this data. At least one of `text` or `mediaURI` must not empty.
      */
-    struct CreateCommentOnPublishData {
-        uint256 publishId;
+    struct CreateCommentData {
+        uint256 parentId;
         uint256 creatorId;
         string contentURI;
-    }
-
-    /**
-     * A struct containing data required to comment on a comment.
-     * @param commentId {uint256} - a comment token id to be commented on
-     * @param creatorId {uint256} - see Comment struct
-     * @param contentURI {string} - see Comment struct
-     * @dev at least one of text and medaiURI must not empty.
-     */
-    struct CreateCommentOnCommentData {
-        uint256 commentId;
-        uint256 creatorId;
-        string contentURI;
+        string text;
+        string mediaURI;
     }
 
     /**
      * A struct containing data required to update a comment on a publish.
      * @param tokenId {uint256} - an id of the comment to be updated
      * @param creatorId {uint256} - see Comment struct
-     * @param newContentURI {string} - see Comment struct
+     * @param contentURI {string} - an updated content uri
+     * @param text {string} - an updated text
+     * @param mediaURI {string} - an updated media uri
      */
     struct UpdateCommentData {
         uint256 tokenId;
         uint256 creatorId;
-        string newContentURI;
+        string contentURI;
+        string text;
+        string mediaURI;
     }
 
     struct PublishLikedEventArgs {

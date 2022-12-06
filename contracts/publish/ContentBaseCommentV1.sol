@@ -57,14 +57,17 @@ contract ContentBaseCommentV1 is
         uint256 indexed tokenId,
         uint256 indexed parentId,
         uint256 indexed creatorId,
-        address owner,
         string contentURI,
+        string text,
+        string mediaURI,
         DataTypes.CommentType commentType,
         uint256 timestamp
     );
     event CommentUpdated(
         uint256 indexed tokenId,
         string contentURI,
+        string text,
+        string mediaURI,
         uint256 timestamp
     );
     event CommentDeleted(uint256 indexed tokenId, uint256 timestamp);
@@ -209,15 +212,15 @@ contract ContentBaseCommentV1 is
      * @inheritdoc IContentBaseCommentV1
      */
     function commentOnPublish(
-        DataTypes.CreateCommentOnPublishData calldata createCommentOnPublishData
+        DataTypes.CreateCommentData calldata createCommentData
     )
         external
         override
         onlyReady
-        onlyProfileOwner(createCommentOnPublishData.creatorId)
+        onlyProfileOwner(createCommentData.creatorId)
     {
-        uint256 publishId = createCommentOnPublishData.publishId;
-        uint256 creatorId = createCommentOnPublishData.creatorId;
+        uint256 publishId = createCommentData.parentId;
+        uint256 creatorId = createCommentData.creatorId;
 
         // The parent publish to be commented on must exist.
         require(
@@ -226,6 +229,27 @@ contract ContentBaseCommentV1 is
             ),
             "Publish not found"
         );
+
+        // Validate contentURI.
+        require(Helpers.notTooShortURI(createCommentData.contentURI));
+        require(Helpers.notTooLongURI(createCommentData.contentURI));
+
+        // At least one of `text` or `mediaURI` must be provided.
+        require(
+            bytes(createCommentData.text).length > 0 ||
+                Helpers.notTooShortURI(createCommentData.mediaURI),
+            "Text or media is required."
+        );
+
+        // Validate text.
+        if (bytes(createCommentData.text).length > 0) {
+            require(Helpers.notTooLongComment(createCommentData.text));
+        }
+
+        // Validate media uri
+        if (Helpers.notTooShortURI(createCommentData.mediaURI)) {
+            require(Helpers.notTooLongURI(createCommentData.mediaURI));
+        }
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
@@ -240,7 +264,7 @@ contract ContentBaseCommentV1 is
             creatorId: creatorId,
             parentId: publishId,
             commentType: DataTypes.CommentType.PUBLISH,
-            contentURI: createCommentOnPublishData.contentURI
+            contentURI: createCommentData.contentURI
         });
 
         // Emit comment created event.
@@ -248,8 +272,9 @@ contract ContentBaseCommentV1 is
             tokenId,
             publishId,
             creatorId,
-            msg.sender,
-            createCommentOnPublishData.contentURI,
+            createCommentData.contentURI,
+            createCommentData.text,
+            createCommentData.mediaURI,
             DataTypes.CommentType.PUBLISH,
             block.timestamp
         );
@@ -259,16 +284,37 @@ contract ContentBaseCommentV1 is
      * @inheritdoc IContentBaseCommentV1
      */
     function commentOnComment(
-        DataTypes.CreateCommentOnCommentData calldata createCommentOnCommentData
+        DataTypes.CreateCommentData calldata createCommentData
     )
         external
         override
         onlyReady
-        onlyProfileOwner(createCommentOnCommentData.creatorId)
-        onlyCommentExists(createCommentOnCommentData.commentId)
+        onlyProfileOwner(createCommentData.creatorId)
+        onlyCommentExists(createCommentData.parentId)
     {
-        uint256 commentId = createCommentOnCommentData.commentId;
-        uint256 creatorId = createCommentOnCommentData.creatorId;
+        uint256 commentId = createCommentData.parentId;
+        uint256 creatorId = createCommentData.creatorId;
+
+        // Validate contentURI.
+        require(Helpers.notTooShortURI(createCommentData.contentURI));
+        require(Helpers.notTooLongURI(createCommentData.contentURI));
+
+        // At least one of `text` or `mediaURI` must be provided.
+        require(
+            bytes(createCommentData.text).length > 0 ||
+                Helpers.notTooShortURI(createCommentData.mediaURI),
+            "Text or media is required."
+        );
+
+        // Validate text.
+        if (bytes(createCommentData.text).length > 0) {
+            require(Helpers.notTooLongComment(createCommentData.text));
+        }
+
+        // Validate media uri
+        if (Helpers.notTooShortURI(createCommentData.mediaURI)) {
+            require(Helpers.notTooLongURI(createCommentData.mediaURI));
+        }
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
@@ -283,7 +329,7 @@ contract ContentBaseCommentV1 is
             creatorId: creatorId,
             parentId: commentId,
             commentType: DataTypes.CommentType.COMMENT,
-            contentURI: createCommentOnCommentData.contentURI
+            contentURI: createCommentData.contentURI
         });
 
         // Emit comment created event.
@@ -291,8 +337,9 @@ contract ContentBaseCommentV1 is
             tokenId,
             commentId,
             creatorId,
-            msg.sender,
-            createCommentOnCommentData.contentURI,
+            createCommentData.contentURI,
+            createCommentData.text,
+            createCommentData.mediaURI,
             DataTypes.CommentType.COMMENT,
             block.timestamp
         );
@@ -300,6 +347,7 @@ contract ContentBaseCommentV1 is
 
     /**
      * @inheritdoc IContentBaseCommentV1
+     * @dev If the value of any key in the struct isn't changed, the existing value must be provided.
      */
     function updateComment(
         DataTypes.UpdateCommentData calldata updateCommentData
@@ -320,19 +368,42 @@ contract ContentBaseCommentV1 is
 
         // Check if there is any change.
         require(
-            keccak256(abi.encodePacked(updateCommentData.newContentURI)) !=
+            keccak256(abi.encodePacked(updateCommentData.contentURI)) !=
                 keccak256(
                     abi.encodePacked(_tokenIdToComment[tokenId].contentURI)
                 ),
             "Nothing change"
         );
 
+        // Validate contentURI.
+        require(Helpers.notTooShortURI(updateCommentData.contentURI));
+        require(Helpers.notTooLongURI(updateCommentData.contentURI));
+
+        // At least one of `text` or `mediaURI` must be provided.
+        require(
+            bytes(updateCommentData.text).length > 0 ||
+                Helpers.notTooShortURI(updateCommentData.mediaURI),
+            "Text or media is required."
+        );
+
+        // Validate text.
+        if (bytes(updateCommentData.text).length > 0) {
+            require(Helpers.notTooLongComment(updateCommentData.text));
+        }
+
+        // Validate media uri
+        if (Helpers.notTooShortURI(updateCommentData.mediaURI)) {
+            require(Helpers.notTooLongURI(updateCommentData.mediaURI));
+        }
+
         // Update the comment struct.
-        _tokenIdToComment[tokenId].contentURI = updateCommentData.newContentURI;
+        _tokenIdToComment[tokenId].contentURI = updateCommentData.contentURI;
 
         emit CommentUpdated(
             updateCommentData.tokenId,
-            updateCommentData.newContentURI,
+            updateCommentData.contentURI,
+            updateCommentData.text,
+            updateCommentData.mediaURI,
             block.timestamp
         );
     }

@@ -10,5 +10,5 @@ library Constants {
     uint8 internal constant MIN_PUBLISH_TITLE = 1;
     uint8 internal constant MAX_PUBLISH_TITLE = 100;
     uint16 internal constant MAX_PUBLISH_DESCRIPTION = 5000;
-    uint16 internal constant MAX_COMMENTS_LENGTH = 2000;
+    uint16 internal constant MAX_COMMENTS_LENGTH = 2500;
 }

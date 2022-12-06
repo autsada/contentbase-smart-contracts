@@ -9,11 +9,9 @@ library Helpers {
      * A helper function to hash handle
      * @param handle {string}
      */
-    function hashHandle(string calldata handle)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function hashHandle(
+        string calldata handle
+    ) internal pure returns (bytes32) {
         return keccak256(bytes(handle));
     }
 
@@ -37,11 +35,9 @@ library Helpers {
      * A helper function to check if handle is vaild
      * @param handle {string} - a handle
      */
-    function validateHandle(string calldata handle)
-        internal
-        pure
-        returns (bool)
-    {
+    function validateHandle(
+        string calldata handle
+    ) internal pure returns (bool) {
         bytes memory bytesHandle = bytes(handle);
 
         // Check the length
@@ -99,11 +95,9 @@ library Helpers {
      * @param title {string} - a publish title.
      * @return boolean
      */
-    function notTooShortTitle(string calldata title)
-        internal
-        pure
-        returns (bool)
-    {
+    function notTooShortTitle(
+        string calldata title
+    ) internal pure returns (bool) {
         bytes memory bytesTitle = bytes(title);
 
         require(
@@ -119,11 +113,9 @@ library Helpers {
      * @param title {string} - a publish title.
      * @return boolean
      */
-    function notTooLongTitle(string calldata title)
-        internal
-        pure
-        returns (bool)
-    {
+    function notTooLongTitle(
+        string calldata title
+    ) internal pure returns (bool) {
         bytes memory bytesTitle = bytes(title);
 
         require(
@@ -139,11 +131,9 @@ library Helpers {
      * @param description {string} - a publish description.
      * @return boolean
      */
-    function notTooLongDescription(string calldata description)
-        internal
-        pure
-        returns (bool)
-    {
+    function notTooLongDescription(
+        string calldata description
+    ) internal pure returns (bool) {
         bytes memory bytesDescription = bytes(description);
 
         require(
@@ -160,11 +150,9 @@ library Helpers {
      * @param category {enum} - a publish primary category.
      * @return boolean
      */
-    function validPrimaryCategory(DataTypes.Category category)
-        internal
-        pure
-        returns (bool)
-    {
+    function validPrimaryCategory(
+        DataTypes.Category category
+    ) internal pure returns (bool) {
         require(
             category > DataTypes.Category.Empty &&
                 category < DataTypes.Category.NotExist,
@@ -180,15 +168,31 @@ library Helpers {
      * @param category {enum} - a publish secondary/tertiary category.
      * @return boolean
      */
-    function validCategory(DataTypes.Category category)
-        internal
-        pure
-        returns (bool)
-    {
+    function validCategory(
+        DataTypes.Category category
+    ) internal pure returns (bool) {
         require(
             category >= DataTypes.Category.Empty &&
                 category < DataTypes.Category.NotExist,
             "Invalid category"
+        );
+
+        return true;
+    }
+
+    /**
+     * A helper function to validate that a comment is not too long.
+     * @param text {string} - a comment text.
+     * @return boolean
+     */
+    function notTooLongComment(
+        string calldata text
+    ) internal pure returns (bool) {
+        bytes memory bytesText = bytes(text);
+
+        require(
+            Constants.MAX_COMMENTS_LENGTH >= bytesText.length,
+            "Comment too long"
         );
 
         return true;
