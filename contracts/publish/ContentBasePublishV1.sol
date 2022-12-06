@@ -59,6 +59,8 @@ contract ContentBasePublishV1 is
     );
     event PublishUpdated(
         uint256 indexed tokenId,
+        uint256 indexed creatorId,
+        address owner,
         string imageURI,
         string contentURI,
         string metadataURI,
@@ -69,7 +71,12 @@ contract ContentBasePublishV1 is
         DataTypes.Category tertiaryCategory,
         uint256 timestamp
     );
-    event PublishDeleted(uint256 indexed tokenId, uint256 timestamp);
+    event PublishDeleted(
+        uint256 indexed tokenId,
+        uint256 indexed creatorId,
+        address owner,
+        uint256 timestamp
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -331,7 +338,7 @@ contract ContentBasePublishV1 is
         }
 
         // Emit publish updated event
-        _emitPublishUpdated(updatePublishData);
+        _emitPublishUpdated(msg.sender, updatePublishData);
     }
 
     /**
@@ -339,10 +346,13 @@ contract ContentBasePublishV1 is
      * @param updatePublishData {struct}
      */
     function _emitPublishUpdated(
+        address owner,
         DataTypes.UpdatePublishData memory updatePublishData
     ) internal {
         emit PublishUpdated(
             updatePublishData.tokenId,
+            updatePublishData.creatorId,
+            owner,
             updatePublishData.imageURI,
             updatePublishData.contentURI,
             updatePublishData.metadataURI,
@@ -377,7 +387,7 @@ contract ContentBasePublishV1 is
         // Remove the publish from the struct mapping.
         delete _tokenIdToPublish[tokenId];
 
-        emit PublishDeleted(tokenId, block.timestamp);
+        emit PublishDeleted(tokenId, creatorId, msg.sender, block.timestamp);
     }
 
     /**
