@@ -193,10 +193,19 @@ library DataTypes {
         string mediaURI;
     }
 
+    /**
+     *  struct containing data required for `PublishLiked` event.
+     * @param tokenId {uint256} - a like token id
+     * @param publishId {uint256} - a publish token id
+     * @param profileId {uint256} - a profile token id
+     * @param totalAmount {uint256} - a total ethers sent by the profile
+     * @param fee {uint256} - a fee to deduct from total amount for the platform
+     */
     struct PublishLikedEventArgs {
         uint256 tokenId;
         uint256 publishId;
         uint256 profileId;
-        uint256 netFee;
+        uint256 totalAmount;
+        uint256 fee;
     }
 }

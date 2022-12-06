@@ -40,14 +40,14 @@ interface IContentBaseLikeV1 {
     /**
      * An external function to update like fee.
      * @dev make sure to add modifier to only ADMIN_ROLE.
-     * @param fee {uint} - a fee to be sent when some profile likes a Publish
+     * @param fee {uint} - an amount in ether
      */
     function updateLikeFee(uint256 fee) external;
 
     /**
      * An external function to update operational fee for the platform.
      * @dev  make sure to add modifier to only ADMIN_ROLE.
-     * @param fee - operational fee
+     * @param fee - a percentage for use to calcuate platform operational fee.
      */
     function updatePlatformFee(uint256 fee) external;
 
@@ -78,10 +78,10 @@ interface IContentBaseLikeV1 {
      * @param publishId {uint256} - a token id of the publish
      * @return liked {bool}
      */
-    function checkLikedPublish(uint256 profileId, uint256 publishId)
-        external
-        view
-        returns (bool);
+    function checkLikedPublish(
+        uint256 profileId,
+        uint256 publishId
+    ) external view returns (bool);
 
     /**
      * An external function to check if a profile dis-liked the publish.
@@ -89,8 +89,8 @@ interface IContentBaseLikeV1 {
      * @param publishId {uint256} - a token id of the publish
      * @return disLiked {bool}
      */
-    function checkDisLikedPublish(uint256 profileId, uint256 publishId)
-        external
-        view
-        returns (bool);
+    function checkDisLikedPublish(
+        uint256 profileId,
+        uint256 publishId
+    ) external view returns (bool);
 }

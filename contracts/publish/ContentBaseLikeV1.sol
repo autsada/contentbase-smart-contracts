@@ -40,7 +40,7 @@ contract ContentBaseLikeV1 is
 
     // A ContentBase owner address.
     address public platformOwner;
-    // The amount that a profile will send to the owner of the publish they like.
+    // The amount in ether that a profile will send to the owner of the publish they like.
     uint256 public likeFee;
     // The percentage to be deducted from the like fee (as the platform commission) before transfering the like fee to the publish's owner, need to store it as a whole number and do division when using it.
     uint256 public platformFee;
@@ -65,6 +65,7 @@ contract ContentBaseLikeV1 is
         uint256 indexed tokenId,
         uint256 indexed publishId,
         uint256 indexed profileId,
+        uint256 totalAmount,
         uint256 fee,
         uint256 timestamp
     );
@@ -102,8 +103,8 @@ contract ContentBaseLikeV1 is
         _grantRole(UPGRADER_ROLE, msg.sender);
 
         platformOwner = msg.sender;
-        likeFee = 1000 ether;
-        platformFee = 50;
+        likeFee = 0.002 ether;
+        platformFee = 10;
         _profileContractAddress = profileContractAddress;
         _publishContractAddress = publishContractAddress;
     }
@@ -230,6 +231,8 @@ contract ContentBaseLikeV1 is
     function updatePlatformFee(
         uint256 fee
     ) external override onlyRole(ADMIN_ROLE) {
+        // fee is a percentage value between 1 - 100
+        require(fee > 0 && fee <= 100, "Invalid input");
         platformFee = fee;
     }
 
@@ -269,12 +272,13 @@ contract ContentBaseLikeV1 is
             require(msg.value == likeFee, "Bad input");
 
             // Transfer the like fee (after deducting operational fee for the platform) to the publish owner.
-            uint256 netFee = msg.value - ((msg.value * platformFee) / 100);
+            uint256 fee = (msg.value * platformFee) / 100;
+            uint256 netTransfer = msg.value - fee;
             payable(
                 IContentBasePublishV1(_publishContractAddress).publishOwner(
                     publishId
                 )
-            ).transfer(netFee);
+            ).transfer(netTransfer);
 
             // Increment the counter before using it so the id will start from 1 (instead of 0).
             _tokenIdCounter.increment();
@@ -294,7 +298,7 @@ contract ContentBaseLikeV1 is
             }
 
             // Update the publish's total received.
-            publishIdToTotalReceived[publishId] += netFee;
+            publishIdToTotalReceived[publishId] += netTransfer;
 
             // Update the profile's Like NFT count.
             profileIdToLikeNFTCount[profileId]++;
@@ -305,7 +309,8 @@ contract ContentBaseLikeV1 is
                     tokenId: tokenId,
                     publishId: publishId,
                     profileId: profileId,
-                    netFee: netFee
+                    totalAmount: msg.value,
+                    fee: fee
                 })
             );
         } else {
@@ -342,7 +347,8 @@ contract ContentBaseLikeV1 is
             vars.tokenId,
             vars.publishId,
             vars.profileId,
-            vars.netFee,
+            vars.totalAmount,
+            vars.fee,
             block.timestamp
         );
     }
