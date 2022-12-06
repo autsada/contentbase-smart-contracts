@@ -57,6 +57,7 @@ contract ContentBaseCommentV1 is
         uint256 indexed tokenId,
         uint256 indexed parentId,
         uint256 indexed creatorId,
+        address owner,
         string contentURI,
         string text,
         string mediaURI,
@@ -65,12 +66,19 @@ contract ContentBaseCommentV1 is
     );
     event CommentUpdated(
         uint256 indexed tokenId,
+        uint256 indexed creatorId,
+        address owner,
         string contentURI,
         string text,
         string mediaURI,
         uint256 timestamp
     );
-    event CommentDeleted(uint256 indexed tokenId, uint256 timestamp);
+    event CommentDeleted(
+        uint256 indexed tokenId,
+        uint256 indexed creatorId,
+        address owner,
+        uint256 timestamp
+    );
     event CommentLiked(
         uint256 indexed commentId,
         uint256 indexed profileId,
@@ -273,6 +281,7 @@ contract ContentBaseCommentV1 is
             tokenId,
             publishId,
             creatorId,
+            msg.sender,
             createCommentData.contentURI,
             createCommentData.text,
             createCommentData.mediaURI,
@@ -339,6 +348,7 @@ contract ContentBaseCommentV1 is
             tokenId,
             commentId,
             creatorId,
+            msg.sender,
             createCommentData.contentURI,
             createCommentData.text,
             createCommentData.mediaURI,
@@ -402,6 +412,8 @@ contract ContentBaseCommentV1 is
 
         emit CommentUpdated(
             updateCommentData.tokenId,
+            updateCommentData.creatorId,
+            msg.sender,
             updateCommentData.contentURI,
             updateCommentData.text,
             updateCommentData.mediaURI,
@@ -431,7 +443,7 @@ contract ContentBaseCommentV1 is
         // Remove the struct from the mapping.
         delete _tokenIdToComment[tokenId];
 
-        emit CommentDeleted(tokenId, block.timestamp);
+        emit CommentDeleted(tokenId, creatorId, msg.sender, block.timestamp);
     }
 
     /**
