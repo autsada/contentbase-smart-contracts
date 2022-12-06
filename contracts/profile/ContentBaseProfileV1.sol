@@ -109,7 +109,7 @@ contract ContentBaseProfileV1 is
         require(Helpers.handleUnique(handle, _handleHashToProfileId));
 
         // The imageURI can be empty so we don't have to validate min length.
-        require(Helpers.notTooLongURI(imageURI));
+        Helpers.notTooLongURI(imageURI);
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
         _tokenIdCounter.increment();
@@ -153,8 +153,8 @@ contract ContentBaseProfileV1 is
         string calldata newImageURI
     ) external override onlyTokenOwner(tokenId) {
         // Validate the image uri.
-        require(Helpers.notTooShortURI(newImageURI));
-        require(Helpers.notTooLongURI(newImageURI));
+        Helpers.notTooShortURI(newImageURI);
+        Helpers.notTooLongURI(newImageURI);
 
         // Compare existing image uri to the new uri.
         require(

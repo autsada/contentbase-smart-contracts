@@ -231,24 +231,25 @@ contract ContentBaseCommentV1 is
         );
 
         // Validate contentURI.
-        require(Helpers.notTooShortURI(createCommentData.contentURI));
-        require(Helpers.notTooLongURI(createCommentData.contentURI));
+        Helpers.notTooShortURI(createCommentData.contentURI);
+        Helpers.notTooLongURI(createCommentData.contentURI);
 
         // At least one of `text` or `mediaURI` must be provided.
         require(
             bytes(createCommentData.text).length > 0 ||
-                Helpers.notTooShortURI(createCommentData.mediaURI),
-            "Text or media is required."
+                bytes(createCommentData.mediaURI).length > 0,
+            "Invalid input"
         );
 
         // Validate text.
         if (bytes(createCommentData.text).length > 0) {
-            require(Helpers.notTooLongComment(createCommentData.text));
+            Helpers.notTooLongComment(createCommentData.text);
         }
 
         // Validate media uri
-        if (Helpers.notTooShortURI(createCommentData.mediaURI)) {
-            require(Helpers.notTooLongURI(createCommentData.mediaURI));
+        if (bytes(createCommentData.mediaURI).length > 0) {
+            Helpers.notTooShortURI(createCommentData.mediaURI);
+            Helpers.notTooLongURI(createCommentData.mediaURI);
         }
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
@@ -296,24 +297,25 @@ contract ContentBaseCommentV1 is
         uint256 creatorId = createCommentData.creatorId;
 
         // Validate contentURI.
-        require(Helpers.notTooShortURI(createCommentData.contentURI));
-        require(Helpers.notTooLongURI(createCommentData.contentURI));
+        Helpers.notTooShortURI(createCommentData.contentURI);
+        Helpers.notTooLongURI(createCommentData.contentURI);
 
         // At least one of `text` or `mediaURI` must be provided.
         require(
             bytes(createCommentData.text).length > 0 ||
-                Helpers.notTooShortURI(createCommentData.mediaURI),
-            "Text or media is required."
+                bytes(createCommentData.mediaURI).length > 0,
+            "Invalid input"
         );
 
         // Validate text.
         if (bytes(createCommentData.text).length > 0) {
-            require(Helpers.notTooLongComment(createCommentData.text));
+            Helpers.notTooLongComment(createCommentData.text);
         }
 
         // Validate media uri
-        if (Helpers.notTooShortURI(createCommentData.mediaURI)) {
-            require(Helpers.notTooLongURI(createCommentData.mediaURI));
+        if (bytes(createCommentData.mediaURI).length > 0) {
+            Helpers.notTooShortURI(createCommentData.mediaURI);
+            Helpers.notTooLongURI(createCommentData.mediaURI);
         }
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
@@ -366,38 +368,37 @@ contract ContentBaseCommentV1 is
             "Not allow"
         );
 
-        // Check if there is any change.
-        require(
-            keccak256(abi.encodePacked(updateCommentData.contentURI)) !=
-                keccak256(
-                    abi.encodePacked(_tokenIdToComment[tokenId].contentURI)
-                ),
-            "Nothing change"
-        );
-
         // Validate contentURI.
-        require(Helpers.notTooShortURI(updateCommentData.contentURI));
-        require(Helpers.notTooLongURI(updateCommentData.contentURI));
+        Helpers.notTooShortURI(updateCommentData.contentURI);
+        Helpers.notTooLongURI(updateCommentData.contentURI);
 
         // At least one of `text` or `mediaURI` must be provided.
         require(
             bytes(updateCommentData.text).length > 0 ||
-                Helpers.notTooShortURI(updateCommentData.mediaURI),
-            "Text or media is required."
+                bytes(updateCommentData.mediaURI).length > 0,
+            "Invalid input"
         );
 
         // Validate text.
         if (bytes(updateCommentData.text).length > 0) {
-            require(Helpers.notTooLongComment(updateCommentData.text));
+            Helpers.notTooLongComment(updateCommentData.text);
         }
 
         // Validate media uri
-        if (Helpers.notTooShortURI(updateCommentData.mediaURI)) {
-            require(Helpers.notTooLongURI(updateCommentData.mediaURI));
+        if (bytes(updateCommentData.mediaURI).length > 0) {
+            Helpers.notTooShortURI(updateCommentData.mediaURI);
+            Helpers.notTooLongURI(updateCommentData.mediaURI);
         }
 
-        // Update the comment struct.
-        _tokenIdToComment[tokenId].contentURI = updateCommentData.contentURI;
+        // Only update the contentURI if it changed.
+        if (
+            keccak256(abi.encodePacked(updateCommentData.contentURI)) !=
+            keccak256(abi.encodePacked(_tokenIdToComment[tokenId].contentURI))
+        ) {
+            // Update the comment struct.
+            _tokenIdToComment[tokenId].contentURI = updateCommentData
+                .contentURI;
+        }
 
         emit CommentUpdated(
             updateCommentData.tokenId,
