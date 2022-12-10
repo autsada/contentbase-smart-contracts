@@ -60,7 +60,6 @@ contract ContentBaseCommentV1 is
         address owner,
         string contentURI,
         string text,
-        string mediaURI,
         DataTypes.CommentType commentType,
         uint256 timestamp
     );
@@ -70,7 +69,6 @@ contract ContentBaseCommentV1 is
         address owner,
         string contentURI,
         string text,
-        string mediaURI,
         uint256 timestamp
     );
     event CommentDeleted(
@@ -242,22 +240,12 @@ contract ContentBaseCommentV1 is
         Helpers.notTooShortURI(createCommentData.contentURI);
         Helpers.notTooLongURI(createCommentData.contentURI);
 
-        // At least one of `text` or `mediaURI` must be provided.
-        require(
-            bytes(createCommentData.text).length > 0 ||
-                bytes(createCommentData.mediaURI).length > 0,
-            "Invalid input"
-        );
+        // `text` must be provided.
+        require(bytes(createCommentData.text).length > 0, "Invalid input");
 
         // Validate text.
         if (bytes(createCommentData.text).length > 0) {
             Helpers.notTooLongComment(createCommentData.text);
-        }
-
-        // Validate media uri
-        if (bytes(createCommentData.mediaURI).length > 0) {
-            Helpers.notTooShortURI(createCommentData.mediaURI);
-            Helpers.notTooLongURI(createCommentData.mediaURI);
         }
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
@@ -284,7 +272,6 @@ contract ContentBaseCommentV1 is
             msg.sender,
             createCommentData.contentURI,
             createCommentData.text,
-            createCommentData.mediaURI,
             DataTypes.CommentType.PUBLISH,
             block.timestamp
         );
@@ -309,22 +296,12 @@ contract ContentBaseCommentV1 is
         Helpers.notTooShortURI(createCommentData.contentURI);
         Helpers.notTooLongURI(createCommentData.contentURI);
 
-        // At least one of `text` or `mediaURI` must be provided.
-        require(
-            bytes(createCommentData.text).length > 0 ||
-                bytes(createCommentData.mediaURI).length > 0,
-            "Invalid input"
-        );
+        // `text` must be provided.
+        require(bytes(createCommentData.text).length > 0, "Invalid input");
 
         // Validate text.
         if (bytes(createCommentData.text).length > 0) {
             Helpers.notTooLongComment(createCommentData.text);
-        }
-
-        // Validate media uri
-        if (bytes(createCommentData.mediaURI).length > 0) {
-            Helpers.notTooShortURI(createCommentData.mediaURI);
-            Helpers.notTooLongURI(createCommentData.mediaURI);
         }
 
         // Increment the counter before using it so the id will start from 1 (instead of 0).
@@ -351,7 +328,6 @@ contract ContentBaseCommentV1 is
             msg.sender,
             createCommentData.contentURI,
             createCommentData.text,
-            createCommentData.mediaURI,
             DataTypes.CommentType.COMMENT,
             block.timestamp
         );
@@ -382,22 +358,12 @@ contract ContentBaseCommentV1 is
         Helpers.notTooShortURI(updateCommentData.contentURI);
         Helpers.notTooLongURI(updateCommentData.contentURI);
 
-        // At least one of `text` or `mediaURI` must be provided.
-        require(
-            bytes(updateCommentData.text).length > 0 ||
-                bytes(updateCommentData.mediaURI).length > 0,
-            "Invalid input"
-        );
+        // `text` must be provided.
+        require(bytes(updateCommentData.text).length > 0, "Invalid input");
 
         // Validate text.
         if (bytes(updateCommentData.text).length > 0) {
             Helpers.notTooLongComment(updateCommentData.text);
-        }
-
-        // Validate media uri
-        if (bytes(updateCommentData.mediaURI).length > 0) {
-            Helpers.notTooShortURI(updateCommentData.mediaURI);
-            Helpers.notTooLongURI(updateCommentData.mediaURI);
         }
 
         // Only update the contentURI if it changed.
@@ -416,7 +382,6 @@ contract ContentBaseCommentV1 is
             msg.sender,
             updateCommentData.contentURI,
             updateCommentData.text,
-            updateCommentData.mediaURI,
             block.timestamp
         );
     }

@@ -146,7 +146,6 @@ library DataTypes {
      * {
      *      name: "ContentBase Comment NFT",
      *      description: "the text input of the comment",
-     *      image: "If the comment has a media file, this is the uri point to that file",
      *      properties: {
      *          // Other info if any
      *      }
@@ -166,15 +165,13 @@ library DataTypes {
      * @param creatorId {uint256} - see Comment struct
      * @param contentURI {string} - see Comment struct
      * @param text {string} - a text comment
-     * @param mediaURI {string} - a uri point to an image/video if user sends it in a comment.
-     * @dev We don't store `text` and `mediaURI` on on-chain, they are required for event emitting to inform the UIs so they can do what ever they want with this data. At least one of `text` or `mediaURI` must not empty.
+     * @dev We don't store `text` on on-chain, they are required for event emitting to inform the UIs so they can do what ever they want with this data. At least one of `text` or `mediaURI` must not empty.
      */
     struct CreateCommentData {
         uint256 parentId;
         uint256 creatorId;
         string contentURI;
         string text;
-        string mediaURI;
     }
 
     /**
@@ -183,14 +180,12 @@ library DataTypes {
      * @param creatorId {uint256} - see Comment struct
      * @param contentURI {string} - an updated content uri
      * @param text {string} - an updated text
-     * @param mediaURI {string} - an updated media uri
      */
     struct UpdateCommentData {
         uint256 tokenId;
         uint256 creatorId;
         string contentURI;
         string text;
-        string mediaURI;
     }
 
     /**
