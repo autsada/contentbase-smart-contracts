@@ -2,8 +2,8 @@ import { ethers, upgrades } from "hardhat"
 import path from "path"
 import fs from "fs/promises"
 
-import profileContractV1 from "../abi/ContentBaseProfileV1.json"
-import publishContractV1 from "../abi/ContentBasePublishV1.json"
+import profileContractV1 from "../../abi/testnet/ContentBaseProfileV1.json"
+import publishContractV1 from "../../abi/testnet/ContentBasePublishV1.json"
 
 async function main() {
   const ContentBaseCommentV1 = await ethers.getContractFactory(
@@ -24,7 +24,7 @@ async function main() {
   }
 
   await fs.writeFile(
-    path.join(__dirname, "..", "/abi/ContentBaseCommentV1.json"),
+    path.join(__dirname, "../..", "/abi/testnet/ContentBaseCommentV1.json"),
     JSON.stringify(data)
   )
 }

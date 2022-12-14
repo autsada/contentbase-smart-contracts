@@ -2,11 +2,16 @@ import { ethers, upgrades } from "hardhat"
 import path from "path"
 import fs from "fs/promises"
 
+import profileContractV1 from "../../abi/testnet/ContentBaseProfileV1.json"
+
 async function main() {
   const ContentBaseProfileV1 = await ethers.getContractFactory(
     "ContentBaseProfileV1"
   )
-  const contentBaseProfileV1 = await upgrades.deployProxy(ContentBaseProfileV1)
+  const contentBaseProfileV1 = await upgrades.upgradeProxy(
+    profileContractV1.address,
+    ContentBaseProfileV1
+  )
 
   await contentBaseProfileV1.deployed()
 
@@ -18,7 +23,7 @@ async function main() {
   }
 
   await fs.writeFile(
-    path.join(__dirname, "..", "/abi/ContentBaseProfileV1.json"),
+    path.join(__dirname, "../..", "/abi/testnet/ContentBaseProfileV1.json"),
     JSON.stringify(data)
   )
 }
