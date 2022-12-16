@@ -20,6 +20,14 @@ library DataTypes {
         string imageURI;
     }
 
+    enum PublishKind {
+        Video,
+        Short,
+        Audio,
+        Blog,
+        Post
+    }
+
     /**
      * Publish's Category
      * @dev The category information should be included in the metadataURI.
@@ -89,7 +97,8 @@ library DataTypes {
      * @param primaryCategory {enum} - the publish's primary category
      * @param secondaryCategory {enum} - the publish's primary category
      * @param tertiaryCategory {enum} - the publish's primary category
-     * @dev title, description, primaryCategory, secondaryCategory, and tertiaryCategory are not stored on the blockchain, they are required for event emitting to inform frontend the information of the created publish only.
+     * @param kind {enum} - the publish's kind
+     * @dev title, description, primaryCategory, secondaryCategory, tertiaryCategory, and kind are not stored on the blockchain, they are required for event emitting to inform frontend the information of the created publish only.
      */
     struct CreatePublishData {
         uint256 creatorId;
@@ -101,6 +110,7 @@ library DataTypes {
         Category primaryCategory;
         Category secondaryCategory;
         Category tertiaryCategory;
+        PublishKind kind;
     }
 
     /**

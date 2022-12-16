@@ -55,6 +55,7 @@ contract ContentBasePublishV1 is
         DataTypes.Category primaryCategory,
         DataTypes.Category secondaryCategory,
         DataTypes.Category tertiaryCategory,
+        DataTypes.PublishKind kind,
         uint256 timestamp
     );
     event PublishUpdated(
@@ -252,6 +253,7 @@ contract ContentBasePublishV1 is
             createPublishData.primaryCategory,
             createPublishData.secondaryCategory,
             createPublishData.tertiaryCategory,
+            createPublishData.kind,
             block.timestamp
         );
     }
