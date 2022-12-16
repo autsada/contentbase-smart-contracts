@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "hardhat/console.sol";
 
 import {IContentBaseLikeV1} from "./IContentBaseLikeV1.sol";
@@ -40,10 +41,10 @@ contract ContentBaseLikeV1 is
 
     // A ContentBase owner address.
     address public platformOwner;
-    // The amount in ether that a profile will send to the owner of the publish they like.
-    uint256 public likeFee;
     // The percentage to be deducted from the like fee (as the platform commission) before transfering the like fee to the publish's owner, need to store it as a whole number and do division when using it.
     uint256 public platformFee;
+    // Chainlink ETH/USD price feed contract address for use to calculate like fee.
+    address public ethToUsdPriceFeedContract;
 
     // A private state to store the profile contract address.
     address private _profileContractAddress;
@@ -103,8 +104,8 @@ contract ContentBaseLikeV1 is
         _grantRole(UPGRADER_ROLE, msg.sender);
 
         platformOwner = msg.sender;
-        likeFee = 0.002 ether;
         platformFee = 10;
+        ethToUsdPriceFeedContract = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
         _profileContractAddress = profileContractAddress;
         _publishContractAddress = publishContractAddress;
     }
@@ -115,7 +116,10 @@ contract ContentBaseLikeV1 is
      */
     function _onlyReady() private view {
         require(platformOwner != address(0), "Platform owner not set");
-        require(likeFee != 0, "Like fee not set");
+        require(
+            ethToUsdPriceFeedContract != address(0),
+            "Price feed contract not set"
+        );
         require(platformFee != 0, "Platform fee not set");
         require(
             _profileContractAddress != address(0),
@@ -221,8 +225,10 @@ contract ContentBaseLikeV1 is
     /**
      * @inheritdoc IContentBaseLikeV1
      */
-    function updateLikeFee(uint256 fee) external override onlyRole(ADMIN_ROLE) {
-        likeFee = fee;
+    function updatePriceFeedContract(
+        address contractAddress
+    ) external override onlyRole(ADMIN_ROLE) {
+        ethToUsdPriceFeedContract = contractAddress;
     }
 
     /**
@@ -269,6 +275,7 @@ contract ContentBaseLikeV1 is
             // A. `like` - Mint a LIKE token to the caller.
 
             // Validate ether sent.
+            uint256 likeFee = calculateLikeFee();
             require(msg.value == likeFee, "Bad input");
 
             // Transfer the like fee (after deducting operational fee for the platform) to the publish owner.
@@ -425,6 +432,26 @@ contract ContentBaseLikeV1 is
         uint256 publishId
     ) external view override returns (bool) {
         return _publishIdToProfileIdToDislikeStatus[publishId][profileId];
+    }
+
+    /**
+     * A public helper function to calculate like fee.
+     * @dev The fee is 10% of 1 usd in wei
+     */
+    function calculateLikeFee() public view returns (uint256) {
+        require(ethToUsdPriceFeedContract != address(0), "Not ready");
+
+        // Get ETH/USD price from Chainlink price feed.
+        (, int price, , , ) = AggregatorV3Interface(ethToUsdPriceFeedContract)
+            .latestRoundData();
+
+        // Calculate 1 usd in wei.
+        int usdToWei = (1e18 * (10 ** 8)) / price;
+
+        // Like fee is 10% on 1 usd in wei.
+        int fee = (usdToWei * 10) / 100;
+
+        return uint256(fee);
     }
 
     /**

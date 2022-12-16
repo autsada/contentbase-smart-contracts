@@ -38,18 +38,18 @@ interface IContentBaseLikeV1 {
     function getPublishContract() external view returns (address);
 
     /**
-     * An external function to update like fee.
-     * @dev make sure to add modifier to only ADMIN_ROLE.
-     * @param fee {uint} - an amount in ether
-     */
-    function updateLikeFee(uint256 fee) external;
-
-    /**
      * An external function to update operational fee for the platform.
      * @dev  make sure to add modifier to only ADMIN_ROLE.
      * @param fee - a percentage for use to calcuate platform operational fee.
      */
     function updatePlatformFee(uint256 fee) external;
+
+    /**
+     * An external function to update price feed contract address.
+     * @dev  make sure to add modifier to only ADMIN_ROLE.
+     * @param contractAddress {address} - a price feed contract address.
+     */
+    function updatePriceFeedContract(address contractAddress) external;
 
     /**
      * An external function to withdraw the contract's balance.
