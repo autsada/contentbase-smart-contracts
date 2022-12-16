@@ -2,7 +2,7 @@ import { ethers, upgrades } from "hardhat"
 import path from "path"
 import fs from "fs/promises"
 
-import commentContractV1 from "../../abi/testnet/ContentBaseCommentV1.json"
+import commentContractV1 from "../../abi/localhost/ContentBaseCommentV1.json"
 
 async function main() {
   const ContentBaseCommentV1 = await ethers.getContractFactory(

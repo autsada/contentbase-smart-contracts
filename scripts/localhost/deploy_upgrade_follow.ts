@@ -2,7 +2,7 @@ import { ethers, upgrades } from "hardhat"
 import path from "path"
 import fs from "fs/promises"
 
-import followContractV1 from "../../abi/testnet/ContentBaseFollowV1.json"
+import followContractV1 from "../../abi/localhost/ContentBaseFollowV1.json"
 
 async function main() {
   const ContentBaseFollowV1 = await ethers.getContractFactory(
