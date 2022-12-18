@@ -274,9 +274,8 @@ contract ContentBaseLikeV1 is
         if (likeId == 0) {
             // A. `like` - Mint a LIKE token to the caller.
 
-            // Validate ether sent.
-            uint256 likeFee = calculateLikeFee();
-            require(msg.value == likeFee, "Bad input");
+            // Validate like fee sent by the caller.
+            require(_validateLikeFee(msg.value), "Incorrect fee");
 
             // Transfer the like fee (after deducting operational fee for the platform) to the publish owner.
             uint256 fee = (msg.value * platformFee) / 100;
@@ -435,23 +434,54 @@ contract ContentBaseLikeV1 is
     }
 
     /**
-     * A public helper function to calculate like fee.
-     * @dev The fee is 10% of 1 usd in wei
+     * A private function to get ETH price in USD from Chainlink.
+     * @dev the returned value is a usd amount with decimals and the decimals, for exmaple if the returned value is (118735000000, 8) it means 1 eth = 1187.35000000 usd.
      */
-    function calculateLikeFee() public view returns (uint256) {
+    function _getEthPrice() private view returns (int, uint8) {
         require(ethToUsdPriceFeedContract != address(0), "Not ready");
 
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(
+            ethToUsdPriceFeedContract
+        );
+
         // Get ETH/USD price from Chainlink price feed.
-        (, int price, , , ) = AggregatorV3Interface(ethToUsdPriceFeedContract)
-            .latestRoundData();
+        (, int price, , , ) = priceFeed.latestRoundData();
+
+        return (price, priceFeed.decimals());
+    }
+
+    /**
+     * A public helper function to calculate like fee.
+     * @dev The fee is 10% of 1 usd in wei.
+     */
+    function calculateLikeFee() public view returns (uint256) {
+        (int256 price, uint8 decimals) = _getEthPrice();
 
         // Calculate 1 usd in wei.
-        int usdToWei = (1e18 * (10 ** 8)) / price;
+        uint256 usdToWei = (1e18 * (10 ** uint256(decimals))) / uint256(price);
 
         // Like fee is 10% on 1 usd in wei.
-        int fee = (usdToWei * 10) / 100;
+        uint256 fee = (usdToWei * 10) / 100;
 
-        return uint256(fee);
+        return fee;
+    }
+
+    /**
+     * A helper function to check if the like fee sent by the caller when they like the publish is correct.
+     * @dev To validate we convert the sent fee to `usd for 1 eth` and compare it to `usd for 1 eth` that is calculated from the price feed.
+     * @dev We use the whole number for comparision, for example if the price feed is `118735000000` we devide this number by the decimals (8 for example) so we get 1187 and then compare it to the whole number received from the calculation of the fee.
+     * @dev `fee` is an amount of wei that equals to 0.1 usd.
+     */
+    function _validateLikeFee(uint256 fee) private view returns (bool) {
+        // Calculate how much usd for 1 eth (1e18 wei) from the fee.
+        uint256 feeToEthInUsd = 1e18 / (fee * 10);
+
+        // Calculate how much usd for 1 eth from the price feed.
+        (int256 price, uint8 decimals) = _getEthPrice();
+        uint256 priceFeedToEthInUsd = uint256(price) /
+            (10 ** uint256(decimals));
+
+        return feeToEthInUsd == priceFeedToEthInUsd;
     }
 
     /**
