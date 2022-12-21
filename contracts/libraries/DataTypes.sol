@@ -61,37 +61,30 @@ library DataTypes {
      * A struct containing data of Publish NFT.
      * @param owner {address} - an address that owns the token.
      * @param creatorId {uint256} - a profile token id that creates the publish.
-     * @param imageURI {string} - a publish's thumbnail image uri.
      * @param contentURI {string} - a publish's content uri, tipically it's a uri point to a video content.
-     * @param metadataURI {string} - a uri point to the publish's metadata json file that contain all information about a publish.
-     *
-     * @dev Metadata Guild: the metadata json object must have these below fields, additional fields can be added.
+     * @dev ContentURI Guild: the json object must have these below fields, additional fields can be added.
      * {
-     *      name: "A title of the publish",
-     *      description: "A description of the publish",
-     *      image: "A publish's thumbnail image, prefer ipfs storage"
+     *      name: <Publish's title>,
+     *      description: <Publish's description>,
+     *      image: <Publish's content uri>
      *      properties: {
-     *          content: "A publish's content uri, prefer ipfs storage",
-     *          primaryCategory {enum}: "See Category enum above - must NOT Empty",
-     *          secondaryCategory {enum}: "See Category enum above - can be Empty",
-     *          tertiaryCategory {enum}: "See Category enum above - can be Empty",
+     *          primaryCategory: <Publish's primary category>,
+     *          secondaryCategory: <Publish's secondary category>,
+     *          tertiaryCategory: <Publish's tertiary category>,
+     *          kind: <Publish's kind>,
      *      }
      * }
      */
     struct Publish {
         address owner;
         uint256 creatorId;
-        string imageURI;
         string contentURI;
-        string metadataURI;
     }
 
     /**
      * A struct containing data required to create Publish NFT.
      * @param creatorId {uint256} - see PublishStruct
-     * @param imageURI {string} - see PublishStruct
      * @param contentURI {string} - see PublishStruct
-     * @param metadataURI {string} - see PublishStruct
      * @param title {string} - the publish's title
      * @param description {string} - the publish's description
      * @param primaryCategory {enum} - the publish's primary category
@@ -102,9 +95,7 @@ library DataTypes {
      */
     struct CreatePublishData {
         uint256 creatorId;
-        string imageURI;
         string contentURI;
-        string metadataURI;
         string title;
         string description;
         Category primaryCategory;
@@ -117,9 +108,7 @@ library DataTypes {
      * A struct containing data required to update Publish NFT.
      * @param tokenId {uint256} - an id of the token to be updated
      * @param creatorId {uint256} - see PublishStruct
-     * @param imageURI {string} - see PublishStruct
      * @param contentURI {string} - see PublishStruct
-     * @param metadataURI {string} - see PublishStruct
      * @param title {string} - the publish's title
      * @param description {string} - the publish's description
      * @param primaryCategory {enum} - the publish's primary category
@@ -130,9 +119,7 @@ library DataTypes {
     struct UpdatePublishData {
         uint256 tokenId;
         uint256 creatorId;
-        string imageURI;
         string contentURI;
-        string metadataURI;
         string title;
         string description;
         Category primaryCategory;
@@ -151,36 +138,25 @@ library DataTypes {
      * @param creatorId {uint256} - a profile token id that comments a publish.
      * @param parentId {uint256} - a publish or comment token id that the comment belongs to.
      * @param commentType {enum} - "PUBLISH" | "COMMENT"
-     * @param contentURI {string} - a uri point to the comment metadata json object that contains the detail of the comment.
-     * @dev The contentURI should be in the following format.
-     * {
-     *      name: "ContentBase Comment NFT",
-     *      description: "the text input of the comment",
-     *      properties: {
-     *          // Other info if any
-     *      }
-     * }
+     * @param text {string} - the comment's detail
      */
     struct Comment {
         address owner;
         uint256 creatorId;
         uint256 parentId;
         CommentType commentType;
-        string contentURI;
+        string text;
     }
 
     /**
      * A struct containing data required to create a comment.
      * @param parentId {uint256} - a publish or comment token id to be commented on
      * @param creatorId {uint256} - see Comment struct
-     * @param contentURI {string} - see Comment struct
      * @param text {string} - a text comment
-     * @dev We don't store `text` on on-chain, they are required for event emitting to inform the UIs so they can do what ever they want with this data. At least one of `text` or `mediaURI` must not empty.
      */
     struct CreateCommentData {
         uint256 parentId;
         uint256 creatorId;
-        string contentURI;
         string text;
     }
 
@@ -188,13 +164,11 @@ library DataTypes {
      * A struct containing data required to update a comment on a publish.
      * @param tokenId {uint256} - an id of the comment to be updated
      * @param creatorId {uint256} - see Comment struct
-     * @param contentURI {string} - an updated content uri
      * @param text {string} - an updated text
      */
     struct UpdateCommentData {
         uint256 tokenId;
         uint256 creatorId;
-        string contentURI;
         string text;
     }
 

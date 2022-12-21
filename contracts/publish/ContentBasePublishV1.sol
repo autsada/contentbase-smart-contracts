@@ -47,9 +47,7 @@ contract ContentBasePublishV1 is
         uint256 indexed tokenId,
         uint256 indexed creatorId,
         address indexed owner,
-        string imageURI,
         string contentURI,
-        string metadataURI,
         string title,
         string description,
         DataTypes.Category primaryCategory,
@@ -62,9 +60,7 @@ contract ContentBasePublishV1 is
         uint256 indexed tokenId,
         uint256 indexed creatorId,
         address owner,
-        string imageURI,
         string contentURI,
-        string metadataURI,
         string title,
         string description,
         DataTypes.Category primaryCategory,
@@ -177,17 +173,9 @@ contract ContentBasePublishV1 is
         onlyReady
         onlyProfileOwner(createPublishData.creatorId)
     {
-        // Validate imageURI.
-        Helpers.notTooShortURI(createPublishData.imageURI);
-        Helpers.notTooLongURI(createPublishData.imageURI);
-
         // Validate contentURI.
         Helpers.notTooShortURI(createPublishData.contentURI);
         Helpers.notTooLongURI(createPublishData.contentURI);
-
-        // Validate metadataURI.
-        Helpers.notTooShortURI(createPublishData.metadataURI);
-        Helpers.notTooLongURI(createPublishData.metadataURI);
 
         // Validate title.
         Helpers.notTooShortTitle(createPublishData.title);
@@ -221,9 +209,7 @@ contract ContentBasePublishV1 is
         _tokenIdToPublish[tokenId] = DataTypes.Publish({
             owner: msg.sender,
             creatorId: createPublishData.creatorId,
-            imageURI: createPublishData.imageURI,
-            contentURI: createPublishData.contentURI,
-            metadataURI: createPublishData.metadataURI
+            contentURI: createPublishData.contentURI
         });
 
         // Emit publish created event.
@@ -245,9 +231,7 @@ contract ContentBasePublishV1 is
             tokenId,
             createPublishData.creatorId,
             owner,
-            createPublishData.imageURI,
             createPublishData.contentURI,
-            createPublishData.metadataURI,
             createPublishData.title,
             createPublishData.description,
             createPublishData.primaryCategory,
@@ -279,17 +263,9 @@ contract ContentBasePublishV1 is
             "Not allow"
         );
 
-        // Validate imageURI
-        Helpers.notTooShortURI(updatePublishData.imageURI);
-        Helpers.notTooLongURI(updatePublishData.imageURI);
-
         // Validate contentURI.
         Helpers.notTooShortURI(updatePublishData.contentURI);
         Helpers.notTooLongURI(updatePublishData.contentURI);
-
-        // Validate metadataURI.
-        Helpers.notTooShortURI(updatePublishData.metadataURI);
-        Helpers.notTooLongURI(updatePublishData.metadataURI);
 
         // Validate title.
         Helpers.notTooShortTitle(updatePublishData.title);
@@ -311,14 +287,6 @@ contract ContentBasePublishV1 is
             );
         }
 
-        // Only update imageURI if it's changed.
-        if (
-            keccak256(abi.encodePacked(_tokenIdToPublish[tokenId].imageURI)) !=
-            keccak256(abi.encodePacked(updatePublishData.imageURI))
-        ) {
-            _tokenIdToPublish[tokenId].imageURI = updatePublishData.imageURI;
-        }
-
         // Only update contentURI if it's changed.
         if (
             keccak256(
@@ -327,16 +295,6 @@ contract ContentBasePublishV1 is
         ) {
             _tokenIdToPublish[tokenId].contentURI = updatePublishData
                 .contentURI;
-        }
-
-        // Only update metadataURI if it's changed.
-        if (
-            keccak256(
-                abi.encodePacked(_tokenIdToPublish[tokenId].metadataURI)
-            ) != keccak256(abi.encodePacked(updatePublishData.metadataURI))
-        ) {
-            _tokenIdToPublish[tokenId].metadataURI = updatePublishData
-                .metadataURI;
         }
 
         // Emit publish updated event
@@ -355,9 +313,7 @@ contract ContentBasePublishV1 is
             updatePublishData.tokenId,
             updatePublishData.creatorId,
             owner,
-            updatePublishData.imageURI,
             updatePublishData.contentURI,
-            updatePublishData.metadataURI,
             updatePublishData.title,
             updatePublishData.description,
             updatePublishData.primaryCategory,
@@ -442,7 +398,7 @@ contract ContentBasePublishV1 is
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
-        return _tokenIdToPublish[tokenId].metadataURI;
+        return _tokenIdToPublish[tokenId].contentURI;
     }
 
     /**

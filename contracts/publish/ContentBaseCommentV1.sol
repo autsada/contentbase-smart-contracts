@@ -58,7 +58,6 @@ contract ContentBaseCommentV1 is
         uint256 indexed parentId,
         uint256 indexed creatorId,
         address owner,
-        string contentURI,
         string text,
         DataTypes.CommentType commentType,
         uint256 timestamp
@@ -67,7 +66,6 @@ contract ContentBaseCommentV1 is
         uint256 indexed tokenId,
         uint256 indexed creatorId,
         address owner,
-        string contentURI,
         string text,
         uint256 timestamp
     );
@@ -236,10 +234,6 @@ contract ContentBaseCommentV1 is
             "Publish not found"
         );
 
-        // Validate contentURI.
-        Helpers.notTooShortURI(createCommentData.contentURI);
-        Helpers.notTooLongURI(createCommentData.contentURI);
-
         // `text` must be provided.
         require(bytes(createCommentData.text).length > 0, "Invalid input");
 
@@ -261,7 +255,7 @@ contract ContentBaseCommentV1 is
             creatorId: creatorId,
             parentId: publishId,
             commentType: DataTypes.CommentType.PUBLISH,
-            contentURI: createCommentData.contentURI
+            text: createCommentData.text
         });
 
         // Emit comment created event.
@@ -270,7 +264,6 @@ contract ContentBaseCommentV1 is
             publishId,
             creatorId,
             msg.sender,
-            createCommentData.contentURI,
             createCommentData.text,
             DataTypes.CommentType.PUBLISH,
             block.timestamp
@@ -291,10 +284,6 @@ contract ContentBaseCommentV1 is
     {
         uint256 commentId = createCommentData.parentId;
         uint256 creatorId = createCommentData.creatorId;
-
-        // Validate contentURI.
-        Helpers.notTooShortURI(createCommentData.contentURI);
-        Helpers.notTooLongURI(createCommentData.contentURI);
 
         // `text` must be provided.
         require(bytes(createCommentData.text).length > 0, "Invalid input");
@@ -317,7 +306,7 @@ contract ContentBaseCommentV1 is
             creatorId: creatorId,
             parentId: commentId,
             commentType: DataTypes.CommentType.COMMENT,
-            contentURI: createCommentData.contentURI
+            text: createCommentData.text
         });
 
         // Emit comment created event.
@@ -326,7 +315,6 @@ contract ContentBaseCommentV1 is
             commentId,
             creatorId,
             msg.sender,
-            createCommentData.contentURI,
             createCommentData.text,
             DataTypes.CommentType.COMMENT,
             block.timestamp
@@ -354,10 +342,6 @@ contract ContentBaseCommentV1 is
             "Not allow"
         );
 
-        // Validate contentURI.
-        Helpers.notTooShortURI(updateCommentData.contentURI);
-        Helpers.notTooLongURI(updateCommentData.contentURI);
-
         // `text` must be provided.
         require(bytes(updateCommentData.text).length > 0, "Invalid input");
 
@@ -368,19 +352,17 @@ contract ContentBaseCommentV1 is
 
         // Only update the contentURI if it changed.
         if (
-            keccak256(abi.encodePacked(updateCommentData.contentURI)) !=
-            keccak256(abi.encodePacked(_tokenIdToComment[tokenId].contentURI))
+            keccak256(abi.encodePacked(updateCommentData.text)) !=
+            keccak256(abi.encodePacked(_tokenIdToComment[tokenId].text))
         ) {
             // Update the comment struct.
-            _tokenIdToComment[tokenId].contentURI = updateCommentData
-                .contentURI;
+            _tokenIdToComment[tokenId].text = updateCommentData.text;
         }
 
         emit CommentUpdated(
             updateCommentData.tokenId,
             updateCommentData.creatorId,
             msg.sender,
-            updateCommentData.contentURI,
             updateCommentData.text,
             block.timestamp
         );
@@ -525,16 +507,6 @@ contract ContentBaseCommentV1 is
     function burn(uint256 tokenId) public view override {
         require(_exists(tokenId), "Comment not found");
         revert("Use `deleteComment` function");
-    }
-
-    /**
-     * Return the comment's content uri
-     */
-    function tokenURI(
-        uint256 tokenId
-    ) public view override returns (string memory) {
-        require(_exists(tokenId), "Comment not found");
-        return _tokenIdToComment[tokenId].contentURI;
     }
 
     /**
