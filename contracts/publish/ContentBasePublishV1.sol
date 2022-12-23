@@ -48,6 +48,7 @@ contract ContentBasePublishV1 is
         uint256 indexed creatorId,
         address indexed owner,
         string contentURI,
+        string contentRef,
         string title,
         string description,
         DataTypes.Category primaryCategory,
@@ -60,7 +61,6 @@ contract ContentBasePublishV1 is
         uint256 indexed tokenId,
         uint256 indexed creatorId,
         address owner,
-        string contentURI,
         string title,
         string description,
         DataTypes.Category primaryCategory,
@@ -177,6 +177,10 @@ contract ContentBasePublishV1 is
         Helpers.notTooShortURI(createPublishData.contentURI);
         Helpers.notTooLongURI(createPublishData.contentURI);
 
+        // Validate contentRef.
+        Helpers.notTooShortURI(createPublishData.contentRef);
+        Helpers.notTooLongURI(createPublishData.contentRef);
+
         // Validate title.
         Helpers.notTooShortTitle(createPublishData.title);
         Helpers.notTooLongTitle(createPublishData.title);
@@ -232,6 +236,7 @@ contract ContentBasePublishV1 is
             createPublishData.creatorId,
             owner,
             createPublishData.contentURI,
+            createPublishData.contentRef,
             createPublishData.title,
             createPublishData.description,
             createPublishData.primaryCategory,
@@ -262,11 +267,6 @@ contract ContentBasePublishV1 is
             _tokenIdToPublish[tokenId].creatorId == updatePublishData.creatorId,
             "Not allow"
         );
-
-        // Validate contentURI.
-        Helpers.notTooShortURI(updatePublishData.contentURI);
-        Helpers.notTooLongURI(updatePublishData.contentURI);
-
         // Validate title.
         Helpers.notTooShortTitle(updatePublishData.title);
         Helpers.notTooLongTitle(updatePublishData.title);
@@ -287,16 +287,6 @@ contract ContentBasePublishV1 is
             );
         }
 
-        // Only update contentURI if it's changed.
-        if (
-            keccak256(
-                abi.encodePacked(_tokenIdToPublish[tokenId].contentURI)
-            ) != keccak256(abi.encodePacked(updatePublishData.contentURI))
-        ) {
-            _tokenIdToPublish[tokenId].contentURI = updatePublishData
-                .contentURI;
-        }
-
         // Emit publish updated event
         _emitPublishUpdated(msg.sender, updatePublishData);
     }
@@ -313,7 +303,6 @@ contract ContentBasePublishV1 is
             updatePublishData.tokenId,
             updatePublishData.creatorId,
             owner,
-            updatePublishData.contentURI,
             updatePublishData.title,
             updatePublishData.description,
             updatePublishData.primaryCategory,

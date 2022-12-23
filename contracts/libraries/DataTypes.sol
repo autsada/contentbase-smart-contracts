@@ -85,6 +85,7 @@ library DataTypes {
      * A struct containing data required to create Publish NFT.
      * @param creatorId {uint256} - see PublishStruct
      * @param contentURI {string} - see PublishStruct
+     * @param contentRef {string} - a path to the content that stored on the cloud or ipfs
      * @param title {string} - the publish's title
      * @param description {string} - the publish's description
      * @param primaryCategory {enum} - the publish's primary category
@@ -96,6 +97,7 @@ library DataTypes {
     struct CreatePublishData {
         uint256 creatorId;
         string contentURI;
+        string contentRef;
         string title;
         string description;
         Category primaryCategory;
@@ -108,7 +110,6 @@ library DataTypes {
      * A struct containing data required to update Publish NFT.
      * @param tokenId {uint256} - an id of the token to be updated
      * @param creatorId {uint256} - see PublishStruct
-     * @param contentURI {string} - see PublishStruct
      * @param title {string} - the publish's title
      * @param description {string} - the publish's description
      * @param primaryCategory {enum} - the publish's primary category
@@ -119,7 +120,6 @@ library DataTypes {
     struct UpdatePublishData {
         uint256 tokenId;
         uint256 creatorId;
-        string contentURI;
         string title;
         string description;
         Category primaryCategory;
